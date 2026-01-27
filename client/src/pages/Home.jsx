@@ -1,17 +1,19 @@
+import { useNavigate } from 'react-router-dom'
 import Hero from '../components/Hero'
 import PetCard from '../components/PetCard'
 import TrustSection from '../components/TrustSection'
 import BackgroundEffects from '../components/BackgroundEffects'
 
 function Home() {
+  const navigate = useNavigate()
+
   const handleCatClick = () => {
-    console.log('Cat test clicked')
     // TODO: Navigate to cat test page
+    console.log('Cat test clicked')
   }
 
   const handleDogClick = () => {
-    console.log('Dog test clicked')
-    // TODO: Navigate to dog test page
+    navigate('/dog-test')
   }
 
   return (
