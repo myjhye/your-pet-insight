@@ -8,11 +8,14 @@ export default {
     extend: {
       colors: {
         primary: "#1B4D3E",
+        "primary-light": "#2C6E5A",
         accent: "#FFB38A",
         secondary: "#D1F2EB",
         "text-light": "#F8FAFC",
         "text-dark": "#1B4D3E",
         "card-bg": "#FFFFFF",
+        "scale-agree": "#D1F2EB",
+        "scale-disagree": "#FFB38A",
       },
       fontFamily: {
         sans: ["Poppins", "sans-serif"],

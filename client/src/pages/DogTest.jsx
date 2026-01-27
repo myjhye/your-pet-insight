@@ -51,8 +51,12 @@ function DogTest() {
   ]
 
   const handleCategoryClick = (categoryId) => {
-    console.log(`Category clicked: ${categoryId}`)
-    // TODO: Navigate to specific test category
+    if (categoryId === 'personality') {
+      navigate('/dog-test/personality')
+    } else {
+      console.log(`Category clicked: ${categoryId}`)
+      // TODO: Navigate to other test categories
+    }
   }
 
   return (

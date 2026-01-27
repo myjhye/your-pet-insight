@@ -3,16 +3,26 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import Home from './pages/Home'
 import DogTest from './pages/DogTest'
+import PersonalityTest from './pages/PersonalityTest'
+
+function Layout({ children }) {
+  return (
+    <>
+      <Header />
+      {children}
+      <Footer />
+    </>
+  )
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <Header />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/dog-test" element={<DogTest />} />
+        <Route path="/" element={<Layout><Home /></Layout>} />
+        <Route path="/dog-test" element={<Layout><DogTest /></Layout>} />
+        <Route path="/dog-test/personality" element={<PersonalityTest />} />
       </Routes>
-      <Footer />
     </BrowserRouter>
   )
 }
