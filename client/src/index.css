@@ -2,34 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --bg-gradient-start: #0f172a;
-  --bg-gradient-end: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --card-bg: rgba(30, 41, 59, 0.8);
-  --card-border: rgba(148, 163, 184, 0.1);
-}
-
-@layer base {
-  body {
-    @apply bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen text-slate-50 leading-relaxed;
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+@layer utilities {
+  .bg-gradient-radial {
+    background-image: radial-gradient(circle at center, var(--tw-gradient-stops));
   }
-
-  #root {
-    @apply min-h-screen;
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 }
 
-@layer components {
-  .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
-  }
+body {
+  background-color: #1B4D3E;
+  font-family: 'Poppins', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: #F8FAFC;
+}
 
-  .card {
-    @apply bg-slate-800/80 border border-slate-700/50 rounded-xl p-6 backdrop-blur-sm;
-  }
+::selection {
+  background-color: #FFB38A;
+  color: #1B4D3E;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }

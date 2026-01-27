@@ -7,39 +7,27 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
-        },
+        primary: "#1B4D3E",
+        accent: "#FFB38A",
+        secondary: "#D1F2EB",
+        "text-light": "#F8FAFC",
+        "text-dark": "#1B4D3E",
+        "card-bg": "#FFFFFF",
       },
       fontFamily: {
-        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        sans: ["Poppins", "sans-serif"],
+        display: ["Montserrat", "sans-serif"],
       },
-      animation: {
-        'fade-in-down': 'fadeInDown 0.6s ease-out',
-        'fade-in-up': 'fadeInUp 0.6s ease-out 0.2s both',
+      borderRadius: {
+        DEFAULT: "0.5rem",
+        'xl': '1rem',
+        '2xl': '1.5rem',
       },
-      keyframes: {
-        fadeInDown: {
-          '0%': { opacity: '0', transform: 'translateY(-20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
+      boxShadow: {
+        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.1)',
+        'glow': '0 0 15px rgba(209, 242, 235, 0.3)',
       },
     },
   },
   plugins: [],
 }
-
