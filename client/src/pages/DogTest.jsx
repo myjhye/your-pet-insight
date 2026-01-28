@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import TestCategoryCard from '../components/TestCategoryCard'
-import BackgroundEffects from '../components/BackgroundEffects'
 
 const testCategories = [
   {
@@ -60,19 +59,17 @@ function DogTest() {
   }
 
   return (
-    <main className="flex-grow relative overflow-hidden">
-      <BackgroundEffects />
-      
-      <div className="relative z-10 px-6 md:px-20 lg:px-40 py-8">
+    <main className="flex-grow bg-[#F9FBF9] min-h-screen">
+      <div className="px-6 md:px-20 lg:px-40 py-8">
         <div className="max-w-[1024px] mx-auto">
           <Breadcrumb items={breadcrumbItems} />
           
           <div className="flex flex-wrap justify-between gap-3 px-4 mb-8">
             <div className="flex min-w-72 flex-col gap-2">
-              <h1 className="text-white text-3xl md:text-4xl font-display font-extrabold leading-tight tracking-tight">
+              <h1 className="text-primary text-3xl md:text-4xl font-display font-extrabold leading-tight tracking-tight">
                 Choose a Test Category
               </h1>
-              <p className="text-secondary/80 text-base font-normal leading-normal">
+              <p className="text-primary/60 text-base font-normal leading-normal">
                 Select a category below to view available assessments for your dog.
               </p>
             </div>
@@ -94,4 +91,3 @@ function DogTest() {
 }
 
 export default DogTest
-

@@ -1,5 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
+# Firebase 초기화
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
+
+# Firestore 클라이언트 초기화
+db = firestore.client()
+
+print("🔥 Firebase 연결 성공! Firestore 준비 완료.")
 
 app = FastAPI(
     title="YourPetInsight API",
@@ -27,4 +39,3 @@ async def health_check():
 async def root():
     """루트 엔드포인트"""
     return {"message": "YourPetInsight API에 오신 것을 환영합니다!"}
-

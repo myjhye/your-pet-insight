@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import TestNavbar from '../components/TestNavbar'
 import QuestionCard from '../components/QuestionCard'
 
@@ -61,6 +61,7 @@ function PersonalityTest() {
   const [stage, setStage] = useState(1) // 1: 메인 질문, 2: 보너스 질문
   const [mainAnswers, setMainAnswers] = useState({})
   const [bonusAnswers, setBonusAnswers] = useState({})
+  const [petName, setPetName] = useState('')
   const questionRefs = useRef([])
   
   // 랜덤 보너스 질문 5개 선택 (컴포넌트 마운트 시 한 번만)
@@ -118,61 +119,36 @@ function PersonalityTest() {
   }
 
   const handleSeeResults = () => {
-    if (allAnswered && stage === 2) {
-      console.log('All answers:', { mainAnswers, bonusAnswers })
-      // TODO: Navigate to results page
+    if (allAnswered && stage === 2 && petName.trim()) {
+      navigate('/dog-test/personality/result', {
+        state: {
+          petName: petName.trim(),
+          mainAnswers,
+          bonusAnswers
+        }
+      })
     }
   }
+
+  const canSeeResults = allAnswered && petName.trim().length > 0
 
   const getQuestionNumber = (index) => {
     return stage === 1 ? index + 1 : mainQuestions.length + index + 1
   }
 
   return (
-    <div className="min-h-screen bg-primary">
-      {/* Fixed Header */}
-      <header className="w-full px-8 py-4 flex justify-between items-center bg-primary/95 backdrop-blur-md border-b border-white/10 fixed top-0 z-50">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-full border-2 border-secondary flex items-center justify-center group-hover:bg-secondary/10 transition-colors">
-              <span className="material-symbols-outlined text-secondary text-sm">pets</span>
-            </div>
-            <span className="font-display font-bold text-2xl tracking-tight text-white">
-              <span className="text-secondary font-light">Your</span> Pet Insight
-            </span>
-          </Link>
-        </div>
-        <div className="hidden md:flex items-center space-x-8">
-          <nav className="flex space-x-6 text-sm font-medium text-secondary/80">
-            <a className="hover:text-accent transition-colors" href="#">Methodology</a>
-            <a className="hover:text-accent transition-colors" href="#">About Us</a>
-            <a className="hover:text-accent transition-colors" href="#">Blog</a>
-          </nav>
-          <div className="relative group">
-            <button className="flex items-center space-x-2 text-white hover:text-accent transition-colors text-sm font-medium">
-              <span className="material-symbols-outlined text-xl">language</span>
-              <span>English</span>
-            </button>
-          </div>
-        </div>
-        <div className="md:hidden">
-          <button className="text-white hover:text-accent focus:outline-none p-1">
-            <span className="material-symbols-outlined text-3xl">menu</span>
-          </button>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-[#F9FBF9]">
       {/* Progress Bar */}
       <TestNavbar answered={totalAnswered} total={totalQuestions} />
       
-      <main className="pt-36 pb-20 px-4 md:px-6">
+      <main className="pt-16 pb-20 px-4 md:px-6">
         <div className="max-w-2xl mx-auto space-y-8">
           {/* Title */}
-          <div className="text-center text-white mb-10 mt-4">
-            <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
+          <div className="text-center mb-10 mt-4">
+            <h1 className="font-display text-3xl md:text-4xl font-bold mb-3 text-primary">
               {stage === 1 ? 'Personality Assessment' : 'Bonus Questions'}
             </h1>
-            <p className="text-secondary text-lg opacity-90 font-light tracking-wide">
+            <p className="text-primary/60 text-lg font-light tracking-wide">
               {stage === 1 
                 ? 'Answer each question in order to complete the assessment.'
                 : 'Almost done! Just 5 more questions.'
@@ -223,20 +199,35 @@ function PersonalityTest() {
                 </span>
               </button>
             ) : (
-              <div className="w-full flex justify-center">
+              <div className="w-full flex flex-col items-center gap-6">
+                {/* Pet Name Input */}
+                <div className="w-full max-w-md">
+                  <label className="block text-primary text-lg font-medium mb-3 text-center">
+                    🐾 What's your pet's name?
+                  </label>
+                  <input
+                    type="text"
+                    value={petName}
+                    onChange={(e) => setPetName(e.target.value)}
+                    placeholder="Enter your pet's name"
+                    className="w-full px-6 py-4 text-lg rounded-xl border-2 border-primary/20 bg-white text-primary placeholder-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center font-medium"
+                  />
+                </div>
+
+                {/* See Results Button */}
                 <button
                   onClick={handleSeeResults}
-                  disabled={!allAnswered}
+                  disabled={!canSeeResults}
                   className={`
                     group px-16 py-6 font-display text-xl font-bold rounded-2xl transition-all flex items-center gap-3
-                    ${allAnswered 
+                    ${canSeeResults 
                       ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg hover:shadow-xl cursor-pointer' 
                       : 'bg-accent text-primary cursor-not-allowed shadow-lg opacity-60'
                     }
                   `}
                 >
                   <span>See Results</span>
-                  <span className={`material-symbols-outlined text-2xl transform transition-transform ${allAnswered ? 'group-hover:translate-x-1' : ''}`}>
+                  <span className={`material-symbols-outlined text-2xl transform transition-transform ${canSeeResults ? 'group-hover:translate-x-1' : ''}`}>
                     celebration
                   </span>
                 </button>

@@ -16,14 +16,14 @@ html {
 }
 
 body {
-  background-color: #1B4D3E;
+  background-color: #F9FBF9;
   font-family: 'Poppins', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  color: #F8FAFC;
+  color: #2D3436;
 }
 
 ::selection {
