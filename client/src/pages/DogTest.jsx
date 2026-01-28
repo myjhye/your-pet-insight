@@ -46,13 +46,13 @@ const testCategories = [
 
 function DogTest() {
   const navigate = useNavigate()
-  const { localePath } = useLang()
+  const { lang, localePath } = useLang()
   const { prefetchQuestions } = useQuestions()
 
-  // 페이지 진입 시 dog_v1 질문 미리 불러오기 (Pre-fetching)
+  // 페이지 진입 시 dog_v1 질문 미리 불러오기 (Pre-fetching, 현재 언어 기준)
   useEffect(() => {
-    prefetchQuestions('dog_v1')
-  }, [prefetchQuestions])
+    prefetchQuestions('dog_v1', lang)
+  }, [prefetchQuestions, lang])
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },

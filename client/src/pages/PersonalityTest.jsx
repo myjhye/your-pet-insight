@@ -33,15 +33,15 @@ function PersonalityTest() {
   const [petName, setPetName] = useState('')
   const questionRefs = useRef([])
 
-  // Context에서 질문 가져오기 (캐시 활용)
+  // Context에서 질문 가져오기 (캐시 활용, 현재 언어 기준)
   useEffect(() => {
-    fetchQuestions(QUESTION_VERSION)
-  }, [fetchQuestions])
+    fetchQuestions(QUESTION_VERSION, lang)
+  }, [fetchQuestions, lang])
 
-  // Context에서 데이터 읽기
-  const questions = getQuestions(QUESTION_VERSION) || { stage1: [], stage2: [] }
-  const loading = isLoading(QUESTION_VERSION)
-  const error = getError(QUESTION_VERSION)
+  // Context에서 데이터 읽기 (버전 + 언어 조합)
+  const questions = getQuestions(QUESTION_VERSION, lang) || { stage1: [], stage2: [] }
+  const loading = isLoading(QUESTION_VERSION, lang)
+  const error = getError(QUESTION_VERSION, lang)
 
   // 스테이지 변경 시 스크롤 최상단으로
   useEffect(() => {
@@ -172,8 +172,6 @@ function PersonalityTest() {
           {/* Questions */}
           {currentQuestions.map((q, index) => {
             const isDisabled = index > currentActiveIndex
-            // 다국어 처리: q.text[lang] 또는 기본값 en
-            const questionText = q.text?.[lang] || q.text?.['en'] || q.text || ''
 
             return (
               <QuestionWithSideImage
@@ -185,7 +183,7 @@ function PersonalityTest() {
                 <QuestionCard
                   ref={el => questionRefs.current[index] = el}
                   number={getQuestionNumber(index)}
-                  question={questionText}
+                  question={q.text}
                   value={currentAnswers[index]}
                   onChange={(value) => handleAnswer(index, value)}
                   disabled={isDisabled}
