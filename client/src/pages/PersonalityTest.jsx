@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TestNavbar from '../components/TestNavbar'
 import QuestionCard from '../components/QuestionCard'
+import QuestionWithSideImage from '../components/TestSideImages'
 
 // 1-20번 기본 질문
 const mainQuestions = [
@@ -46,6 +47,20 @@ const bonusQuestionPool = [
   "My dog pulls on the leash during walks.",
 ]
 
+// 스테이지 1: 4개 이미지 (질문 4, 9, 14, 18에 배치) - 좌우 번갈아
+const stage1ImageConfig = {
+  3: { image: '1.png', isLeft: true },
+  8: { image: '2.png', isLeft: false },
+  13: { image: '3.png', isLeft: true },
+  17: { image: '4.png', isLeft: false },
+}
+
+// 스테이지 2: 2개 이미지 (질문 2, 4에 배치) - 좌우 번갈아
+const stage2ImageConfig = {
+  1: { image: '5.png', isLeft: true },
+  3: { image: '6.png', isLeft: false },
+}
+
 // 배열을 섞는 함수
 function shuffleArray(array) {
   const shuffled = [...array]
@@ -72,6 +87,7 @@ function PersonalityTest() {
   const currentQuestions = stage === 1 ? mainQuestions : bonusQuestions
   const currentAnswers = stage === 1 ? mainAnswers : bonusAnswers
   const setCurrentAnswers = stage === 1 ? setMainAnswers : setBonusAnswers
+  const currentImageConfig = stage === 1 ? stage1ImageConfig : stage2ImageConfig
   
   const answeredCount = Object.keys(currentAnswers).length
   const allAnswered = answeredCount === currentQuestions.length
@@ -167,15 +183,21 @@ function PersonalityTest() {
             const isDisabled = index > currentActiveIndex
 
             return (
-              <QuestionCard
+              <QuestionWithSideImage
                 key={`${stage}-${index}`}
-                ref={el => questionRefs.current[index] = el}
-                number={getQuestionNumber(index)}
-                question={question}
-                value={currentAnswers[index]}
-                onChange={(value) => handleAnswer(index, value)}
-                disabled={isDisabled}
-              />
+                questionIndex={index}
+                imageConfig={currentImageConfig}
+                basePath="/images/dog"
+              >
+                <QuestionCard
+                  ref={el => questionRefs.current[index] = el}
+                  number={getQuestionNumber(index)}
+                  question={question}
+                  value={currentAnswers[index]}
+                  onChange={(value) => handleAnswer(index, value)}
+                  disabled={isDisabled}
+                />
+              </QuestionWithSideImage>
             )
           })}
 
