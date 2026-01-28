@@ -1,7 +1,8 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
+import { LanguageProvider, DEFAULT_LANG } from './contexts/LanguageContext'
 import Home from './pages/Home'
 import DogTest from './pages/DogTest'
 import PersonalityTest from './pages/PersonalityTest'
@@ -29,15 +30,30 @@ function TestLayout({ children }) {
   )
 }
 
-function App() {
+// 언어별 라우트를 감싸는 컴포넌트
+function LangRoutes() {
   return (
-    <BrowserRouter>
+    <LanguageProvider>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/dog-test" element={<Layout><DogTest /></Layout>} />
         <Route path="/dog-test/personality" element={<TestLayout><PersonalityTest /></TestLayout>} />
         <Route path="/dog-test/personality/result" element={<Layout><PersonalityTestResult /></Layout>} />
+      </Routes>
+    </LanguageProvider>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* 루트 경로는 기본 언어로 리다이렉트 */}
+        <Route path="/" element={<Navigate to={`/${DEFAULT_LANG}`} replace />} />
+        
+        {/* 언어 접두사가 있는 모든 라우트 */}
+        <Route path="/:lang/*" element={<LangRoutes />} />
       </Routes>
     </BrowserRouter>
   )

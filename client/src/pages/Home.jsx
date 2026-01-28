@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useLang } from '../contexts/LanguageContext'
 import Hero from '../components/Hero'
 import PetCard from '../components/PetCard'
 import TrustSection from '../components/TrustSection'
@@ -6,6 +7,7 @@ import BackgroundEffects from '../components/BackgroundEffects'
 
 function Home() {
   const navigate = useNavigate()
+  const { localePath } = useLang()
 
   const handleCatClick = () => {
     // TODO: Navigate to cat test page
@@ -13,7 +15,7 @@ function Home() {
   }
 
   const handleDogClick = () => {
-    navigate('/dog-test')
+    navigate(localePath('/dog-test'))
   }
 
   return (

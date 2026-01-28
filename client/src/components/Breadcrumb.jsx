@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
+import { useLang } from '../contexts/LanguageContext'
 
 function Breadcrumb({ items }) {
+  const { localePath } = useLang()
+
   return (
     <div className="flex flex-wrap gap-2 px-4 py-2 mb-4">
       {items.map((item, index) => (
@@ -8,7 +11,7 @@ function Breadcrumb({ items }) {
           {index > 0 && <span className="text-primary/40 text-sm font-medium">/</span>}
           {item.href ? (
             <Link
-              to={item.href}
+              to={localePath(item.href)}
               className="text-accent hover:text-accent/80 text-sm font-medium transition-colors"
             >
               {item.label}

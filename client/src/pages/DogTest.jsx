@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useLang } from '../contexts/LanguageContext'
 import Breadcrumb from '../components/Breadcrumb'
 import TestCategoryCard from '../components/TestCategoryCard'
 
@@ -43,6 +44,7 @@ const testCategories = [
 
 function DogTest() {
   const navigate = useNavigate()
+  const { localePath } = useLang()
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
@@ -51,7 +53,7 @@ function DogTest() {
 
   const handleCategoryClick = (categoryId) => {
     if (categoryId === 'personality') {
-      navigate('/dog-test/personality')
+      navigate(localePath('/dog-test/personality'))
     } else {
       console.log(`Category clicked: ${categoryId}`)
       // TODO: Navigate to other test categories

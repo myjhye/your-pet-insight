@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useLang } from '../contexts/LanguageContext'
 import TestNavbar from '../components/TestNavbar'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
@@ -73,6 +74,7 @@ function shuffleArray(array) {
 
 function PersonalityTest() {
   const navigate = useNavigate()
+  const { localePath } = useLang()
   const [stage, setStage] = useState(1) // 1: 메인 질문, 2: 보너스 질문
   const [mainAnswers, setMainAnswers] = useState({})
   const [bonusAnswers, setBonusAnswers] = useState({})
@@ -136,7 +138,7 @@ function PersonalityTest() {
 
   const handleSeeResults = () => {
     if (allAnswered && stage === 2 && petName.trim()) {
-      navigate('/dog-test/personality/result', {
+      navigate(localePath('/dog-test/personality/result'), {
         state: {
           petName: petName.trim(),
           mainAnswers,

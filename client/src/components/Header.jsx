@@ -1,11 +1,16 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useLang } from '../contexts/LanguageContext'
 
 function Header({ fixed = false }) {
+  const { lang, langInfo, changeLang, localePath, languages } = useLang()
+  const [isLangOpen, setIsLangOpen] = useState(false)
+
   return (
     <div className={`w-full bg-primary ${fixed ? 'fixed top-0 left-0 z-50' : ''}`}>
       <header className="w-full px-8 py-6 flex justify-between items-center max-w-7xl mx-auto relative z-10">
         <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to={localePath('/')} className="flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-full border-2 border-secondary flex items-center justify-center group-hover:bg-secondary/10 transition-colors">
               <span className="material-symbols-outlined text-secondary text-sm">pets</span>
             </div>
@@ -20,11 +25,53 @@ function Header({ fixed = false }) {
             <a className="hover:text-accent transition-colors" href="#">About Us</a>
             <a className="hover:text-accent transition-colors" href="#">Blog</a>
           </nav>
-          <div className="relative group">
-            <button className="flex items-center space-x-2 text-white hover:text-accent transition-colors text-sm font-medium">
+          
+          {/* Language Selector */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              className="flex items-center space-x-2 text-white hover:text-accent transition-colors text-sm font-medium"
+            >
               <span className="material-symbols-outlined text-xl">language</span>
-              <span>English</span>
+              <span>{langInfo.flag} {langInfo.label}</span>
+              <span className={`material-symbols-outlined text-sm transition-transform ${isLangOpen ? 'rotate-180' : ''}`}>
+                expand_more
+              </span>
             </button>
+            
+            {isLangOpen && (
+              <>
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsLangOpen(false)}
+                />
+                
+                {/* Dropdown */}
+                <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl overflow-hidden z-50 min-w-[140px]">
+                  {Object.values(languages).map((language) => (
+                    <button
+                      key={language.code}
+                      onClick={() => {
+                        changeLang(language.code)
+                        setIsLangOpen(false)
+                      }}
+                      className={`
+                        w-full px-4 py-3 text-left text-sm font-medium flex items-center gap-2
+                        transition-colors hover:bg-primary/10
+                        ${lang === language.code ? 'bg-primary/5 text-primary' : 'text-gray-700'}
+                      `}
+                    >
+                      <span>{language.flag}</span>
+                      <span>{language.label}</span>
+                      {lang === language.code && (
+                        <span className="material-symbols-outlined text-primary text-sm ml-auto">check</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div className="md:hidden">
