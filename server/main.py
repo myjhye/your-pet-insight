@@ -14,6 +14,9 @@ else:
 
 db = firestore.client()
 
+# 인메모리 캐시 (서버 실행 중 유지)
+cached_questions = {}
+
 app = FastAPI()
 
 # 2. CORS 설정 (리액트에서 접속 허용)
@@ -38,9 +41,14 @@ def read_root():
     return {"status": "🔥 Firebase 연결 성공! Your Pet Insight API is running."}
 
 
-# [GET] 질문지 불러오기 API
+# [GET] 질문지 불러오기 API (인메모리 캐싱 적용)
 @app.get("/api/questions/{version}")
 async def get_questions(version: str):
+    # 1. 이미 캐시된 데이터가 있다면 즉시 반환 (DB 호출 없이 ~0.001초)
+    if version in cached_questions:
+        return cached_questions[version]
+    
+    # 2. 캐시가 없으면 Firestore에서 가져옴
     doc_ref = db.collection("assessment_configs").document(version)
     doc = doc_ref.get()
     
@@ -49,11 +57,15 @@ async def get_questions(version: str):
     
     data = doc.to_dict()
     
-    # 프론트엔드 편의를 위해 데이터를 스테이지별로 정리해서 보냄
-    return {
+    # 프론트엔드 편의를 위해 데이터를 스테이지별로 정리
+    formatted_data = {
         "stage1": data.get("questions", []),       # 1-20번 문항
         "stage2": data.get("owner_questions", [])  # 21-25번 문항 (보호자 성향)
     }
+    
+    # 3. 가져온 데이터를 캐시에 저장
+    cached_questions[version] = formatted_data
+    return formatted_data
 
 
 # [POST] 테스트 결과 저장 API

@@ -3,6 +3,7 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
 import { LanguageProvider, DEFAULT_LANG } from './contexts/LanguageContext'
+import { QuestionsProvider } from './contexts/QuestionsContext'
 import Home from './pages/Home'
 import DogTest from './pages/DogTest'
 import PersonalityTest from './pages/PersonalityTest'
@@ -34,13 +35,15 @@ function TestLayout({ children }) {
 function LangRoutes() {
   return (
     <LanguageProvider>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Layout><Home /></Layout>} />
-        <Route path="/dog-test" element={<Layout><DogTest /></Layout>} />
-        <Route path="/dog-test/personality" element={<TestLayout><PersonalityTest /></TestLayout>} />
-        <Route path="/dog-test/personality/result" element={<Layout><PersonalityTestResult /></Layout>} />
-      </Routes>
+      <QuestionsProvider>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/dog-test" element={<Layout><DogTest /></Layout>} />
+          <Route path="/dog-test/personality" element={<TestLayout><PersonalityTest /></TestLayout>} />
+          <Route path="/dog-test/personality/result" element={<Layout><PersonalityTestResult /></Layout>} />
+        </Routes>
+      </QuestionsProvider>
     </LanguageProvider>
   )
 }

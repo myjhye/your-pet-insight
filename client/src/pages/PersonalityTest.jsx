@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import { useLang } from '../contexts/LanguageContext'
+import { useQuestions } from '../contexts/QuestionsContext'
 import TestNavbar from '../components/TestNavbar'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
@@ -20,34 +20,28 @@ const stage2ImageConfig = {
   3: { image: '6.png', isLeft: false },
 }
 
+const QUESTION_VERSION = 'dog_v1'
+
 function PersonalityTest() {
   const navigate = useNavigate()
   const { lang, localePath } = useLang()
+  const { fetchQuestions, getQuestions, isLoading, getError } = useQuestions()
   
-  const [questions, setQuestions] = useState({ stage1: [], stage2: [] })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [stage, setStage] = useState(1)
   const [mainAnswers, setMainAnswers] = useState({})
   const [bonusAnswers, setBonusAnswers] = useState({})
   const [petName, setPetName] = useState('')
   const questionRefs = useRef([])
 
-  // DB에서 질문 불러오기
+  // Context에서 질문 가져오기 (캐시 활용)
   useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const res = await axios.get('http://localhost:8000/api/questions/dog_v1')
-        setQuestions(res.data)
-        setLoading(false)
-      } catch (err) {
-        console.error("질문을 불러오는데 실패했습니다.", err)
-        setError("Failed to load questions. Please try again.")
-        setLoading(false)
-      }
-    }
-    fetchQuestions()
-  }, [])
+    fetchQuestions(QUESTION_VERSION)
+  }, [fetchQuestions])
+
+  // Context에서 데이터 읽기
+  const questions = getQuestions(QUESTION_VERSION) || { stage1: [], stage2: [] }
+  const loading = isLoading(QUESTION_VERSION)
+  const error = getError(QUESTION_VERSION)
 
   // 스테이지 변경 시 스크롤 최상단으로
   useEffect(() => {

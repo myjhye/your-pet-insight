@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
+import { useQuestions } from '../contexts/QuestionsContext'
 import Breadcrumb from '../components/Breadcrumb'
 import TestCategoryCard from '../components/TestCategoryCard'
 
@@ -45,6 +47,12 @@ const testCategories = [
 function DogTest() {
   const navigate = useNavigate()
   const { localePath } = useLang()
+  const { prefetchQuestions } = useQuestions()
+
+  // 페이지 진입 시 dog_v1 질문 미리 불러오기 (Pre-fetching)
+  useEffect(() => {
+    prefetchQuestions('dog_v1')
+  }, [prefetchQuestions])
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
