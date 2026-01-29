@@ -3,14 +3,14 @@ import { useParams } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
 
-// Stats별 색상 및 아이콘 매핑
-const STATS_CONFIG = {
-  sociability: { color: 'bg-red-500', icon: 'groups' },
-  obedience: { color: 'bg-cyan-500', icon: 'volunteer_activism' },
-  temperament: { color: 'bg-yellow-400', icon: 'mood' },
-  emotionality: { color: 'bg-pink-500', icon: 'favorite' },
-  sagacity: { color: 'bg-violet-500', icon: 'psychology' },
-}
+// Stats 고정 순서 및 설정
+const STATS_ORDER = [
+  { key: 'sociability', color: 'bg-red-500' },
+  { key: 'sagacity', color: 'bg-violet-500' },
+  { key: 'emotionality', color: 'bg-pink-500' },
+  { key: 'obedience', color: 'bg-cyan-500' },
+  { key: 'temperament', color: 'bg-yellow-400' },
+]
 
 // 로딩 컴포넌트
 function LoadingScreen() {
@@ -46,11 +46,18 @@ function ErrorScreen({ message, onRetry }) {
 
 // Stats 막대 그래프 컴포넌트
 function StatBar({ name, label, value, color }) {
+  // 성향 강도 계산: 항상 50~100% 사이로 표시 (주도 성향의 강도)
+  // 예: 43% → 57% (반대 성향이 57% 강함), 65% → 65% (해당 성향이 65% 강함)
+  const strengthPercent = value >= 50 ? value : (100 - value)
+  
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-end">
         <span className="text-sm font-bold text-primary/60 uppercase tracking-wider">{name}</span>
-        <span className="text-sm font-bold text-primary">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-primary">{label}</span>
+          <span className={`text-sm font-bold ${color.replace('bg-', 'text-')}`}>{strengthPercent}%</span>
+        </div>
       </div>
       <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
         <div
@@ -117,6 +124,10 @@ function PersonalityTestResult() {
   // 데이터 추출
   const { pet_name, stats, archetype, mbti_code } = resultData
   
+  // 디버깅: stats 값 확인
+  console.log('📊 Result Data:', { pet_name, stats, mbti_code })
+  console.log('📊 Stats values:', stats)
+  
   // Archetype 데이터에서 현재 언어 텍스트 추출
   const getLocalizedText = (obj) => {
     if (!obj) return ''
@@ -129,6 +140,31 @@ function PersonalityTestResult() {
   const coreTraits = archetype?.coreTraits || []
   const dailyLife = archetype?.dailyLife || []
   const statsLabels = archetype?.statsLabels || {}
+  
+  // Stats 값 안전하게 추출 및 숫자 변환
+  const getStatValue = (key) => {
+    if (!stats || typeof stats !== 'object') {
+      console.warn(`⚠️ Stats 객체가 없거나 유효하지 않습니다:`, stats)
+      return 0
+    }
+    
+    const value = stats[key]
+    if (value === undefined || value === null) {
+      console.warn(`⚠️ Stats[${key}] 값이 없습니다. 전체 stats:`, stats)
+      return 0
+    }
+    
+    // 숫자로 변환 (문자열일 경우 대비)
+    const numValue = typeof value === 'number' ? value : Number(value)
+    
+    if (isNaN(numValue)) {
+      console.warn(`⚠️ Stats[${key}] 값이 숫자가 아닙니다:`, value)
+      return 0
+    }
+    
+    // 0-100 범위로 제한
+    return Math.max(0, Math.min(100, numValue))
+  }
 
   return (
     <main className="min-h-screen bg-[#F9FBF9] text-[#2D3436]">
@@ -173,21 +209,20 @@ function PersonalityTestResult() {
             </div>
           </div>
 
-          {/* Stats 막대 그래프 */}
-          <div className="px-10 pb-12 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-            {Object.entries(stats || {}).map(([key, value]) => {
-              const config = STATS_CONFIG[key] || { color: 'bg-gray-400' }
+          {/* Stats 막대 그래프 (일렬 배치) */}
+          <div className="px-10 pb-12 space-y-6">
+            {STATS_ORDER.map(({ key, color }) => {
+              const value = getStatValue(key)  // 안전한 값 추출
               const label = getLocalizedText(statsLabels[key]) || key
               
               return (
-                <div key={key} className={key === 'sagacity' ? 'md:col-span-2' : ''}>
-                  <StatBar
-                    name={key.charAt(0).toUpperCase() + key.slice(1)}
-                    label={label}
-                    value={value}
-                    color={config.color}
-                  />
-                </div>
+                <StatBar
+                  key={key}
+                  name={key.charAt(0).toUpperCase() + key.slice(1)}
+                  label={label}
+                  value={value}
+                  color={color}
+                />
               )
             })}
           </div>

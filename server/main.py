@@ -149,36 +149,43 @@ async def calculate_mbti(request: CalculateRequest):
         config_data = doc.to_dict()
         all_questions = config_data.get("questions", []) + config_data.get("owner_questions", [])
         
-        # 질문 ID → 메타데이터 매핑 (id는 1부터 시작)
-        question_meta = {q["id"]: q for q in all_questions}
+        # 질문 ID → 메타데이터 매핑 (ID를 문자열로 통일하여 안전하게 처리)
+        question_meta = {str(q["id"]): q for q in all_questions}
         
         # ---------------------------------------------------------
-        # 2. 점수 변환 (Likert -3~3 → 1~5 척도로 변환)
+        # 2. 점수 변환 (Likert -3~3 → 1~5 척도로 선형 매핑)
         # ---------------------------------------------------------
-        def convert_likert_to_scale(likert_score: int) -> int:
-            """Likert (-3 ~ 3) → 5점 척도 (1 ~ 5)"""
-            # -3 → 1, -2 → 2, -1 → 3, 0 → 3, 1 → 3, 2 → 4, 3 → 5
-            mapping = {-3: 1, -2: 2, -1: 2, 0: 3, 1: 4, 2: 4, 3: 5}
-            return mapping.get(likert_score, 3)
+        def convert_score(likert_score: int) -> float:
+            """Likert (-3 ~ 3) → 5점 척도 (1 ~ 5) 선형 매핑"""
+            # 선형 변환: ((score + 3) / 6 * 4) + 1
+            # -3 → 1, -2 → 1.67, -1 → 2.33, 0 → 3, 1 → 3.67, 2 → 4.33, 3 → 5
+            return ((likert_score + 3) / 6 * 4) + 1
         
         # ---------------------------------------------------------
         # 3. 역채점 처리 및 MBTI 축별 점수 합산
         # ---------------------------------------------------------
         axis_scores = {"E": 0, "S": 0, "F": 0, "J": 0}
+        axis_question_counts = {"E": 0, "S": 0, "F": 0, "J": 0}  # 각 축별 질문 개수 추적
         all_answers = []
+        
+        print(f"\n{'='*60}")
+        print(f"📋 질문별 점수 계산 시작 (총 {len(request.mainAnswers)}개 질문)")
+        print(f"{'='*60}")
         
         # mainAnswers (1~20번 질문)
         for idx_str, likert_value in request.mainAnswers.items():
-            question_id = int(idx_str) + 1  # 인덱스 0 → 질문 ID 1
-            meta = question_meta.get(question_id)
+            # 인덱스 기반 ID 매핑 (인덱스 0 → 질문 ID 1)
+            actual_id = str(int(idx_str) + 1)
+            meta = question_meta.get(actual_id)
             
             if not meta:
+                print(f"⚠️ 질문 ID {actual_id}를 찾을 수 없습니다.")
                 continue
             
-            # Likert → 5점 척도 변환
-            raw_score = convert_likert_to_scale(likert_value)
+            # Likert → 5점 척도 선형 변환
+            raw_score = convert_score(likert_value)
             
-            # 역채점 처리
+            # 역채점 처리 (5점 척도 기준: 6 - 점수)
             is_reverse = meta.get("is_reverse", False)
             final_score = (6 - raw_score) if is_reverse else raw_score
             
@@ -186,60 +193,95 @@ async def calculate_mbti(request: CalculateRequest):
             axis = meta.get("axis")
             if axis in axis_scores:
                 axis_scores[axis] += final_score
+                axis_question_counts[axis] += 1
+                
+                # 상세 디버깅 로그
+                print(f"Q{actual_id:2s} | Likert: {likert_value:2d} | Raw: {raw_score:5.2f} | "
+                      f"Reverse: {is_reverse} | Final: {final_score:5.2f} | "
+                      f"Axis: {axis} | 누적: {axis_scores[axis]:6.2f}")
             
             all_answers.append({
-                "question_id": question_id,
+                "question_id": int(actual_id),
                 "likert_value": likert_value,
-                "raw_score": raw_score,
-                "final_score": final_score,
+                "raw_score": round(raw_score, 2),
+                "final_score": round(final_score, 2),
                 "axis": axis,
                 "is_reverse": is_reverse
             })
         
+        print(f"{'='*60}")
+        print(f"📊 축별 점수 합계 (질문 개수)")
+        print(f"{'='*60}")
+        for axis, score in axis_scores.items():
+            count = axis_question_counts[axis]
+            avg = score / count if count > 0 else 0
+            print(f"{axis}축: 총점 {score:6.2f}점 (질문 {count}개, 평균 {avg:.2f}점)")
+        print(f"{'='*60}\n")
+        
         # bonusAnswers (21~25번 질문) - 보호자 성향, MBTI 계산에는 미포함
         for idx_str, likert_value in request.bonusAnswers.items():
-            question_id = 20 + int(idx_str) + 1  # 인덱스 0 → 질문 ID 21
-            meta = question_meta.get(question_id)
+            actual_id = str(20 + int(idx_str) + 1)  # 인덱스 0 → 질문 ID 21
+            meta = question_meta.get(actual_id)
             
-            raw_score = convert_likert_to_scale(likert_value)
+            raw_score = convert_score(likert_value)
             
             all_answers.append({
-                "question_id": question_id,
+                "question_id": int(actual_id),
                 "likert_value": likert_value,
-                "raw_score": raw_score,
-                "final_score": raw_score,  # 보너스는 역채점 없음
+                "raw_score": round(raw_score, 2),
+                "final_score": round(raw_score, 2),  # 보너스는 역채점 없음
                 "axis": meta.get("axis") if meta else "bonus",
                 "is_reverse": False
             })
         
         # ---------------------------------------------------------
-        # 4. MBTI 4축 판정 (15점 기준)
+        # 4. 백분율 Stats 계산 (먼저 계산하여 MBTI 판정에 사용)
         # ---------------------------------------------------------
-        def determine_type(score: int, high: str, low: str) -> str:
-            """15점 이상이면 high, 미만이면 low 반환"""
-            return high if score >= 15 else low
-        
-        mbti_code = (
-            determine_type(axis_scores["E"], "E", "I") +
-            determine_type(axis_scores["S"], "S", "N") +
-            determine_type(axis_scores["F"], "F", "T") +
-            determine_type(axis_scores["J"], "J", "P")
-        )
-        
-        # ---------------------------------------------------------
-        # 5. 백분율 Stats 계산 ((점수-5) / 20 * 100)
-        # ---------------------------------------------------------
-        def to_percentage(score: int) -> int:
+        def get_stat(score: float) -> int:
             """5~25점 범위를 0~100%로 변환"""
-            return round(((score - 5) / 20) * 100)
+            # (획득점수 - 최소점수5) / (최대점수25 - 최소점수5) * 100
+            percentage = ((score - 5) / 20) * 100
+            return round(percentage)
         
         stats = {
-            "sociability": to_percentage(axis_scores["E"]),      # E축
-            "sagacity": to_percentage(axis_scores["S"]),         # S축
-            "emotionality": to_percentage(axis_scores["F"]),     # F축
-            "obedience": to_percentage(axis_scores["J"]),        # J축
-            "temperament": round((to_percentage(axis_scores["E"]) + to_percentage(axis_scores["J"])) / 2)
+            "sociability": get_stat(axis_scores["E"]),      # E축
+            "sagacity": get_stat(axis_scores["S"]),         # S축
+            "emotionality": get_stat(axis_scores["F"]),     # F축
+            "obedience": get_stat(axis_scores["J"]),        # J축
         }
+        stats["temperament"] = round((stats["sociability"] + stats["obedience"]) / 2)
+        
+        # 상세 디버깅: Stats 계산 과정 출력
+        print(f"\n{'='*60}")
+        print(f"📊 백분율 Stats 계산")
+        print(f"{'='*60}")
+        print(f"E축 점수: {axis_scores['E']:.2f}점 → Sociability: {stats['sociability']}%")
+        print(f"S축 점수: {axis_scores['S']:.2f}점 → Sagacity: {stats['sagacity']}%")
+        print(f"F축 점수: {axis_scores['F']:.2f}점 → Emotionality: {stats['emotionality']}%")
+        print(f"J축 점수: {axis_scores['J']:.2f}점 → Obedience: {stats['obedience']}%")
+        print(f"Temperament: {stats['temperament']}% (Sociability + Obedience 평균)")
+        print(f"{'='*60}\n")
+        
+        # ---------------------------------------------------------
+        # 5. MBTI 4축 판정 (백분율 50% 기준)
+        # ---------------------------------------------------------
+        e_i = "E" if stats["sociability"] >= 50 else "I"
+        s_n = "S" if stats["sagacity"] >= 50 else "N"
+        f_t = "F" if stats["emotionality"] >= 50 else "T"
+        j_p = "J" if stats["obedience"] >= 50 else "P"
+        
+        mbti_code = e_i + s_n + f_t + j_p
+        
+        # 상세 디버깅: MBTI 판정 과정 출력
+        print(f"{'='*60}")
+        print(f"🎯 MBTI 판정 (50% 기준)")
+        print(f"{'='*60}")
+        print(f"E/I: Sociability {stats['sociability']}% → {e_i} ({'Extroverted' if e_i == 'E' else 'Introverted'})")
+        print(f"S/N: Sagacity {stats['sagacity']}% → {s_n} ({'Sensing' if s_n == 'S' else 'Intuitive'})")
+        print(f"F/T: Emotionality {stats['emotionality']}% → {f_t} ({'Feeling' if f_t == 'F' else 'Thinking'})")
+        print(f"J/P: Obedience {stats['obedience']}% → {j_p} ({'Judging' if j_p == 'J' else 'Perceiving'})")
+        print(f"\n✅ 최종 MBTI: {mbti_code}")
+        print(f"{'='*60}\n")
         
         # ---------------------------------------------------------
         # 6. Archetype 데이터 조회
