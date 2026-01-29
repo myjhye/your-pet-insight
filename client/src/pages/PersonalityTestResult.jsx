@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
 import { useLang } from '../contexts/LanguageContext'
-
-const API_BASE_URL = 'http://localhost:8000'
+import { useResults } from '../contexts/ResultsContext'
 
 // Stats별 색상 및 아이콘 매핑
 const STATS_CONFIG = {
@@ -87,32 +85,19 @@ function TraitCard({ icon, title, description, variant = 'default' }) {
 function PersonalityTestResult() {
   const { resultId } = useParams()
   const { lang } = useLang()
-  
-  const [resultData, setResultData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { fetchResult, getResult, isLoading, getError } = useResults()
 
-  // API에서 결과 데이터 가져오기
+  // Context에서 결과 가져오기 (캐시 활용)
   useEffect(() => {
-    const fetchResult = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        
-        const response = await axios.get(`${API_BASE_URL}/api/results/${resultId}`)
-        setResultData(response.data)
-      } catch (err) {
-        console.error('결과 조회 실패:', err)
-        setError(err.response?.data?.detail || '결과를 불러오는데 실패했습니다.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     if (resultId) {
-      fetchResult()
+      fetchResult(resultId)
     }
-  }, [resultId])
+  }, [resultId, fetchResult])
+
+  // Context에서 데이터 읽기
+  const resultData = getResult(resultId)
+  const loading = isLoading(resultId)
+  const error = getError(resultId)
 
   // 로딩 중
   if (loading) {

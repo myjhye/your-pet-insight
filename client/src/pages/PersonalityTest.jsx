@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useLang } from '../contexts/LanguageContext'
 import { useQuestions } from '../contexts/QuestionsContext'
+import { useResults } from '../contexts/ResultsContext'
 import TestNavbar from '../components/TestNavbar'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
@@ -29,6 +30,7 @@ function PersonalityTest() {
   const navigate = useNavigate()
   const { lang, localePath } = useLang()
   const { fetchQuestions, getQuestions, isLoading, getError } = useQuestions()
+  const { cacheResult } = useResults()
   
   const [stage, setStage] = useState(1)
   const [mainAnswers, setMainAnswers] = useState({})
@@ -112,7 +114,15 @@ function PersonalityTest() {
         locale: lang
       })
 
-      const { resultId } = response.data
+      const { resultId, ...resultData } = response.data
+
+      // 결과를 캐시에 저장 (결과 페이지에서 API 재호출 방지)
+      cacheResult(resultId, {
+        result_id: resultId,
+        pet_name: petName.trim(),
+        locale: lang,
+        ...resultData
+      })
 
       // 결과 페이지로 이동 (UUID 포함)
       navigate(localePath(`/dog-test/personality/result/${resultId}`))
