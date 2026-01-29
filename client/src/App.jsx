@@ -41,7 +41,7 @@ function LangRoutes() {
           <Route path="/" element={<Layout><Home /></Layout>} />
           <Route path="/dog-test" element={<Layout><DogTest /></Layout>} />
           <Route path="/dog-test/personality" element={<TestLayout><PersonalityTest /></TestLayout>} />
-          <Route path="/dog-test/personality/result" element={<Layout><PersonalityTestResult /></Layout>} />
+          <Route path="/dog-test/personality/result/:resultId" element={<Layout><PersonalityTestResult /></Layout>} />
         </Routes>
       </QuestionsProvider>
     </LanguageProvider>

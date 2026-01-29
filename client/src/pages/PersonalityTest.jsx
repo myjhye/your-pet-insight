@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { useLang } from '../contexts/LanguageContext'
 import { useQuestions } from '../contexts/QuestionsContext'
 import TestNavbar from '../components/TestNavbar'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
+
+const API_BASE_URL = 'http://localhost:8000'
 
 // 스테이지 1: 4개 이미지 (질문 4, 9, 14, 18에 배치) - 좌우 번갈아
 const stage1ImageConfig = {
@@ -31,6 +34,7 @@ function PersonalityTest() {
   const [mainAnswers, setMainAnswers] = useState({})
   const [bonusAnswers, setBonusAnswers] = useState({})
   const [petName, setPetName] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const questionRefs = useRef([])
 
   // Context에서 질문 가져오기 (캐시 활용, 현재 언어 기준)
@@ -94,20 +98,32 @@ function PersonalityTest() {
     }
   }
 
-  const handleSeeResults = () => {
-    if (allAnswered && stage === 2 && petName.trim()) {
-      navigate(localePath('/dog-test/personality/result'), {
-        state: {
-          petName: petName.trim(),
-          mainAnswers,
-          bonusAnswers,
-          locale: lang
-        }
+  const handleSeeResults = async () => {
+    if (!allAnswered || stage !== 2 || !petName.trim() || isSubmitting) return
+
+    setIsSubmitting(true)
+    
+    try {
+      // 백엔드 /api/calculate 호출
+      const response = await axios.post(`${API_BASE_URL}/api/calculate`, {
+        petName: petName.trim(),
+        mainAnswers,
+        bonusAnswers,
+        locale: lang
       })
+
+      const { resultId } = response.data
+
+      // 결과 페이지로 이동 (UUID 포함)
+      navigate(localePath(`/dog-test/personality/result/${resultId}`))
+    } catch (error) {
+      console.error('결과 계산 중 오류:', error)
+      alert('결과 계산 중 오류가 발생했습니다. 다시 시도해주세요.')
+      setIsSubmitting(false)
     }
   }
 
-  const canSeeResults = allAnswered && petName.trim().length > 0
+  const canSeeResults = allAnswered && petName.trim().length > 0 && !isSubmitting
 
   const getQuestionNumber = (index) => {
     return stage === 1 ? index + 1 : questions.stage1.length + index + 1
@@ -230,19 +246,28 @@ function PersonalityTest() {
                 {/* See Results Button */}
                 <button
                   onClick={handleSeeResults}
-                  disabled={!canSeeResults}
+                  disabled={!canSeeResults || isSubmitting}
                   className={`
                     group px-16 py-6 font-display text-xl font-bold rounded-2xl transition-all flex items-center gap-3
-                    ${canSeeResults 
+                    ${canSeeResults && !isSubmitting
                       ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg hover:shadow-xl cursor-pointer' 
                       : 'bg-accent text-primary cursor-not-allowed shadow-lg opacity-60'
                     }
                   `}
                 >
-                  <span>See Results</span>
-                  <span className={`material-symbols-outlined text-2xl transform transition-transform ${canSeeResults ? 'group-hover:translate-x-1' : ''}`}>
-                    celebration
-                  </span>
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Analyzing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>See Results</span>
+                      <span className={`material-symbols-outlined text-2xl transform transition-transform ${canSeeResults ? 'group-hover:translate-x-1' : ''}`}>
+                        celebration
+                      </span>
+                    </>
+                  )}
                 </button>
               </div>
             )}

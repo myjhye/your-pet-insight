@@ -303,6 +303,25 @@ async def calculate_mbti(request: CalculateRequest):
         raise HTTPException(status_code=500, detail=f"계산 중 오류 발생: {str(e)}")
 
 
+# [GET] 특정 결과 조회 API
+@app.get("/api/results/{result_id}")
+async def get_result(result_id: str):
+    try:
+        # test_results 컬렉션에서 해당 UUID 문서 조회
+        doc_ref = db.collection("test_results").document(result_id)
+        doc = doc_ref.get()
+
+        if not doc.exists:
+            raise HTTPException(status_code=404, detail="결과를 찾을 수 없습니다.")
+
+        # 결과 데이터 반환 (이미 계산된 stats와 archetype 서술 포함)
+        return doc.to_dict()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # [GET] 데이터 셋업 API - 질문 업로드
 @app.get("/api/setup")
 async def setup_data():
