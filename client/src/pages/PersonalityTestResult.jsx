@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
@@ -93,6 +93,10 @@ function PersonalityTestResult() {
   const { resultId } = useParams()
   const { lang } = useLang()
   const { fetchResult, getResult, isLoading, getError } = useResults()
+  
+  // 이미지 로드 상태 관리
+  const [imageError, setImageError] = useState(false)
+  const [imageSrc, setImageSrc] = useState(null)
 
   // Context에서 결과 가져오기 (캐시 활용)
   useEffect(() => {
@@ -105,6 +109,22 @@ function PersonalityTestResult() {
   const resultData = getResult(resultId)
   const loading = isLoading(resultId)
   const error = getError(resultId)
+  
+  // 이미지 경로 설정 및 확장자 시도
+  useEffect(() => {
+    if (resultData?.archetype?.image_id) {
+      const imageId = resultData.archetype.image_id
+      const extensions = ['.png', '.jpg', '.jpeg', '.webp']
+      let currentIndex = 0
+      
+      // 첫 번째 확장자로 시작
+      setImageSrc(`/images/archetypes/${imageId}${extensions[currentIndex]}`)
+      setImageError(false)
+    } else {
+      setImageSrc(null)
+      setImageError(true)
+    }
+  }, [resultData])
 
   // 로딩 중
   if (loading) {
@@ -171,37 +191,65 @@ function PersonalityTestResult() {
       <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Main Result Card */}
         <div className="bg-white rounded-[2rem] shadow-sm border border-primary/5 overflow-hidden mb-12">
-          {/* 유형 뱃지 */}
-          <div className="p-4 text-center border-b border-dashed border-gray-100">
-            <span className="inline-block px-6 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-[0.2em] uppercase">
-              {alias || mbti_code}
-            </span>
+          {/* 펫 이름 */}
+          <div className="p-6 md:p-8 text-center border-b border-dashed border-gray-100 bg-gradient-to-b from-primary/5 to-transparent">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-primary tracking-tight">
+                {pet_name}
+              </h1>
+              <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
+            </div>
+            <p className="text-sm text-primary/60 font-medium">Your Beloved Companion</p>
           </div>
 
-          {/* 메인 이미지 & 펫 이름 */}
+          {/* 메인 이미지 & 유형 뱃지 */}
           <div className="p-10 flex flex-col items-center">
-            <div className="relative w-64 h-64 md:w-72 md:h-72 bg-secondary/20 rounded-full flex items-center justify-center mb-10">
-              {archetype?.image_id ? (
+            <div className="relative w-80 h-80 md:w-96 md:h-96 lg:w-[28rem] lg:h-[28rem] bg-secondary/20 rounded-full flex items-center justify-center mb-10">
+              {imageSrc && !imageError ? (
                 <img 
-                  src={`/images/archetypes/${archetype.image_id}.png`}
-                  alt={alias}
-                  className="w-48 h-48 md:w-56 md:h-56 object-contain z-10"
-                  onError={(e) => {
-                    e.target.style.display = 'none'
-                    e.target.nextSibling.style.display = 'flex'
+                  src={imageSrc}
+                  alt={alias || mbti_code || 'Pet Archetype'}
+                  className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain z-10"
+                  onError={() => {
+                    // 다음 확장자 시도
+                    const imageId = archetype?.image_id
+                    if (imageId) {
+                      const extensions = ['.png', '.jpg', '.jpeg', '.webp']
+                      const currentPath = imageSrc
+                      const currentExt = extensions.find(ext => currentPath.endsWith(ext))
+                      
+                      if (currentExt) {
+                        const currentIndex = extensions.indexOf(currentExt)
+                        if (currentIndex < extensions.length - 1) {
+                          // 다음 확장자 시도
+                          setImageSrc(`/images/archetypes/${imageId}${extensions[currentIndex + 1]}`)
+                          return
+                        }
+                      }
+                    }
+                    // 모든 확장자 시도 실패 시 fallback 표시
+                    setImageError(true)
+                  }}
+                  onLoad={() => {
+                    // 이미지 로드 성공 시 에러 상태 초기화
+                    setImageError(false)
                   }}
                 />
               ) : null}
-              <div className={`w-48 h-48 md:w-56 md:h-56 bg-secondary/30 rounded-full items-center justify-center ${archetype?.image_id ? 'hidden' : 'flex'}`}>
-                <span className="material-symbols-outlined text-primary text-8xl">pets</span>
-              </div>
+              {/* Fallback: 이미지가 없거나 로드 실패 시 */}
+              {(!imageSrc || imageError) && (
+                <div className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/30 rounded-full flex items-center justify-center z-10">
+                  <span className="material-symbols-outlined text-primary text-9xl md:text-[12rem]">pets</span>
+                </div>
+              )}
               <div className="absolute inset-0 border border-primary/10 rounded-full scale-110"></div>
               <div className="absolute inset-0 border border-dashed border-primary/20 rounded-full scale-125"></div>
             </div>
             
             <div className="text-center">
               <h2 className="text-5xl md:text-6xl font-display font-bold text-primary tracking-tight uppercase">
-                {pet_name}
+                {alias || mbti_code}
               </h2>
               {summary && (
                 <p className="mt-4 text-primary/60 text-lg max-w-lg mx-auto">{summary}</p>
