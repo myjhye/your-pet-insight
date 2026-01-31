@@ -4,6 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+from datetime import datetime, timedelta
 import uuid
 
 # 1. Firebase 인증 및 초기화 (안전한 초기화 - 중복 방지)
@@ -313,6 +314,10 @@ async def calculate_mbti(request: CalculateRequest):
         # ---------------------------------------------------------
         result_id = str(uuid.uuid4())
         
+        # 현재 시간과 30일 뒤 시간 계산
+        now = datetime.utcnow()
+        expire_at = now + timedelta(days=30)  # 30일 뒤 날짜 계산
+        
         result_data = {
             "result_id": result_id,
             "pet_name": request.petName,
@@ -322,7 +327,8 @@ async def calculate_mbti(request: CalculateRequest):
             "stats": stats,
             "answers": all_answers,
             "archetype": archetype_data,
-            "created_at": firestore.SERVER_TIMESTAMP
+            "created_at": now,
+            "expire_at": expire_at,  # 삭제될 시간을 저장
         }
         
         db.collection("test_results").document(result_id).set(result_data)
