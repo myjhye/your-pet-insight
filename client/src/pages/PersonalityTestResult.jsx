@@ -4,6 +4,7 @@ import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // Stats 고정 순서 및 설정
 const STATS_ORDER = [
@@ -166,6 +167,60 @@ function PersonalityTestResult() {
     }
   }, [resultData])
   
+  // 숫자와 % 강조 처리 (렌더링 후)
+  useEffect(() => {
+    if (currentTab === 'premium' && reportStatus === 'ready' && reportPages) {
+      const highlightNumbers = () => {
+        const proseElement = document.querySelector('.prose')
+        if (!proseElement) return
+        
+        // 이미 처리된 요소는 건너뛰기
+        const processedElements = proseElement.querySelectorAll('.highlight-processed')
+        processedElements.forEach(el => {
+          el.classList.remove('highlight-processed')
+          const original = el.getAttribute('data-original')
+          if (original) {
+            el.innerHTML = original
+          }
+        })
+        
+        // 모든 텍스트 노드 찾기
+        const walker = document.createTreeWalker(
+          proseElement,
+          NodeFilter.SHOW_TEXT,
+          null
+        )
+        
+        const textNodes = []
+        let node
+        while (node = walker.nextNode()) {
+          if (node.textContent.match(/\d+%/)) {
+            textNodes.push(node)
+          }
+        }
+        
+        textNodes.forEach(textNode => {
+          const parent = textNode.parentElement
+          if (parent && !parent.classList.contains('highlight-processed')) {
+            parent.classList.add('highlight-processed')
+            const original = textNode.textContent
+            parent.setAttribute('data-original', original)
+            const highlighted = original.replace(/(\d+%)/g, '<span class="text-primary font-bold text-lg">$1</span>')
+            if (highlighted !== original) {
+              const wrapper = document.createElement('span')
+              wrapper.innerHTML = highlighted
+              textNode.replaceWith(...Array.from(wrapper.childNodes))
+            }
+          }
+        })
+      }
+      
+      // 약간의 지연 후 실행 (렌더링 완료 후)
+      const timer = setTimeout(highlightNumbers, 200)
+      return () => clearTimeout(timer)
+    }
+  }, [activeTab, currentTab, reportStatus, reportPages])
+  
   // 리포트 생성 함수
   const handleGenerateReport = async () => {
     if (!resultId) return
@@ -281,7 +336,7 @@ function PersonalityTestResult() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F9FBF9] text-[#2D3436]">
+    <main className={`min-h-screen text-[#2D3436] ${currentTab === 'premium' ? 'bg-[#F8F7F4]' : 'bg-[#F9FBF9]'}`}>
       <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Main Result Card */}
         <div className="bg-white rounded-[2rem] shadow-sm border border-primary/5 overflow-hidden mb-12">
@@ -411,17 +466,6 @@ function PersonalityTestResult() {
               </div>
             </>
           )}
-
-          {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) */}
-          {currentTab === 'premium' && reportStatus === 'ready' && reportPages && (
-            <div className="p-10">
-              <div className="text-center mb-8">
-                <span className="material-symbols-outlined text-primary text-5xl mb-4">workspace_premium</span>
-                <h2 className="text-3xl font-display font-bold text-primary mb-2">프리미엄 심층 리포트</h2>
-                <p className="text-primary/60">AI가 분석한 {pet_name}의 완전한 성격 프로필</p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* 기본 결과 섹션 (기본 탭일 때만 표시) */}
@@ -550,7 +594,7 @@ function PersonalityTestResult() {
           </div>
         )}
         
-        {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) */}
+        {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) - 통합 양장본 구조 */}
         {currentTab === 'premium' && reportStatus === 'ready' && reportPages && (() => {
           const pageOrder = [
             'table_of_contents',
@@ -581,56 +625,102 @@ function PersonalityTestResult() {
           const totalPages = availablePages.length
           
           return (
-            <div className="mt-12 bg-stone-50 rounded-3xl p-6 md:p-8">
-              {/* 탭 메뉴 */}
-              <div className="bg-white rounded-2xl p-2 mb-6 shadow-sm border border-primary/5">
-                <div className="flex flex-wrap gap-2">
-                  {availablePages.map((pageKey) => {
-                    const isActive = activeTab === pageKey
-                    return (
-                      <button
-                        key={pageKey}
-                        onClick={() => setActiveTab(pageKey)}
-                        className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${
-                          isActive
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-gray-50 text-primary hover:bg-primary/10'
-                        }`}
+            <div className="mt-12">
+              {/* 통합 컨테이너 - 커다란 고급 양장본 */}
+              <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden border border-primary/5">
+                {/* 1. 헤더 영역 (타이틀) */}
+                <header className="bg-primary/5 p-10 md:p-12 text-center border-b border-primary/10">
+                  <span className="material-symbols-outlined text-primary text-5xl mb-4 block">workspace_premium</span>
+                  <h2 className="text-3xl md:text-4xl font-display font-bold text-primary mb-2">
+                    프리미엄 심층 리포트
+                  </h2>
+                  <p className="text-primary/60 text-lg">AI가 분석한 {pet_name}의 완전한 성격 프로필</p>
+                </header>
+
+                {/* 2. 네비게이션 (탭 메뉴) */}
+                <nav className="border-y border-primary/10 bg-white sticky top-0 z-20">
+                  <div className="flex flex-wrap gap-2 p-4 overflow-x-auto">
+                    {availablePages.map((pageKey) => {
+                      const isActive = activeTab === pageKey
+                      return (
+                        <button
+                          key={pageKey}
+                          onClick={() => setActiveTab(pageKey)}
+                          className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
+                            isActive
+                              ? 'bg-primary text-white shadow-md'
+                              : 'bg-gray-50 text-primary hover:bg-primary/10'
+                          }`}
+                        >
+                          {pageTitles[pageKey] || pageKey.replace(/_/g, ' ')}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </nav>
+
+                {/* 3. 본문 영역 (애니메이션 적용) */}
+                <main className="p-10 md:p-16 min-h-[600px] bg-white">
+                  <AnimatePresence mode="wait">
+                    {activePageData && (
+                      <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
                       >
-                        {pageTitles[pageKey] || pageKey.replace(/_/g, ' ')}
-                      </button>
-                    )
-                  })}
-                </div>
+                        {/* 페이지 헤더 */}
+                        <div className="flex items-center justify-between mb-8 pb-6 border-b border-primary/10">
+                          <div className="flex items-center gap-4">
+                            <span className="material-symbols-outlined text-primary text-3xl">auto_stories</span>
+                            <div>
+                              <h3 className="text-2xl font-display font-bold text-primary">
+                                {activePageTitle}
+                              </h3>
+                              <p className="text-sm text-primary/60 mt-1">Page {currentPageIndex} / {totalPages}</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* ReactMarkdown으로 마크다운 렌더링 - 잡지 스타일 고도화 */}
+                        <div className="prose prose-lg prose-slate max-w-none text-[#2D3436] 
+                          prose-headings:font-display prose-headings:font-bold prose-headings:text-primary
+                          prose-headings:mt-8 prose-headings:mb-4
+                          prose-h2:text-2xl prose-h2:border-l-4 prose-h2:border-primary prose-h2:pl-4 prose-h2:mt-10
+                          prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:pl-4 prose-h3:relative
+                          prose-h3:before:content-['▪'] prose-h3:before:text-primary prose-h3:before:absolute prose-h3:before:left-0
+                          prose-p:leading-loose prose-p:mb-6 prose-p:text-[#2D3436]
+                          prose-strong:text-primary prose-strong:font-bold
+                          prose-ul:my-6 prose-ol:my-6
+                          prose-li:my-3 prose-li:leading-relaxed
+                          prose-blockquote:border-l-4 prose-blockquote:border-primary/30 
+                          prose-blockquote:bg-primary/5 prose-blockquote:pl-8 prose-blockquote:py-4 
+                          prose-blockquote:rounded-r-xl prose-blockquote:my-6 prose-blockquote:italic
+                          prose-blockquote:relative prose-blockquote:before:content-none prose-blockquote:after:content-none
+                          [&>p:first-child]:first-letter:text-6xl [&>p:first-child]:first-letter:font-display 
+                          [&>p:first-child]:first-letter:font-bold [&>p:first-child]:first-letter:text-primary 
+                          [&>p:first-child]:first-letter:float-left [&>p:first-child]:first-letter:leading-none 
+                          [&>p:first-child]:first-letter:mr-2 [&>p:first-child]:first-letter:mt-1">
+                          <ReactMarkdown
+                            components={{
+                              // 인용구에 아이콘 추가
+                              blockquote: ({ children }) => (
+                                <blockquote className="relative pl-8">
+                                  <span className="material-symbols-outlined absolute left-0 top-2 text-primary/40 text-2xl">format_quote</span>
+                                  <div>{children}</div>
+                                </blockquote>
+                              ),
+                            }}
+                          >
+                            {activePageData.content}
+                          </ReactMarkdown>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </main>
               </div>
-              
-              {/* 활성 탭 내용 */}
-              {activePageData && (
-                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-primary/5">
-                  {/* 페이지 헤더 */}
-                  <div className="flex items-center justify-between mb-8 pb-6 border-b border-primary/10">
-                    <div className="flex items-center gap-4">
-                      <span className="material-symbols-outlined text-primary text-3xl">auto_stories</span>
-                      <div>
-                        <h3 className="text-2xl font-display font-bold text-primary">
-                          {activePageTitle}
-                        </h3>
-                        <p className="text-sm text-primary/60 mt-1">Page {currentPageIndex} / {totalPages}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* ReactMarkdown으로 마크다운 렌더링 - 잡지 스타일 */}
-                  <div className="prose prose-lg prose-slate max-w-none text-[#2D3436] 
-                    prose-headings:font-display prose-headings:font-bold prose-headings:text-primary
-                    prose-p:leading-relaxed prose-p:mb-6
-                    prose-strong:text-primary prose-strong:font-bold
-                    prose-ul:my-6 prose-ol:my-6
-                    prose-li:my-2">
-                    <ReactMarkdown>{activePageData.content}</ReactMarkdown>
-                  </div>
-                </div>
-              )}
             </div>
           )
         })()}
