@@ -104,6 +104,12 @@ function PersonalityTestResult() {
   const [reportStatus, setReportStatus] = useState(null) // not_generated, generating, ready, failed
   const [reportPages, setReportPages] = useState(null)
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  
+  // 메인 탭 상태 관리 (기본 결과 / 프리미엄 리포트)
+  const [currentTab, setCurrentTab] = useState('basic')
+  
+  // 리포트 내부 탭 상태 관리
+  const [activeTab, setActiveTab] = useState('table_of_contents')
 
   // Context에서 결과 가져오기 (캐시 활용)
   useEffect(() => {
@@ -139,6 +145,24 @@ function PersonalityTestResult() {
     if (resultData) {
       setReportStatus(resultData.report_status || 'not_generated')
       setReportPages(resultData.report_pages || null)
+      
+      // 리포트가 ready이고 첫 페이지가 있으면 기본 탭 설정
+      if (resultData.report_status === 'ready' && resultData.report_pages) {
+        const pageOrder = [
+          'table_of_contents',
+          'deep_dive_traits',
+          'cognitive_strengths',
+          'owner_chemistry',
+          'training_roadmap',
+          'social_adaptation',
+          'lifestyle_guide',
+          'heartfelt_message'
+        ]
+        const firstAvailablePage = pageOrder.find(pageKey => resultData.report_pages[pageKey])
+        if (firstAvailablePage) {
+          setActiveTab(firstAvailablePage)
+        }
+      }
     }
   }, [resultData])
   
@@ -150,7 +174,8 @@ function PersonalityTestResult() {
     setReportStatus('generating')
     
     try {
-      const response = await axios.post(`http://localhost:8000/api/test/generate-report/${resultId}`)
+      // URL이나 Context에서 가져온 lang을 쿼리 파라미터로 전달
+      const response = await axios.post(`http://localhost:8000/api/test/generate-report/${resultId}?lang=${lang}`)
       
       if (response.data.status === 'success') {
         // 리포트 생성 완료, 상태 확인을 위해 결과 다시 불러오기
@@ -272,7 +297,48 @@ function PersonalityTestResult() {
             <p className="text-sm text-primary/60 font-medium">Your Beloved Companion</p>
           </div>
 
-          {/* 메인 이미지 & 유형 뱃지 */}
+          {/* 메인 탭 버튼 (기본 결과 / 프리미엄 리포트) */}
+          <div className="px-6 md:px-8 py-4 border-b border-gray-100">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentTab('basic')}
+                className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all ${
+                  currentTab === 'basic'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-gray-50 text-primary hover:bg-primary/10'
+                }`}
+              >
+                기본 결과
+              </button>
+              <button
+                onClick={() => {
+                  if (reportStatus === 'ready') {
+                    setCurrentTab('premium')
+                  } else {
+                    // 결제 유도 섹션으로 스크롤
+                    const premiumSection = document.getElementById('premium-cta')
+                    if (premiumSection) {
+                      premiumSection.scrollIntoView({ behavior: 'smooth' })
+                    }
+                  }
+                }}
+                className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+                  currentTab === 'premium' && reportStatus === 'ready'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-gray-50 text-primary hover:bg-primary/10'
+                }`}
+              >
+                {reportStatus !== 'ready' && (
+                  <span className="material-symbols-outlined text-lg">lock</span>
+                )}
+                프리미엄 리포트
+              </button>
+            </div>
+          </div>
+
+          {/* 메인 이미지 & 유형 뱃지 (기본 탭일 때만 표시) */}
+          {currentTab === 'basic' && (
+            <>
           <div className="p-10 flex flex-col items-center">
             <div className="relative w-80 h-80 md:w-96 md:h-96 lg:w-[28rem] lg:h-[28rem] bg-secondary/20 rounded-full flex items-center justify-center mb-10">
               {imageSrc && !imageError ? (
@@ -326,212 +392,264 @@ function PersonalityTestResult() {
             </div>
           </div>
 
-          {/* Stats 막대 그래프 (일렬 배치) */}
-          <div className="px-10 pb-12 space-y-6">
-            {STATS_ORDER.map(({ key, color }) => {
-              const value = getStatValue(key)  // 안전한 값 추출
-              const label = getLocalizedText(statsLabels[key]) || key
-              
-              return (
-                <StatBar
-                  key={key}
-                  name={key.charAt(0).toUpperCase() + key.slice(1)}
-                  label={label}
-                  value={value}
-                  color={color}
-                />
-              )
-            })}
-          </div>
+              {/* Stats 막대 그래프 (일렬 배치) */}
+              <div className="px-10 pb-12 space-y-6">
+                {STATS_ORDER.map(({ key, color }) => {
+                  const value = getStatValue(key)  // 안전한 값 추출
+                  const label = getLocalizedText(statsLabels[key]) || key
+                  
+                  return (
+                    <StatBar
+                      key={key}
+                      name={key.charAt(0).toUpperCase() + key.slice(1)}
+                      label={label}
+                      value={value}
+                      color={color}
+                    />
+                  )
+                })}
+              </div>
+            </>
+          )}
+
+          {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) */}
+          {currentTab === 'premium' && reportStatus === 'ready' && reportPages && (
+            <div className="p-10">
+              <div className="text-center mb-8">
+                <span className="material-symbols-outlined text-primary text-5xl mb-4">workspace_premium</span>
+                <h2 className="text-3xl font-display font-bold text-primary mb-2">프리미엄 심층 리포트</h2>
+                <p className="text-primary/60">AI가 분석한 {pet_name}의 완전한 성격 프로필</p>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Core Traits */}
-        {coreTraits.length > 0 && (
-          <div className="space-y-12 mb-16">
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-3xl font-display font-bold text-primary">Core Traits</h2>
-              <div className="flex-grow h-[1px] bg-primary/10"></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {coreTraits.slice(0, 2).map((trait, index) => (
-                <TraitCard
-                  key={index}
-                  icon={trait.icon || 'auto_awesome'}
-                  title={getLocalizedText(trait.title)}
-                  description={getLocalizedText(trait.description)}
-                  variant={index % 2 === 1 ? 'alt' : 'default'}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Daily Life */}
-        {dailyLife.length > 0 && (
-          <div className="space-y-12 mb-16">
-            <div className="flex items-center gap-4 my-8">
-              <h2 className="text-3xl font-display font-bold text-primary">Daily Life with You</h2>
-              <div className="flex-grow h-[1px] bg-primary/10"></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {dailyLife.slice(0, 2).map((item, index) => (
-                <TraitCard
-                  key={index}
-                  icon={item.icon || 'schedule'}
-                  title={getLocalizedText(item.title)}
-                  description={getLocalizedText(item.description)}
-                  variant={index % 2 === 0 ? 'alt' : 'default'}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Premium CTA */}
-        <div className="relative bg-primary rounded-[2.5rem] p-10 md:p-16 text-center overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-white/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-[#2D5A47]/30 rounded-full blur-3xl"></div>
-          <div className="relative z-10">
-            <span className="material-symbols-outlined text-white text-6xl mb-6">workspace_premium</span>
-            <h4 className="text-3xl md:text-4xl font-display font-bold text-white mb-6">Go Beyond the Surface</h4>
-            <p className="text-white/70 mb-10 max-w-xl mx-auto text-lg leading-relaxed">
-              Unlock the 25-page Premium Report to discover detailed training roadmaps, breed-specific insights, and scientific cognitive benchmarks.
-            </p>
-            
-            {/* 리포트 생성 상태에 따른 버튼 표시 */}
-            {reportStatus === 'not_generated' && (
-              <button 
-                onClick={handleGenerateReport}
-                disabled={isGeneratingReport}
-                className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Get Premium Full Report
-              </button>
-            )}
-            
-            {reportStatus === 'generating' && (
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-white/90 text-lg font-medium">Generating your premium report...</p>
-                <p className="text-white/60 text-sm">This may take up to 30 seconds</p>
-              </div>
-            )}
-            
-            {reportStatus === 'ready' && reportPages && (
-              <div className="space-y-6">
-                <button className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95">
-                  View Premium Report
-                </button>
-                <div className="text-white/80 text-sm">
-                  <span className="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>
-                  Report ready! Click to view
+        {/* 기본 결과 섹션 (기본 탭일 때만 표시) */}
+        {currentTab === 'basic' && (
+          <>
+            {/* Core Traits */}
+            {coreTraits.length > 0 && (
+              <div className="space-y-12 mb-16">
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className="text-3xl font-display font-bold text-primary">Core Traits</h2>
+                  <div className="flex-grow h-[1px] bg-primary/10"></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {coreTraits.slice(0, 2).map((trait, index) => (
+                    <TraitCard
+                      key={index}
+                      icon={trait.icon || 'auto_awesome'}
+                      title={getLocalizedText(trait.title)}
+                      description={getLocalizedText(trait.description)}
+                      variant={index % 2 === 1 ? 'alt' : 'default'}
+                    />
+                  ))}
                 </div>
               </div>
             )}
-            
-            {reportStatus === 'failed' && (
-              <div className="space-y-4">
-                <p className="text-white/90 text-lg">Report generation failed. Please try again.</p>
-                <button 
-                  onClick={handleGenerateReport}
-                  className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-lg py-3 px-8 rounded-full shadow-xl transition-all"
-                >
-                  Retry
-                </button>
+
+            {/* Daily Life */}
+            {dailyLife.length > 0 && (
+              <div className="space-y-12 mb-16">
+                <div className="flex items-center gap-4 my-8">
+                  <h2 className="text-3xl font-display font-bold text-primary">Daily Life with You</h2>
+                  <div className="flex-grow h-[1px] bg-primary/10"></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {dailyLife.slice(0, 2).map((item, index) => (
+                    <TraitCard
+                      key={index}
+                      icon={item.icon || 'schedule'}
+                      title={getLocalizedText(item.title)}
+                      description={getLocalizedText(item.description)}
+                      variant={index % 2 === 0 ? 'alt' : 'default'}
+                    />
+                  ))}
+                </div>
               </div>
             )}
-            
-            {/* 개발자 모드 테스트 버튼 */}
-            {process.env.NODE_ENV === 'development' && reportStatus !== 'generating' && (
-              <div className="mt-6 pt-6 border-t border-white/20">
-                <button
-                  onClick={handleGenerateReport}
-                  disabled={isGeneratingReport}
-                  className="bg-white/20 hover:bg-white/30 text-white text-sm font-medium py-2 px-6 rounded-full transition-all disabled:opacity-50"
-                >
-                  {isGeneratingReport ? 'Generating...' : '프리미엄 리포트 생성 테스트 (Dev Only)'}
-                </button>
-              </div>
-            )}
-            
-            <div className="mt-8 flex items-center justify-center gap-2 text-white/40 text-sm">
-              <span className="material-symbols-outlined text-sm">verified_user</span>
-              <span>Join 50,000+ happy pet parents worldwide.</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* 리포트 내용 표시 (ready 상태일 때) */}
-        {reportStatus === 'ready' && reportPages && (
-          <div className="mt-12 space-y-12">
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-3xl font-display font-bold text-primary">Premium Report</h2>
-              <div className="flex-grow h-[1px] bg-primary/10"></div>
-            </div>
-            
-            {/* 페이지 순서 정의 */}
-            {(() => {
-              const pageOrder = [
-                'table_of_contents',
-                'deep_dive_traits',
-                'cognitive_strengths',
-                'owner_chemistry',
-                'training_roadmap',
-                'social_adaptation',
-                'lifestyle_guide',
-                'heartfelt_message'
-              ]
-              
-              const pageTitles = {
-                'table_of_contents': '목차',
-                'deep_dive_traits': '성격 지표 심층 해설',
-                'cognitive_strengths': '인지적 강점과 본능적 천재성',
-                'owner_chemistry': '보호자와의 특별한 케미 분석',
-                'training_roadmap': '맞춤형 긍정 강화 교육 로드맵',
-                'social_adaptation': '사회성 및 환경 적응 가이드',
-                'lifestyle_guide': '완벽한 하루를 위한 라이프스타일',
-                'heartfelt_message': '보호자에게 보내는 특별한 메시지'
-              }
-              
-              return pageOrder
-                .filter(pageKey => reportPages[pageKey])
-                .map((pageKey, index) => {
-                  const pageData = reportPages[pageKey]
-                  const pageTitle = pageTitles[pageKey] || pageKey.replace(/_/g, ' ')
-                  
-                  return (
-                    <div key={pageKey} className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-primary/5">
-                      <div className="flex items-center gap-4 mb-8">
-                        <span className="text-4xl font-display font-black text-primary/10">{index + 1}</span>
-                        <h3 className="text-2xl font-display font-bold text-primary capitalize">
-                          {pageTitle}
-                        </h3>
-                      </div>
-                      
-                      {/* 정규식 대신 ReactMarkdown 사용으로 완벽한 렌더링 */}
-                      <div className="prose prose-lg prose-slate max-w-none text-[#2D3436]">
-                        <ReactMarkdown>{pageData.content}</ReactMarkdown>
-                      </div>
-                    </div>
-                  )
-                })
-            })()}
-          </div>
+          </>
         )}
 
-        {/* 결과 공유 (선택적) */}
-        <div className="mt-12 text-center">
-          <p className="text-primary/40 text-sm mb-4">Share your result</p>
-          <div className="flex justify-center gap-4">
-            <button 
-              onClick={() => navigator.clipboard.writeText(window.location.href)}
-              className="flex items-center gap-2 px-6 py-3 bg-white border border-primary/10 rounded-full text-primary hover:bg-primary/5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-xl">link</span>
-              <span className="font-medium">Copy Link</span>
-            </button>
+        {/* Premium CTA (기본 탭에서만 표시) */}
+        {currentTab === 'basic' && (
+          <div id="premium-cta" className="relative bg-primary rounded-[2.5rem] p-10 md:p-16 text-center overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-white/20 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-[#2D5A47]/30 rounded-full blur-3xl"></div>
+            <div className="relative z-10">
+              <span className="material-symbols-outlined text-white text-6xl mb-6">workspace_premium</span>
+              <h4 className="text-3xl md:text-4xl font-display font-bold text-white mb-6">Go Beyond the Surface</h4>
+              <p className="text-white/70 mb-10 max-w-xl mx-auto text-lg leading-relaxed">
+                Unlock the 25-page Premium Report to discover detailed training roadmaps, breed-specific insights, and scientific cognitive benchmarks.
+              </p>
+              
+              {/* 리포트 생성 상태에 따른 버튼 표시 */}
+              {reportStatus === 'not_generated' && (
+                <button 
+                  onClick={handleGenerateReport}
+                  disabled={isGeneratingReport}
+                  className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Get Premium Full Report
+                </button>
+              )}
+              
+              {reportStatus === 'generating' && (
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-white/90 text-lg font-medium">Generating your premium report...</p>
+                  <p className="text-white/60 text-sm">This may take up to 30 seconds</p>
+                </div>
+              )}
+              
+              {reportStatus === 'ready' && reportPages && (
+                <div className="space-y-6">
+                  <button 
+                    onClick={() => setCurrentTab('premium')}
+                    className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95"
+                  >
+                    View Premium Report
+                  </button>
+                  <div className="text-white/80 text-sm">
+                    <span className="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>
+                    Report ready! Click to view
+                  </div>
+                </div>
+              )}
+              
+              {reportStatus === 'failed' && (
+                <div className="space-y-4">
+                  <p className="text-white/90 text-lg">Report generation failed. Please try again.</p>
+                  <button 
+                    onClick={handleGenerateReport}
+                    className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-lg py-3 px-8 rounded-full shadow-xl transition-all"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+              
+              {/* 개발자 모드 테스트 버튼 */}
+              {process.env.NODE_ENV === 'development' && reportStatus !== 'generating' && (
+                <div className="mt-6 pt-6 border-t border-white/20">
+                  <button
+                    onClick={handleGenerateReport}
+                    disabled={isGeneratingReport}
+                    className="bg-white/20 hover:bg-white/30 text-white text-sm font-medium py-2 px-6 rounded-full transition-all disabled:opacity-50"
+                  >
+                    {isGeneratingReport ? 'Generating...' : '프리미엄 리포트 생성 테스트 (Dev Only)'}
+                  </button>
+                </div>
+              )}
+              
+              <div className="mt-8 flex items-center justify-center gap-2 text-white/40 text-sm">
+                <span className="material-symbols-outlined text-sm">verified_user</span>
+                <span>Join 50,000+ happy pet parents worldwide.</span>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+        
+        {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) */}
+        {currentTab === 'premium' && reportStatus === 'ready' && reportPages && (() => {
+          const pageOrder = [
+            'table_of_contents',
+            'deep_dive_traits',
+            'cognitive_strengths',
+            'owner_chemistry',
+            'training_roadmap',
+            'social_adaptation',
+            'lifestyle_guide',
+            'heartfelt_message'
+          ]
+          
+          const pageTitles = {
+            'table_of_contents': '목차',
+            'deep_dive_traits': '성격 분석',
+            'cognitive_strengths': '인지 강점',
+            'owner_chemistry': '케미 분석',
+            'training_roadmap': '훈련법',
+            'social_adaptation': '사회성',
+            'lifestyle_guide': '라이프스타일',
+            'heartfelt_message': '특별한 메시지'
+          }
+          
+          const availablePages = pageOrder.filter(pageKey => reportPages[pageKey])
+          const activePageData = reportPages[activeTab]
+          const activePageTitle = pageTitles[activeTab] || activeTab.replace(/_/g, ' ')
+          const currentPageIndex = availablePages.indexOf(activeTab) + 1
+          const totalPages = availablePages.length
+          
+          return (
+            <div className="mt-12 bg-stone-50 rounded-3xl p-6 md:p-8">
+              {/* 탭 메뉴 */}
+              <div className="bg-white rounded-2xl p-2 mb-6 shadow-sm border border-primary/5">
+                <div className="flex flex-wrap gap-2">
+                  {availablePages.map((pageKey) => {
+                    const isActive = activeTab === pageKey
+                    return (
+                      <button
+                        key={pageKey}
+                        onClick={() => setActiveTab(pageKey)}
+                        className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                          isActive
+                            ? 'bg-primary text-white shadow-md'
+                            : 'bg-gray-50 text-primary hover:bg-primary/10'
+                        }`}
+                      >
+                        {pageTitles[pageKey] || pageKey.replace(/_/g, ' ')}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              
+              {/* 활성 탭 내용 */}
+              {activePageData && (
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-primary/5">
+                  {/* 페이지 헤더 */}
+                  <div className="flex items-center justify-between mb-8 pb-6 border-b border-primary/10">
+                    <div className="flex items-center gap-4">
+                      <span className="material-symbols-outlined text-primary text-3xl">auto_stories</span>
+                      <div>
+                        <h3 className="text-2xl font-display font-bold text-primary">
+                          {activePageTitle}
+                        </h3>
+                        <p className="text-sm text-primary/60 mt-1">Page {currentPageIndex} / {totalPages}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* ReactMarkdown으로 마크다운 렌더링 - 잡지 스타일 */}
+                  <div className="prose prose-lg prose-slate max-w-none text-[#2D3436] 
+                    prose-headings:font-display prose-headings:font-bold prose-headings:text-primary
+                    prose-p:leading-relaxed prose-p:mb-6
+                    prose-strong:text-primary prose-strong:font-bold
+                    prose-ul:my-6 prose-ol:my-6
+                    prose-li:my-2">
+                    <ReactMarkdown>{activePageData.content}</ReactMarkdown>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* 결과 공유 (기본 탭에서만 표시) */}
+        {currentTab === 'basic' && (
+          <div className="mt-12 text-center">
+            <p className="text-primary/40 text-sm mb-4">Share your result</p>
+            <div className="flex justify-center gap-4">
+              <button 
+                onClick={() => navigator.clipboard.writeText(window.location.href)}
+                className="flex items-center gap-2 px-6 py-3 bg-white border border-primary/10 rounded-full text-primary hover:bg-primary/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-xl">link</span>
+                <span className="font-medium">Copy Link</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   )
