@@ -6,6 +6,9 @@ from pydantic import BaseModel
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 import uuid
+import asyncio
+import os
+from openai import AsyncOpenAI
 
 # 1. Firebase 인증 및 초기화 (안전한 초기화 - 중복 방지)
 if not firebase_admin._apps:
@@ -329,6 +332,8 @@ async def calculate_mbti(request: CalculateRequest):
             "archetype": archetype_data,
             "created_at": now,
             "expire_at": expire_at,  # 삭제될 시간을 저장
+            "report_status": "not_generated",  # 리포트 생성 상태 초기화
+            "report_pages": None,  # 리포트 페이지 데이터 초기화
         }
         
         db.collection("test_results").document(result_id).set(result_data)
@@ -394,6 +399,216 @@ async def setup_archetypes():
         import traceback
         print(traceback.format_exc())
         return {"status": "error", "message": str(e)}
+
+
+# ============================================================
+# [POST] AI 리포트 생성 API
+# ============================================================
+@app.post("/api/test/generate-report/{result_id}")
+async def generate_report(result_id: str):
+    """
+    테스트용 리포트 생성 엔드포인트
+    Firestore에서 결과 데이터를 가져와 OpenAI로 7개 페이지를 병렬 생성
+    """
+    try:
+        # OpenAI 클라이언트 초기화
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+        
+        client = AsyncOpenAI(api_key=api_key)
+        
+        # 1. Firestore에서 결과 데이터 조회
+        doc_ref = db.collection("test_results").document(result_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            raise HTTPException(status_code=404, detail="결과를 찾을 수 없습니다.")
+        
+        result_data = doc.to_dict()
+        pet_name = result_data.get("pet_name", "Unknown")
+        mbti_code = result_data.get("mbti_code", "")
+        stats = result_data.get("stats", {})
+        archetype = result_data.get("archetype", {})
+        answers = result_data.get("answers", [])
+        
+        # report_status를 'generating'으로 업데이트
+        doc_ref.update({
+            "report_status": "generating"
+        })
+        
+        # 2. Stats 데이터 해석 설명 생성
+        stats_interpretation = {
+            "sociability": f"사회성 {stats.get('sociability', 50)}% - {'외향적' if stats.get('sociability', 50) >= 50 else '내향적'} 성향",
+            "sagacity": f"지능성 {stats.get('sagacity', 50)}% - {'직관적' if stats.get('sagacity', 50) >= 50 else '감각적'} 성향",
+            "emotionality": f"감정성 {stats.get('emotionality', 50)}% - {'감정적' if stats.get('emotionality', 50) >= 50 else '이성적'} 성향",
+            "obedience": f"순종성 {stats.get('obedience', 50)}% - {'계획적' if stats.get('obedience', 50) >= 50 else '자유로운'} 성향",
+            "temperament": f"기질 {stats.get('temperament', 50)}% - {'안정적' if stats.get('temperament', 50) >= 50 else '활발한'} 성향"
+        }
+        
+        # 3. 7개 페이지별 프롬프트 정의
+        page_prompts = [
+            {
+                "page": "training_roadmap",
+                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 다음 통계를 바탕으로 맞춤형 훈련 로드맵을 작성해주세요.
+
+통계:
+- {stats_interpretation['sociability']}
+- {stats_interpretation['sagacity']}
+- {stats_interpretation['emotionality']}
+- {stats_interpretation['obedience']}
+- {stats_interpretation['temperament']}
+
+이 데이터를 바탕으로 {pet_name}에게 가장 효과적인 훈련 방법, 단계별 접근법, 예상 소요 시간, 주의사항을 포함한 상세한 훈련 로드맵을 작성해주세요. 한국어로 작성하며, 실용적이고 구체적인 조언을 제공해주세요."""
+            },
+            {
+                "page": "behavior_analysis",
+                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 통계 데이터를 바탕으로 행동 분석 리포트를 작성해주세요.
+
+통계:
+- {stats_interpretation['sociability']}
+- {stats_interpretation['sagacity']}
+- {stats_interpretation['emotionality']}
+- {stats_interpretation['obedience']}
+- {stats_interpretation['temperament']}
+
+이 데이터를 바탕으로 {pet_name}의 예상 행동 패턴, 강점, 주의해야 할 행동, 일상 생활에서의 특징을 분석해주세요. 한국어로 작성하며, 구체적인 예시를 포함해주세요."""
+            },
+            {
+                "page": "social_interaction",
+                "prompt": f"""반려견 {pet_name}의 사회성 통계({stats_interpretation['sociability']})를 바탕으로 사회적 상호작용 가이드를 작성해주세요.
+
+성격 유형: {mbti_code}
+전체 통계:
+- {stats_interpretation['sociability']}
+- {stats_interpretation['sagacity']}
+- {stats_interpretation['emotionality']}
+- {stats_interpretation['obedience']}
+
+이 데이터를 바탕으로 {pet_name}가 다른 강아지, 사람, 새로운 환경과 어떻게 상호작용할지 예측하고, 사회화 훈련 방법, 주의사항, 긍정적인 사회적 경험을 만드는 방법을 제시해주세요. 한국어로 작성해주세요."""
+            },
+            {
+                "page": "health_wellness",
+                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 통계를 바탕으로 건강 및 웰니스 가이드를 작성해주세요.
+
+통계:
+- {stats_interpretation['sociability']}
+- {stats_interpretation['sagacity']}
+- {stats_interpretation['emotionality']}
+- {stats_interpretation['obedience']}
+- {stats_interpretation['temperament']}
+
+이 데이터를 바탕으로 {pet_name}의 성격에 맞는 운동량, 식습관, 정신 건강 관리, 스트레스 관리 방법을 제시해주세요. 한국어로 작성하며, 실용적인 조언을 포함해주세요."""
+            },
+            {
+                "page": "cognitive_benchmarks",
+                "prompt": f"""반려견 {pet_name}의 지능성 통계({stats_interpretation['sagacity']})를 바탕으로 인지 능력 벤치마크 리포트를 작성해주세요.
+
+성격 유형: {mbti_code}
+전체 통계:
+- {stats_interpretation['sociability']}
+- {stats_interpretation['sagacity']}
+- {stats_interpretation['emotionality']}
+- {stats_interpretation['obedience']}
+
+이 데이터를 바탕으로 {pet_name}의 인지 능력 수준, 학습 스타일, 문제 해결 능력, 적합한 정신 자극 활동을 분석하고 제시해주세요. 한국어로 작성하며, 과학적 근거를 포함해주세요."""
+            },
+            {
+                "page": "environment_setup",
+                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 통계를 바탕으로 최적의 환경 설정 가이드를 작성해주세요.
+
+통계:
+- {stats_interpretation['sociability']}
+- {stats_interpretation['sagacity']}
+- {stats_interpretation['emotionality']}
+- {stats_interpretation['obedience']}
+- {stats_interpretation['temperament']}
+
+이 데이터를 바탕으로 {pet_name}에게 가장 적합한 생활 환경, 공간 배치, 장난감 선택, 휴식 공간 설계를 제안해주세요. 한국어로 작성하며, 구체적인 예시를 포함해주세요."""
+            },
+            {
+                "page": "owner_bonding",
+                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 통계를 바탕으로 보호자와의 유대감 강화 가이드를 작성해주세요.
+
+통계:
+- {stats_interpretation['sociability']}
+- {stats_interpretation['sagacity']}
+- {stats_interpretation['emotionality']}
+- {stats_interpretation['obedience']}
+- {stats_interpretation['temperament']}
+
+이 데이터를 바탕으로 {pet_name}와 보호자가 더 깊은 유대감을 형성하는 방법, 소통 방법, 함께 즐길 수 있는 활동, 신뢰 구축 방법을 제시해주세요. 한국어로 작성하며, 감성적이고 실용적인 조언을 포함해주세요."""
+            }
+        ]
+        
+        # 4. 7개 페이지를 병렬로 생성
+        async def generate_page(page_info):
+            try:
+                response = await client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "당신은 반려견 행동 전문가이자 훈련사입니다. 반려견의 성격 데이터를 바탕으로 실용적이고 구체적인 조언을 제공합니다."
+                        },
+                        {
+                            "role": "user",
+                            "content": page_info["prompt"]
+                        }
+                    ],
+                    temperature=0.7,
+                    max_tokens=1500
+                )
+                return {
+                    "page": page_info["page"],
+                    "content": response.choices[0].message.content
+                }
+            except Exception as e:
+                print(f"페이지 {page_info['page']} 생성 실패: {str(e)}")
+                return {
+                    "page": page_info["page"],
+                    "content": f"생성 중 오류가 발생했습니다: {str(e)}"
+                }
+        
+        # 병렬 실행
+        tasks = [generate_page(page_info) for page_info in page_prompts]
+        results = await asyncio.gather(*tasks)
+        
+        # 5. 결과를 하나의 객체로 묶기
+        report_pages = {}
+        for result in results:
+            report_pages[result["page"]] = result["content"]
+        
+        # 6. Firestore에 업데이트
+        doc_ref.update({
+            "report_pages": report_pages,
+            "report_status": "ready",
+            "generated_at": firestore.SERVER_TIMESTAMP
+        })
+        
+        return {
+            "status": "success",
+            "message": "리포트 생성이 완료되었습니다.",
+            "result_id": result_id,
+            "pages_generated": len(report_pages)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        
+        # 오류 발생 시 상태 업데이트
+        try:
+            doc_ref = db.collection("test_results").document(result_id)
+            doc_ref.update({
+                "report_status": "failed"
+            })
+        except:
+            pass
+        
+        raise HTTPException(status_code=500, detail=f"리포트 생성 중 오류 발생: {str(e)}")
 
 
 # uvicorn.run은 항상 파일의 맨 마지막에 위치해야 합니다!
