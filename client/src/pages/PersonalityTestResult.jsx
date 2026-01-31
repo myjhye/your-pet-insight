@@ -65,7 +65,7 @@ function StatBar({ name, label, value, color }) {
       <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
         <div
           className={`h-full ${color} rounded-full transition-all duration-1000`}
-          style={{ width: `${Math.min(value, 100)}%` }}
+          style={{ width: `${strengthPercent}%` }}
         ></div>
       </div>
     </div>
@@ -293,6 +293,14 @@ function PersonalityTestResult() {
   // 데이터 추출
   const { pet_name, stats, archetype, mbti_code } = resultData
   
+  // 펫 이름 첫 글자 대문자 변환 함수
+  const capitalizeFirstLetter = (str) => {
+    if (!str) return str
+    return str.charAt(0).toUpperCase() + str.slice(1)
+  }
+  
+  const displayPetName = capitalizeFirstLetter(pet_name)
+  
   // 디버깅: stats 값 확인
   console.log('📊 Result Data:', { pet_name, stats, mbti_code })
   console.log('📊 Stats values:', stats)
@@ -345,7 +353,7 @@ function PersonalityTestResult() {
             <div className="flex items-center justify-center gap-3 mb-2">
               <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-primary tracking-tight">
-                {pet_name}
+                {displayPetName}
               </h1>
               <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
             </div>
@@ -634,7 +642,7 @@ function PersonalityTestResult() {
                   <h2 className="text-3xl md:text-4xl font-display font-bold text-primary mb-2">
                     프리미엄 심층 리포트
                   </h2>
-                  <p className="text-primary/60 text-lg">AI가 분석한 {pet_name}의 완전한 성격 프로필</p>
+                  <p className="text-primary/60 text-lg">AI가 분석한 {displayPetName}의 완전한 성격 프로필</p>
                 </header>
 
                 {/* 2. 네비게이션 (탭 메뉴) */}
