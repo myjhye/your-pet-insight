@@ -103,7 +103,8 @@ function PersonalityTestResult() {
     if (resultId) {
       fetchResult(resultId)
     }
-  }, [resultId, fetchResult])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultId]) // fetchResult는 안정적인 함수이므로 의존성에서 제외
 
   // Context에서 데이터 읽기
   const resultData = getResult(resultId)

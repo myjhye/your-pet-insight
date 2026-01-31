@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react'
 import axios from 'axios'
 
 const ResultsContext = createContext()
@@ -10,16 +10,34 @@ export function ResultsProvider({ children }) {
   const [resultsCache, setResultsCache] = useState({})
   const [loadingIds, setLoadingIds] = useState({})
   const [errors, setErrors] = useState({})
+  
+  // 최신 캐시 상태를 참조하기 위한 ref
+  const cacheRef = useRef({})
+  const loadingRef = useRef({})
+  
+  // 캐시와 ref 동기화
+  cacheRef.current = resultsCache
+  loadingRef.current = loadingIds
 
   // 결과 불러오기 함수 (캐시 확인 후 필요시 fetch)
   const fetchResult = useCallback(async (resultId) => {
-    // 이미 캐시에 있으면 즉시 반환
-    if (resultsCache[resultId]) {
-      return resultsCache[resultId]
+    if (!resultId) {
+      return null
+    }
+
+    // 이미 캐시에 있으면 즉시 반환 (로딩 상태도 false로 설정)
+    if (cacheRef.current[resultId]) {
+      setLoadingIds(prev => {
+        if (prev[resultId] === false) {
+          return prev
+        }
+        return { ...prev, [resultId]: false }
+      })
+      return cacheRef.current[resultId]
     }
 
     // 이미 로딩 중이면 대기
-    if (loadingIds[resultId]) {
+    if (loadingRef.current[resultId]) {
       return null
     }
 
@@ -43,7 +61,7 @@ export function ResultsProvider({ children }) {
       setLoadingIds(prev => ({ ...prev, [resultId]: false }))
       return null
     }
-  }, [resultsCache, loadingIds])
+  }, []) // 의존성 배열 비우기 - ref 사용으로 안정적
 
   // 특정 resultId의 결과 가져오기 (캐시된 데이터)
   const getResult = useCallback((resultId) => {
