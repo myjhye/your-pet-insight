@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
+import axios from 'axios'
+import ReactMarkdown from 'react-markdown'
 
 // Stats 고정 순서 및 설정
 const STATS_ORDER = [
@@ -97,6 +99,11 @@ function PersonalityTestResult() {
   // 이미지 로드 상태 관리
   const [imageError, setImageError] = useState(false)
   const [imageSrc, setImageSrc] = useState(null)
+  
+  // 리포트 생성 상태 관리
+  const [reportStatus, setReportStatus] = useState(null) // not_generated, generating, ready, failed
+  const [reportPages, setReportPages] = useState(null)
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
 
   // Context에서 결과 가져오기 (캐시 활용)
   useEffect(() => {
@@ -126,6 +133,67 @@ function PersonalityTestResult() {
       setImageError(true)
     }
   }, [resultData])
+  
+  // 리포트 상태 확인
+  useEffect(() => {
+    if (resultData) {
+      setReportStatus(resultData.report_status || 'not_generated')
+      setReportPages(resultData.report_pages || null)
+    }
+  }, [resultData])
+  
+  // 리포트 생성 함수
+  const handleGenerateReport = async () => {
+    if (!resultId) return
+    
+    setIsGeneratingReport(true)
+    setReportStatus('generating')
+    
+    try {
+      const response = await axios.post(`http://localhost:8000/api/test/generate-report/${resultId}`)
+      
+      if (response.data.status === 'success') {
+        // 리포트 생성 완료, 상태 확인을 위해 결과 다시 불러오기
+        await fetchResult(resultId)
+        
+        // 폴링으로 리포트 상태 확인 (최대 30초)
+        let attempts = 0
+        const maxAttempts = 30
+        
+        const checkStatus = setInterval(async () => {
+          attempts++
+          try {
+            const resultResponse = await axios.get(`http://localhost:8000/api/results/${resultId}`)
+            const updatedData = resultResponse.data
+            
+            if (updatedData.report_status === 'ready') {
+              setReportStatus('ready')
+              setReportPages(updatedData.report_pages)
+              setIsGeneratingReport(false)
+              clearInterval(checkStatus)
+            } else if (updatedData.report_status === 'failed') {
+              setReportStatus('failed')
+              setIsGeneratingReport(false)
+              clearInterval(checkStatus)
+            } else if (attempts >= maxAttempts) {
+              setIsGeneratingReport(false)
+              clearInterval(checkStatus)
+            }
+          } catch (err) {
+            console.error('리포트 상태 확인 실패:', err)
+            if (attempts >= maxAttempts) {
+              setIsGeneratingReport(false)
+              clearInterval(checkStatus)
+            }
+          }
+        }, 1000)
+      }
+    } catch (error) {
+      console.error('리포트 생성 실패:', error)
+      setReportStatus('failed')
+      setIsGeneratingReport(false)
+    }
+  }
 
   // 로딩 중
   if (loading) {
@@ -329,15 +397,127 @@ function PersonalityTestResult() {
             <p className="text-white/70 mb-10 max-w-xl mx-auto text-lg leading-relaxed">
               Unlock the 25-page Premium Report to discover detailed training roadmaps, breed-specific insights, and scientific cognitive benchmarks.
             </p>
-            <button className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95">
-              Get Premium Full Report
-            </button>
+            
+            {/* 리포트 생성 상태에 따른 버튼 표시 */}
+            {reportStatus === 'not_generated' && (
+              <button 
+                onClick={handleGenerateReport}
+                disabled={isGeneratingReport}
+                className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Get Premium Full Report
+              </button>
+            )}
+            
+            {reportStatus === 'generating' && (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-white/90 text-lg font-medium">Generating your premium report...</p>
+                <p className="text-white/60 text-sm">This may take up to 30 seconds</p>
+              </div>
+            )}
+            
+            {reportStatus === 'ready' && reportPages && (
+              <div className="space-y-6">
+                <button className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95">
+                  View Premium Report
+                </button>
+                <div className="text-white/80 text-sm">
+                  <span className="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>
+                  Report ready! Click to view
+                </div>
+              </div>
+            )}
+            
+            {reportStatus === 'failed' && (
+              <div className="space-y-4">
+                <p className="text-white/90 text-lg">Report generation failed. Please try again.</p>
+                <button 
+                  onClick={handleGenerateReport}
+                  className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-lg py-3 px-8 rounded-full shadow-xl transition-all"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            
+            {/* 개발자 모드 테스트 버튼 */}
+            {process.env.NODE_ENV === 'development' && reportStatus !== 'generating' && (
+              <div className="mt-6 pt-6 border-t border-white/20">
+                <button
+                  onClick={handleGenerateReport}
+                  disabled={isGeneratingReport}
+                  className="bg-white/20 hover:bg-white/30 text-white text-sm font-medium py-2 px-6 rounded-full transition-all disabled:opacity-50"
+                >
+                  {isGeneratingReport ? 'Generating...' : '프리미엄 리포트 생성 테스트 (Dev Only)'}
+                </button>
+              </div>
+            )}
+            
             <div className="mt-8 flex items-center justify-center gap-2 text-white/40 text-sm">
               <span className="material-symbols-outlined text-sm">verified_user</span>
               <span>Join 50,000+ happy pet parents worldwide.</span>
             </div>
           </div>
         </div>
+        
+        {/* 리포트 내용 표시 (ready 상태일 때) */}
+        {reportStatus === 'ready' && reportPages && (
+          <div className="mt-12 space-y-12">
+            <div className="flex items-center gap-4 mb-8">
+              <h2 className="text-3xl font-display font-bold text-primary">Premium Report</h2>
+              <div className="flex-grow h-[1px] bg-primary/10"></div>
+            </div>
+            
+            {/* 페이지 순서 정의 */}
+            {(() => {
+              const pageOrder = [
+                'table_of_contents',
+                'deep_dive_traits',
+                'cognitive_strengths',
+                'owner_chemistry',
+                'training_roadmap',
+                'social_adaptation',
+                'lifestyle_guide',
+                'heartfelt_message'
+              ]
+              
+              const pageTitles = {
+                'table_of_contents': '목차',
+                'deep_dive_traits': '성격 지표 심층 해설',
+                'cognitive_strengths': '인지적 강점과 본능적 천재성',
+                'owner_chemistry': '보호자와의 특별한 케미 분석',
+                'training_roadmap': '맞춤형 긍정 강화 교육 로드맵',
+                'social_adaptation': '사회성 및 환경 적응 가이드',
+                'lifestyle_guide': '완벽한 하루를 위한 라이프스타일',
+                'heartfelt_message': '보호자에게 보내는 특별한 메시지'
+              }
+              
+              return pageOrder
+                .filter(pageKey => reportPages[pageKey])
+                .map((pageKey, index) => {
+                  const pageData = reportPages[pageKey]
+                  const pageTitle = pageTitles[pageKey] || pageKey.replace(/_/g, ' ')
+                  
+                  return (
+                    <div key={pageKey} className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-primary/5">
+                      <div className="flex items-center gap-4 mb-8">
+                        <span className="text-4xl font-display font-black text-primary/10">{index + 1}</span>
+                        <h3 className="text-2xl font-display font-bold text-primary capitalize">
+                          {pageTitle}
+                        </h3>
+                      </div>
+                      
+                      {/* 정규식 대신 ReactMarkdown 사용으로 완벽한 렌더링 */}
+                      <div className="prose prose-lg prose-slate max-w-none text-[#2D3436]">
+                        <ReactMarkdown>{pageData.content}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )
+                })
+            })()}
+          </div>
+        )}
 
         {/* 결과 공유 (선택적) */}
         <div className="mt-12 text-center">

@@ -8,7 +8,11 @@ from datetime import datetime, timedelta
 import uuid
 import asyncio
 import os
+from dotenv import load_dotenv
 from openai import AsyncOpenAI
+
+# .env 파일의 내용을 로드합니다.
+load_dotenv()
 
 # 1. Firebase 인증 및 초기화 (안전한 초기화 - 중복 방지)
 if not firebase_admin._apps:
@@ -21,6 +25,10 @@ db = firestore.client()
 
 # 인메모리 캐시 (서버 실행 중 유지)
 cached_questions = {}
+
+# OpenAI 클라이언트 초기화
+# 이제 os.getenv가 .env 파일의 값을 가져올 수 있습니다.
+openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = FastAPI()
 
@@ -333,7 +341,7 @@ async def calculate_mbti(request: CalculateRequest):
             "created_at": now,
             "expire_at": expire_at,  # 삭제될 시간을 저장
             "report_status": "not_generated",  # 리포트 생성 상태 초기화
-            "report_pages": None,  # 리포트 페이지 데이터 초기화
+            "report_pages": {},  # 리포트 페이지 데이터 초기화
         }
         
         db.collection("test_results").document(result_id).set(result_data)
@@ -402,22 +410,11 @@ async def setup_archetypes():
 
 
 # ============================================================
-# [POST] AI 리포트 생성 API
+# [POST] 프리미엄 리포트 생성 API
 # ============================================================
 @app.post("/api/test/generate-report/{result_id}")
 async def generate_report(result_id: str):
-    """
-    테스트용 리포트 생성 엔드포인트
-    Firestore에서 결과 데이터를 가져와 OpenAI로 7개 페이지를 병렬 생성
-    """
     try:
-        # OpenAI 클라이언트 초기화
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise HTTPException(status_code=500, detail="OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
-        
-        client = AsyncOpenAI(api_key=api_key)
-        
         # 1. Firestore에서 결과 데이터 조회
         doc_ref = db.collection("test_results").document(result_id)
         doc = doc_ref.get()
@@ -426,130 +423,120 @@ async def generate_report(result_id: str):
             raise HTTPException(status_code=404, detail="결과를 찾을 수 없습니다.")
         
         result_data = doc.to_dict()
-        pet_name = result_data.get("pet_name", "Unknown")
+        pet_name = result_data.get("pet_name", "")
         mbti_code = result_data.get("mbti_code", "")
         stats = result_data.get("stats", {})
-        archetype = result_data.get("archetype", {})
         answers = result_data.get("answers", [])
         
-        # report_status를 'generating'으로 업데이트
+        # 보너스 답변 추출 (21-25번 질문) - 보호자 성향 데이터
+        owner_answers = [a for a in answers if a.get("question_id", 0) > 20]
+        
+        # 보호자 성향 데이터 포맷팅
+        owner_traits = {}
+        if owner_answers:
+            # 보호자 답변을 간단한 요약으로 변환
+            owner_summary = []
+            for ans in owner_answers:
+                likert = ans.get("likert_value", 0)
+                if likert > 0:
+                    owner_summary.append("활발하고 적극적인 성향")
+                elif likert < 0:
+                    owner_summary.append("차분하고 신중한 성향")
+                else:
+                    owner_summary.append("균형잡힌 성향")
+            owner_traits = {
+                "summary": ", ".join(set(owner_summary[:3])),  # 중복 제거 후 최대 3개
+                "answers": owner_answers
+            }
+        
+        # Stats 데이터를 문자열로 포맷팅
+        trait_stats = ", ".join([f"{key}: {value}%" for key, value in stats.items()])
+        
+        # 2. 리포트 상태를 'generating'으로 업데이트
         doc_ref.update({
-            "report_status": "generating"
+            "report_status": "generating",
+            "report_pages": {}
         })
         
-        # 2. Stats 데이터 해석 설명 생성
-        stats_interpretation = {
-            "sociability": f"사회성 {stats.get('sociability', 50)}% - {'외향적' if stats.get('sociability', 50) >= 50 else '내향적'} 성향",
-            "sagacity": f"지능성 {stats.get('sagacity', 50)}% - {'직관적' if stats.get('sagacity', 50) >= 50 else '감각적'} 성향",
-            "emotionality": f"감정성 {stats.get('emotionality', 50)}% - {'감정적' if stats.get('emotionality', 50) >= 50 else '이성적'} 성향",
-            "obedience": f"순종성 {stats.get('obedience', 50)}% - {'계획적' if stats.get('obedience', 50) >= 50 else '자유로운'} 성향",
-            "temperament": f"기질 {stats.get('temperament', 50)}% - {'안정적' if stats.get('temperament', 50) >= 50 else '활발한'} 성향"
-        }
+        # 3. 공통 시스템 프롬프트 (간결하게)
+        system_prompt = """너는 반려견 행동 심리 전문가다. 보호자에게 명확하고 따뜻하게 설명하라. 마크다운으로 작성하라."""
         
-        # 3. 7개 페이지별 프롬프트 정의
+        # 4. 8개 페이지별 프롬프트 정의 (목차 + 7개 내용 페이지)
         page_prompts = [
             {
+                "page": "table_of_contents",
+                "prompt": f"""다음은 {pet_name}의 프리미엄 성격 분석 리포트 목차입니다.
+
+리포트는 총 8페이지로 구성되며, 다음 내용을 포함합니다:
+1. 목차 (현재 페이지)
+2. 성격 지표 심층 해설
+3. 인지적 강점과 본능적 천재성
+4. 보호자와의 특별한 케미 분석
+5. 맞춤형 긍정 강화 교육 로드맵
+6. 사회성 및 환경 적응 가이드
+7. 완벽한 하루를 위한 라이프스타일
+8. 보호자에게 보내는 특별한 메시지
+
+위 목차를 마크다운 형식으로 예쁘게 포맷팅하여 작성해주세요. 각 페이지에 대한 간단한 설명(1-2줄)도 포함해주세요."""
+            },
+            {
+                "page": "deep_dive_traits",
+                "prompt": f"""반려견 {pet_name}의 5가지 성격 수치 데이터인 {trait_stats}를 분석해줘. 이 수치들이 단순한 숫자를 넘어 {pet_name}의 일상에서 어떤 행동 패턴으로 나타나는지 설명해줘. 특히 가장 높은 수치와 가장 낮은 수치가 부딪힐 때 나타나는 독특한 개성을 강조해서 한 페이지 분량의 심층 보고서를 작성해줘.
+
+MBTI 유형: {mbti_code}"""
+            },
+            {
+                "page": "cognitive_strengths",
+                "prompt": f"""{pet_name}의 성격 유형인 {mbti_code}과 사가시티(Sagacity) 수치를 바탕으로, 이 친구가 세상을 어떻게 이해하고 문제를 해결하는지 분석해줘. 예를 들어 새로운 장난감을 줬을 때나 낯선 길을 갈 때 어떤 인지적 프로세스를 거치는지, 이 유형만이 가진 '천재적인 모먼트'는 무엇인지 구체적인 예시를 들어 작성해줘.
+
+성격 통계: {trait_stats}"""
+            },
+            {
+                "page": "owner_chemistry",
+                "prompt": f"""가장 중요한 분석이야. 강아지 성향 데이터 {trait_stats}와 보호자의 성향 데이터 {owner_traits.get('summary', '보호자 성향 데이터 없음')}를 대조해줘. 1) 두 사람의 에너지가 가장 잘 맞는 부분, 2) 서로의 성향 차이로 인해 발생할 수 있는 잠재적 오해, 3) 보호자가 {pet_name}의 마음을 얻기 위해 실천할 수 있는 '심리적 접근법'을 분석해줘. 데이터에 기반하여 아주 개인화된 내용을 담아줘.
+
+{pet_name}의 MBTI 유형: {mbti_code}"""
+            },
+            {
                 "page": "training_roadmap",
-                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 다음 통계를 바탕으로 맞춤형 훈련 로드맵을 작성해주세요.
+                "prompt": f"""{pet_name}의 순종도(Obedience)와 기질(Temperament) 수치를 고려한 최적의 교육 전략을 세워줘. 강압적인 훈련 대신 이 친구의 동기부여를 자극할 수 있는 구체적인 방법(간식, 칭찬, 놀이 등)을 제시해줘. 특히 이 성격 유형이 쉽게 지루해하거나 스트레스받을 수 있는 지점을 짚어주고, 이를 극복하는 단계별 훈련 가이드를 작성해줘.
 
-통계:
-- {stats_interpretation['sociability']}
-- {stats_interpretation['sagacity']}
-- {stats_interpretation['emotionality']}
-- {stats_interpretation['obedience']}
-- {stats_interpretation['temperament']}
-
-이 데이터를 바탕으로 {pet_name}에게 가장 효과적인 훈련 방법, 단계별 접근법, 예상 소요 시간, 주의사항을 포함한 상세한 훈련 로드맵을 작성해주세요. 한국어로 작성하며, 실용적이고 구체적인 조언을 제공해주세요."""
+성격 통계: {trait_stats}
+MBTI 유형: {mbti_code}"""
             },
             {
-                "page": "behavior_analysis",
-                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 통계 데이터를 바탕으로 행동 분석 리포트를 작성해주세요.
+                "page": "social_adaptation",
+                "prompt": f"""{pet_name}의 사회성(Sociability)과 감정성(Emotionality) 수치를 바탕으로 사회생활 가이드를 작성해줘. 1) 애견 카페나 공원에서 다른 강아지를 만날 때의 매너 교육법, 2) 이사를 가거나 낯선 사람이 집에 왔을 때의 적응 단계, 3) 분리불안을 예방하기 위해 보호자가 제공해야 할 정서적 안전장치를 행동학적으로 제안해줘.
 
-통계:
-- {stats_interpretation['sociability']}
-- {stats_interpretation['sagacity']}
-- {stats_interpretation['emotionality']}
-- {stats_interpretation['obedience']}
-- {stats_interpretation['temperament']}
-
-이 데이터를 바탕으로 {pet_name}의 예상 행동 패턴, 강점, 주의해야 할 행동, 일상 생활에서의 특징을 분석해주세요. 한국어로 작성하며, 구체적인 예시를 포함해주세요."""
+성격 통계: {trait_stats}
+MBTI 유형: {mbti_code}"""
             },
             {
-                "page": "social_interaction",
-                "prompt": f"""반려견 {pet_name}의 사회성 통계({stats_interpretation['sociability']})를 바탕으로 사회적 상호작용 가이드를 작성해주세요.
+                "page": "lifestyle_guide",
+                "prompt": f"""{pet_name}의 에너지 레벨과 성향에 딱 맞는 '완벽한 하루 일과'를 설계해줘. 추천하는 산책 코스의 스타일(냄새 위주 vs 활동량 위주), 이 유형의 지능을 자극할 수 있는 노즈워크나 장난감 종류, 그리고 휴식 시간에 가장 편안함을 느낄 수 있는 환경 조성법을 추천해줘. 실제 제품 카테고리를 언급해도 좋아.
 
-성격 유형: {mbti_code}
-전체 통계:
-- {stats_interpretation['sociability']}
-- {stats_interpretation['sagacity']}
-- {stats_interpretation['emotionality']}
-- {stats_interpretation['obedience']}
-
-이 데이터를 바탕으로 {pet_name}가 다른 강아지, 사람, 새로운 환경과 어떻게 상호작용할지 예측하고, 사회화 훈련 방법, 주의사항, 긍정적인 사회적 경험을 만드는 방법을 제시해주세요. 한국어로 작성해주세요."""
+성격 통계: {trait_stats}
+MBTI 유형: {mbti_code}"""
             },
             {
-                "page": "health_wellness",
-                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 통계를 바탕으로 건강 및 웰니스 가이드를 작성해주세요.
+                "page": "heartfelt_message",
+                "prompt": f"""지금까지의 모든 분석을 종합하여, {pet_name}이 보호자에게 온 것은 어떤 의미인지 감동적인 마무리 편지를 써줘. 이 친구의 성격 유형이 가진 '사랑스러운 단점'마저도 소중한 이유를 언급해줘. 마지막에는 '당신은 {pet_name}에게 세상에서 가장 완벽한 보호자입니다'라는 메시지를 포함해 한 페이지를 채워줘.
 
-통계:
-- {stats_interpretation['sociability']}
-- {stats_interpretation['sagacity']}
-- {stats_interpretation['emotionality']}
-- {stats_interpretation['obedience']}
-- {stats_interpretation['temperament']}
-
-이 데이터를 바탕으로 {pet_name}의 성격에 맞는 운동량, 식습관, 정신 건강 관리, 스트레스 관리 방법을 제시해주세요. 한국어로 작성하며, 실용적인 조언을 포함해주세요."""
-            },
-            {
-                "page": "cognitive_benchmarks",
-                "prompt": f"""반려견 {pet_name}의 지능성 통계({stats_interpretation['sagacity']})를 바탕으로 인지 능력 벤치마크 리포트를 작성해주세요.
-
-성격 유형: {mbti_code}
-전체 통계:
-- {stats_interpretation['sociability']}
-- {stats_interpretation['sagacity']}
-- {stats_interpretation['emotionality']}
-- {stats_interpretation['obedience']}
-
-이 데이터를 바탕으로 {pet_name}의 인지 능력 수준, 학습 스타일, 문제 해결 능력, 적합한 정신 자극 활동을 분석하고 제시해주세요. 한국어로 작성하며, 과학적 근거를 포함해주세요."""
-            },
-            {
-                "page": "environment_setup",
-                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 통계를 바탕으로 최적의 환경 설정 가이드를 작성해주세요.
-
-통계:
-- {stats_interpretation['sociability']}
-- {stats_interpretation['sagacity']}
-- {stats_interpretation['emotionality']}
-- {stats_interpretation['obedience']}
-- {stats_interpretation['temperament']}
-
-이 데이터를 바탕으로 {pet_name}에게 가장 적합한 생활 환경, 공간 배치, 장난감 선택, 휴식 공간 설계를 제안해주세요. 한국어로 작성하며, 구체적인 예시를 포함해주세요."""
-            },
-            {
-                "page": "owner_bonding",
-                "prompt": f"""반려견 {pet_name}의 성격 유형({mbti_code})과 통계를 바탕으로 보호자와의 유대감 강화 가이드를 작성해주세요.
-
-통계:
-- {stats_interpretation['sociability']}
-- {stats_interpretation['sagacity']}
-- {stats_interpretation['emotionality']}
-- {stats_interpretation['obedience']}
-- {stats_interpretation['temperament']}
-
-이 데이터를 바탕으로 {pet_name}와 보호자가 더 깊은 유대감을 형성하는 방법, 소통 방법, 함께 즐길 수 있는 활동, 신뢰 구축 방법을 제시해주세요. 한국어로 작성하며, 감성적이고 실용적인 조언을 포함해주세요."""
+{pet_name}의 MBTI 유형: {mbti_code}
+성격 통계: {trait_stats}"""
             }
         ]
         
-        # 4. 7개 페이지를 병렬로 생성
-        async def generate_page(page_info):
+        # 5. 8개 페이지를 병렬로 생성 (최신 OpenAI API 사용)
+        async def generate_page(page_info: Dict) -> Dict:
+            """단일 페이지 생성"""
             try:
-                response = await client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
+                response = await openai_client.responses.create(
+                    model="gpt-5-mini",
+                    input=[
                         {
                             "role": "system",
-                            "content": "당신은 반려견 행동 전문가이자 훈련사입니다. 반려견의 성격 데이터를 바탕으로 실용적이고 구체적인 조언을 제공합니다."
+                            "content": system_prompt
                         },
                         {
                             "role": "user",
@@ -557,40 +544,70 @@ async def generate_report(result_id: str):
                         }
                     ],
                     temperature=0.7,
-                    max_tokens=1500
+                    max_output_tokens=1500
                 )
+                
+                content = response.output_text
+                
+                if not content:
+                    raise ValueError("응답 내용이 비어있습니다.")
+                
                 return {
                     "page": page_info["page"],
-                    "content": response.choices[0].message.content
+                    "content": content,
+                    "status": "success"
                 }
             except Exception as e:
-                print(f"페이지 {page_info['page']} 생성 실패: {str(e)}")
+                print(f"페이지 생성 실패 ({page_info['page']}): {str(e)}")
                 return {
                     "page": page_info["page"],
-                    "content": f"생성 중 오류가 발생했습니다: {str(e)}"
+                    "content": f"페이지 생성 중 오류: {str(e)}",
+                    "status": "error"
                 }
         
-        # 병렬 실행
-        tasks = [generate_page(page_info) for page_info in page_prompts]
-        results = await asyncio.gather(*tasks)
+        # 세마포어로 동시성 제한 (레이트 리밋 방지)
+        semaphore = asyncio.Semaphore(3)  # 최대 3개 동시 요청
         
-        # 5. 결과를 하나의 객체로 묶기
+        async def generate_page_limited(page_info: Dict) -> Dict:
+            """세마포어로 제한된 페이지 생성"""
+            async with semaphore:
+                return await generate_page(page_info)
+        
+        # 병렬 실행 (8개 페이지, 최대 3개씩 동시 실행)
+        print(f"\n{'='*60}")
+        print(f"📝 리포트 생성 시작: {result_id}")
+        print(f"📄 총 8페이지 생성 (목차 + 7개 내용 페이지)")
+        print(f"⚡ 동시성 제한: 최대 3개씩 순차 처리")
+        print(f"{'='*60}")
+        
+        page_results = await asyncio.gather(
+            *[generate_page_limited(page) for page in page_prompts]
+        )
+        
+        # 6. 결과를 하나의 객체로 묶기
         report_pages = {}
-        for result in results:
-            report_pages[result["page"]] = result["content"]
+        for result in page_results:
+            report_pages[result["page"]] = {
+                "content": result["content"],
+                "status": result["status"]
+            }
         
-        # 6. Firestore에 업데이트
+        # 7. Firestore에 저장
+        now = datetime.utcnow()
         doc_ref.update({
             "report_pages": report_pages,
             "report_status": "ready",
-            "generated_at": firestore.SERVER_TIMESTAMP
+            "generated_at": now
         })
+        
+        print(f"✅ 리포트 생성 완료: {result_id}")
+        print(f"{'='*60}\n")
         
         return {
             "status": "success",
-            "message": "리포트 생성이 완료되었습니다.",
             "result_id": result_id,
-            "pages_generated": len(report_pages)
+            "report_status": "ready",
+            "pages": list(report_pages.keys())
         }
         
     except HTTPException:
