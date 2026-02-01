@@ -618,9 +618,12 @@ function PersonalityTestResult() {
     return <LoadingScreen lang={lang} />
   }
 
-  // 에러 발생
+  // 에러 발생 - 한국어 메시지가 오면 UI_TEXT 메시지 사용
   if (error) {
-    return <ErrorScreen message={error} onRetry={() => window.location.reload()} lang={lang} />
+    const errorMessage = (typeof error === 'string' && (error.includes('찾을 수 없습니다') || error.includes('결과'))) 
+      ? uiText.error.noData 
+      : error
+    return <ErrorScreen message={errorMessage} onRetry={() => window.location.reload()} lang={lang} />
   }
 
   // 데이터 없음

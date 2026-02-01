@@ -26,11 +26,66 @@ const stage2ImageConfig = {
 
 const QUESTION_VERSION = 'dog_v1'
 
+// UI 텍스트 다국어 정의
+const UI_TEXT = {
+  en: {
+    loading: "Loading Questions...",
+    error: {
+      retry: "Retry"
+    },
+    stage1: {
+      title: "Personality Assessment",
+      subtitle: "Answer each question in order to complete the assessment."
+    },
+    stage2: {
+      title: "Owner Connection",
+      subtitle: "Almost done! Just 5 more questions about you.",
+      badge: "Owner Connection Round"
+    },
+    buttons: {
+      next: "Next",
+      seeResults: "See Results",
+      analyzing: "Analyzing..."
+    },
+    petName: {
+      label: "🐾 What's your pet's name?",
+      placeholder: "Enter your pet's name"
+    }
+  },
+  jp: {
+    loading: "質問を読み込み中...",
+    error: {
+      retry: "再試行"
+    },
+    stage1: {
+      title: "性格評価",
+      subtitle: "評価を完了するために、各質問に順番に答えてください。"
+    },
+    stage2: {
+      title: "飼い主とのつながり",
+      subtitle: "もう少しです！あなたについて5つの質問に答えてください。",
+      badge: "飼い主とのつながりラウンド"
+    },
+    buttons: {
+      next: "次へ",
+      seeResults: "結果を見る",
+      analyzing: "分析中..."
+    },
+    petName: {
+      label: "🐾 ペットの名前は？",
+      placeholder: "ペットの名前を入力してください"
+    }
+  }
+}
+
 function PersonalityTest() {
   const navigate = useNavigate()
   const { lang, localePath } = useLang()
   const { fetchQuestions, getQuestions, isLoading, getError } = useQuestions()
   const { cacheResult } = useResults()
+  
+  // UI 텍스트 가져오기 (언어별)
+  const uiText = UI_TEXT[lang] || UI_TEXT.en
   
   const [stage, setStage] = useState(1)
   const [mainAnswers, setMainAnswers] = useState({})
@@ -145,7 +200,7 @@ function PersonalityTest() {
       <div className="min-h-screen bg-[#F9FBF9] flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-primary/60 font-medium">Loading Questions...</p>
+          <p className="text-primary/60 font-medium">{uiText.loading}</p>
         </div>
       </div>
     )
@@ -162,7 +217,7 @@ function PersonalityTest() {
             onClick={() => window.location.reload()}
             className="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
-            Retry
+            {uiText.error.retry}
           </button>
         </div>
       </div>
@@ -172,25 +227,22 @@ function PersonalityTest() {
   return (
     <div className="min-h-screen bg-[#F9FBF9]">
       {/* Progress Bar */}
-      <TestNavbar answered={totalAnswered} total={totalQuestions} />
+      <TestNavbar answered={totalAnswered} total={totalQuestions} lang={lang} />
       
       <main className="pt-16 pb-20 px-4 md:px-6">
         <div className="max-w-2xl mx-auto space-y-8">
           {/* Title */}
           <div className="text-center mb-10 mt-4">
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-3 text-primary">
-              {stage === 1 ? 'Personality Assessment' : 'Owner Connection'}
+              {stage === 1 ? uiText.stage1.title : uiText.stage2.title}
             </h1>
             <p className="text-primary/60 text-lg font-light tracking-wide">
-              {stage === 1 
-                ? 'Answer each question in order to complete the assessment.'
-                : 'Almost done! Just 5 more questions about you.'
-              }
+              {stage === 1 ? uiText.stage1.subtitle : uiText.stage2.subtitle}
             </p>
             {stage === 2 && (
               <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-accent/20 rounded-full">
                 <span className="material-symbols-outlined text-accent">favorite</span>
-                <span className="text-accent font-medium text-sm">Owner Connection Round</span>
+                <span className="text-accent font-medium text-sm">{uiText.stage2.badge}</span>
               </div>
             )}
           </div>
@@ -232,7 +284,7 @@ function PersonalityTest() {
                   }
                 `}
               >
-                <span>Next</span>
+                <span>{uiText.buttons.next}</span>
                 <span className={`material-symbols-outlined transform transition-transform ${allAnswered ? 'group-hover:translate-x-1' : ''}`}>
                   arrow_forward
                 </span>
@@ -242,13 +294,13 @@ function PersonalityTest() {
                 {/* Pet Name Input */}
                 <div className="w-full max-w-md">
                   <label className="block text-primary text-lg font-medium mb-3 text-center">
-                    🐾 What's your pet's name?
+                    {uiText.petName.label}
                   </label>
                   <input
                     type="text"
                     value={petName}
                     onChange={(e) => setPetName(e.target.value)}
-                    placeholder="Enter your pet's name"
+                    placeholder={uiText.petName.placeholder}
                     className="w-full px-6 py-4 text-lg rounded-xl border-2 border-primary/20 bg-white text-primary placeholder-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center font-medium"
                   />
                 </div>
@@ -268,11 +320,11 @@ function PersonalityTest() {
                   {isSubmitting ? (
                     <>
                       <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Analyzing...</span>
+                      <span>{uiText.buttons.analyzing}</span>
                     </>
                   ) : (
                     <>
-                      <span>See Results</span>
+                      <span>{uiText.buttons.seeResults}</span>
                       <span className={`material-symbols-outlined text-2xl transform transition-transform ${canSeeResults ? 'group-hover:translate-x-1' : ''}`}>
                         celebration
                       </span>

@@ -1,13 +1,26 @@
-function TestNavbar({ answered, total }) {
+// UI 텍스트 다국어 정의
+const UI_TEXT = {
+  en: {
+    progress: "Progress",
+    answered: "Answered"
+  },
+  jp: {
+    progress: "進捗",
+    answered: "回答済み"
+  }
+}
+
+function TestNavbar({ answered, total, lang = 'en' }) {
   const progress = (answered / total) * 100
+  const uiText = UI_TEXT[lang] || UI_TEXT.en
 
   return (
     <div className="w-full bg-primary px-6 py-3 sticky top-[72px] z-40">
       <div className="max-w-4xl mx-auto flex flex-col gap-2">
         <div className="flex justify-between items-center">
-          <span className="text-secondary/70 text-sm font-medium">Progress</span>
+          <span className="text-secondary/70 text-sm font-medium">{uiText.progress}</span>
           <div className="text-white font-semibold text-sm bg-white/10 px-3 py-1 rounded-full">
-            {answered} of {total} Answered
+            {answered} / {total} {uiText.answered}
           </div>
         </div>
         <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden relative">
