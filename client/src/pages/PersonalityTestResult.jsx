@@ -648,16 +648,6 @@ function PersonalityTestResult() {
               </p>
               
               {/* 리포트 생성 상태에 따른 버튼 표시 */}
-              {reportStatus === 'not_generated' && (
-                <button 
-                  onClick={handleGenerateReport}
-                  disabled={isGeneratingReport}
-                  className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uiText.premium.cta.getReport}
-                </button>
-              )}
-              
               {reportStatus === 'generating' && (
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -666,43 +656,36 @@ function PersonalityTestResult() {
                 </div>
               )}
               
-              {reportStatus === 'ready' && reportPages && (
+              {(reportStatus === 'not_generated' || reportStatus === 'ready' || reportStatus === 'failed') && (
                 <div className="space-y-6">
                   <button 
-                    onClick={() => setCurrentTab('premium')}
-                    className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95"
+                    onClick={() => {
+                      if (reportStatus === 'ready' && reportPages) {
+                        // 리포트가 준비되어 있으면 바로 보기
+                        setCurrentTab('premium')
+                      } else {
+                        // 리포트가 없거나 실패했으면 생성
+                        handleGenerateReport()
+                      }
+                    }}
+                    disabled={isGeneratingReport || reportStatus === 'generating'}
+                    className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {uiText.premium.cta.viewReport}
+                    {reportStatus === 'ready' && reportPages 
+                      ? uiText.premium.cta.viewReport 
+                      : reportStatus === 'failed'
+                      ? uiText.premium.cta.retry
+                      : uiText.premium.cta.getReport}
                   </button>
-                  <div className="text-white/80 text-sm">
-                    <span className="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>
-                    {uiText.premium.cta.ready}
-                  </div>
-                </div>
-              )}
-              
-              {reportStatus === 'failed' && (
-                <div className="space-y-4">
-                  <p className="text-white/90 text-lg">{uiText.premium.cta.failed}</p>
-                  <button 
-                    onClick={handleGenerateReport}
-                    className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-lg py-3 px-8 rounded-full shadow-xl transition-all"
-                  >
-                    {uiText.premium.cta.retry}
-                  </button>
-                </div>
-              )}
-              
-              {/* 개발자 모드 테스트 버튼 */}
-              {process.env.NODE_ENV === 'development' && reportStatus !== 'generating' && (
-                <div className="mt-6 pt-6 border-t border-white/20">
-                  <button
-                    onClick={handleGenerateReport}
-                    disabled={isGeneratingReport}
-                    className="bg-white/20 hover:bg-white/30 text-white text-sm font-medium py-2 px-6 rounded-full transition-all disabled:opacity-50"
-                  >
-                    {isGeneratingReport ? (lang === 'jp' ? '生成中...' : 'Generating...') : uiText.premium.cta.devTest}
-                  </button>
+                  {reportStatus === 'ready' && reportPages && (
+                    <div className="text-white/80 text-sm">
+                      <span className="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>
+                      {uiText.premium.cta.ready}
+                    </div>
+                  )}
+                  {reportStatus === 'failed' && (
+                    <p className="text-white/70 text-sm">{uiText.premium.cta.failed}</p>
+                  )}
                 </div>
               )}
               
