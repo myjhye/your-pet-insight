@@ -9,18 +9,30 @@ import uuid
 import asyncio
 import os
 import random
+import json
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
 # .env 파일의 내용을 로드합니다.
 load_dotenv()
 
-# 1. Firebase 인증 및 초기화 (안전한 초기화 - 중복 방지)
+# 1. Firebase 인증 및 초기화
 if not firebase_admin._apps:
-    cred = credentials.Certificate("serviceAccountKey.json")
+    # 환경 변수에서 인증 정보를 가져옴
+    cred_json = os.getenv("FIREBASE_CREDENTIALS")
+    
+    if cred_json:
+        # 서버 환경: 환경 변수 문자열을 JSON으로 파싱해서 사용
+        cred_dict = json.loads(cred_json)
+        cred = credentials.Certificate(cred_dict)
+    else:
+        # 로컬 환경: 파일이 있으면 사용 (없으면 에러)
+        if os.path.exists("serviceAccountKey.json"):
+            cred = credentials.Certificate("serviceAccountKey.json")
+        else:
+            raise FileNotFoundError("Firebase 인증 정보(파일 또는 환경 변수)가 없습니다.")
+            
     firebase_admin.initialize_app(cred)
-else:
-    firebase_admin.get_app()
 
 db = firestore.client()
 
