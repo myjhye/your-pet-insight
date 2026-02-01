@@ -26,7 +26,9 @@ const UI_TEXT = {
     error: {
       title: "Oops! Something went wrong",
       tryAgain: "Try Again",
-      noData: "Result data not found."
+      noData: "Result data not found.",
+      languageMismatch: "This result was created in a different language.",
+      viewInOriginal: "View in Original Language"
     },
     tabs: {
       basic: "Basic Results",
@@ -122,7 +124,9 @@ const UI_TEXT = {
     error: {
       title: "エラーが発生しました",
       tryAgain: "再試行",
-      noData: "結果データが見つかりません。"
+      noData: "結果データが見つかりません。",
+      languageMismatch: "この結果は別の言語で作成されました。",
+      viewInOriginal: "元の言語で表示"
     },
     tabs: {
       basic: "基本結果",
@@ -246,6 +250,43 @@ function ErrorScreen({ message, onRetry, lang = 'en' }) {
   )
 }
 
+// 언어 불일치 전용 에러 컴포넌트
+function LanguageMismatchScreen({ originalLang, currentLang, onViewOriginal }) {
+  const text = UI_TEXT[currentLang] || UI_TEXT.en
+  
+  // 언어 이름 매핑
+  const langNames = {
+    en: { en: 'English', jp: '英語' },
+    jp: { en: 'Japanese', jp: '日本語' }
+  }
+  
+  const originalLangName = langNames[originalLang]?.[currentLang] || originalLang.toUpperCase()
+  
+  return (
+    <main className="min-h-screen bg-[#F9FBF9] flex items-center justify-center">
+      <div className="text-center max-w-md px-6">
+        <span className="material-symbols-outlined text-7xl text-primary/40 mb-6 block">translate</span>
+        <h2 className="text-2xl font-display font-bold text-primary mb-4">
+          {text.error.languageMismatch}
+        </h2>
+        <p className="text-primary/60 mb-8">
+          {currentLang === 'jp' 
+            ? `このテストは${originalLangName}で受けました。元の言語で結果をご覧ください。`
+            : `This test was taken in ${originalLangName}. Please view the result in the original language.`
+          }
+        </p>
+        <button
+          onClick={onViewOriginal}
+          className="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-xl">open_in_new</span>
+          {text.error.viewInOriginal}
+        </button>
+      </div>
+    </main>
+  )
+}
+
 // Stats 막대 그래프 컴포넌트
 function StatBar({ name, label, value, color }) {
   // 성향 강도 계산: 항상 50~100% 사이로 표시 (주도 성향의 강도)
@@ -341,6 +382,9 @@ function PersonalityTestResult() {
   // Share 기능 상태
   const [copied, setCopied] = useState(false)
   
+  // 언어 불일치 상태
+  const [languageMismatch, setLanguageMismatch] = useState(false)
+  
   // 메인 탭 상태 관리 (기본 결과 / 프리미엄 리포트)
   const [currentTab, setCurrentTab] = useState('basic')
   
@@ -359,6 +403,18 @@ function PersonalityTestResult() {
   const resultData = getResult(resultId)
   const loading = isLoading(resultId)
   const error = getError(resultId)
+  
+  // 언어 불일치 체크 (locale 또는 lang 필드 사용)
+  useEffect(() => {
+    if (resultData) {
+      const originalLang = resultData.locale || resultData.lang
+      if (originalLang && lang !== originalLang) {
+        setLanguageMismatch(true)
+      } else {
+        setLanguageMismatch(false)
+      }
+    }
+  }, [resultData, lang])
   
   // 이미지 경로 설정 및 확장자 시도
   useEffect(() => {
@@ -570,6 +626,21 @@ function PersonalityTestResult() {
   // 데이터 없음
   if (!resultData) {
     return <ErrorScreen message={uiText.error.noData} onRetry={() => window.location.reload()} lang={lang} />
+  }
+
+  // 언어 불일치 - 에러 화면 표시
+  if (languageMismatch && resultData) {
+    const originalLang = resultData.locale || resultData.lang
+    return (
+      <LanguageMismatchScreen 
+        originalLang={originalLang}
+        currentLang={lang}
+        onViewOriginal={() => {
+          const newPath = window.location.pathname.replace(`/${lang}/`, `/${originalLang}/`)
+          window.location.href = newPath
+        }}
+      />
+    )
   }
 
   // 데이터 추출

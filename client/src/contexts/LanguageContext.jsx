@@ -8,6 +8,8 @@ export const LANGUAGES = {
   jp: { code: 'jp', label: '日本語', flag: '🇯🇵' },
 }
 
+// 지원하는 언어 목록 (여기서 관리)
+export const SUPPORTED_LANGUAGES = ['en', 'jp']
 export const DEFAULT_LANG = 'en'
 
 export function LanguageProvider({ children }) {
@@ -15,8 +17,18 @@ export function LanguageProvider({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   
+  // 지원하지 않는 언어 체크 & 리다이렉트
+  useEffect(() => {
+    if (lang && !SUPPORTED_LANGUAGES.includes(lang)) {
+      // 현재 경로에서 잘못된 언어를 기본 언어로 교체
+      const newPath = location.pathname.replace(`/${lang}/`, `/${DEFAULT_LANG}/`)
+      // 기본 언어로 리다이렉트 (replace로 히스토리 대체)
+      navigate(newPath, { replace: true })
+    }
+  }, [lang, location.pathname, navigate])
+  
   // URL에서 언어 코드 가져오기 (없으면 기본값 en)
-  const currentLang = LANGUAGES[lang] ? lang : DEFAULT_LANG
+  const currentLang = SUPPORTED_LANGUAGES.includes(lang) ? lang : DEFAULT_LANG
   
   // body 태그에 언어 속성 추가 (일본어 폰트 최적화용)
   useEffect(() => {
@@ -30,9 +42,12 @@ export function LanguageProvider({ children }) {
 
   // 언어 변경 함수
   const changeLang = (newLang) => {
+    // 지원하지 않는 언어는 무시
+    if (!SUPPORTED_LANGUAGES.includes(newLang)) return
+    
     const pathParts = location.pathname.split('/')
     // 첫 번째 부분이 언어 코드인지 확인
-    if (LANGUAGES[pathParts[1]]) {
+    if (SUPPORTED_LANGUAGES.includes(pathParts[1])) {
       pathParts[1] = newLang
     } else {
       pathParts.splice(1, 0, newLang)
@@ -54,7 +69,9 @@ export function LanguageProvider({ children }) {
       langInfo: LANGUAGES[currentLang],
       changeLang, 
       localePath,
-      languages: LANGUAGES 
+      languages: LANGUAGES,
+      SUPPORTED_LANGUAGES,
+      DEFAULT_LANG
     }}>
       {children}
     </LanguageContext.Provider>
