@@ -420,12 +420,391 @@ async def setup_archetypes():
 
 
 # ============================================================
-# [POST] 프리미엄 리포트 생성 API
+# V2 프롬프트 함수들
+# ============================================================
+def get_system_prompt_v2(lang: str, pet_name: str, mbti_code: str, stats: dict, owner_summary: str) -> str:
+    """V2 시스템 프롬프트 - 간결하고 명확한 지시"""
+    
+    mbti_meanings = {
+        "E": {"en": "Social & Outgoing", "jp": "社交的で外向的"},
+        "I": {"en": "Independent & Reserved", "jp": "独立心があり控えめ"},
+        "S": {"en": "Practical & Grounded", "jp": "実践的で現実的"},
+        "N": {"en": "Curious & Imaginative", "jp": "好奇心旺盛で想像力豊か"},
+        "F": {"en": "Emotional & Empathetic", "jp": "感情豊かで共感的"},
+        "T": {"en": "Calm & Logical", "jp": "冷静で論理的"},
+        "J": {"en": "Structured & Disciplined", "jp": "規律正しく計画的"},
+        "P": {"en": "Flexible & Spontaneous", "jp": "柔軟で自発的"}
+    }
+    
+    traits = [mbti_meanings.get(letter, {}).get(lang, letter) for letter in mbti_code]
+    
+    if lang == "jp":
+        return f"""あなたは犬の性格分析の専門家です。読みやすいブログ記事のように書いてください。
+
+【{pet_name}のプロファイル】
+- 性格タイプ: {mbti_code} ({', '.join(traits)})
+- 社交性: {stats.get('sociability', 50)}% | 知性: {stats.get('sagacity', 50)}%
+- 感情性: {stats.get('emotionality', 50)}% | 従順性: {stats.get('obedience', 50)}%
+- 飼い主: {owner_summary}
+
+【フォーマット規則】
+✅ Markdownを使用: # 見出し、## 小見出し、**太字**、> 引用、- リスト
+✅ 各セクションは簡潔に（2-3段落）
+✅ 数値を根拠として自然に言及
+✅ 「です/ます」調
+
+❌ 禁止: 過度な時間描写、同じフレーズの繰り返し、長すぎる文章"""
+
+    else:
+        return f"""You are a dog personality analysis expert. Write like a friendly, readable blog post.
+
+【{pet_name}'s Profile】
+- Type: {mbti_code} ({', '.join(traits)})
+- Sociability: {stats.get('sociability', 50)}% | Sagacity: {stats.get('sagacity', 50)}%
+- Emotionality: {stats.get('emotionality', 50)}% | Obedience: {stats.get('obedience', 50)}%
+- Owner: {owner_summary}
+
+【Format Rules】
+✅ Use Markdown: # Heading, ## Subheading, **bold**, > quote, - list
+✅ Keep sections concise (2-3 paragraphs each)
+✅ Reference stats naturally as evidence
+✅ Warm but professional tone
+
+❌ Forbidden: Excessive time descriptions, repetitive phrases, overly long sentences"""
+
+
+def get_page_prompts_v2(lang: str, pet_name: str, mbti_code: str, stats: dict, owner_summary: str) -> list:
+    """V2 페이지별 프롬프트 - 구체적이고 데이터 기반"""
+    
+    # 특성 판단
+    high_soc = stats.get('sociability', 50) >= 55
+    high_sag = stats.get('sagacity', 50) >= 55
+    high_emo = stats.get('emotionality', 50) >= 55
+    high_obe = stats.get('obedience', 50) >= 55
+    
+    if lang == "jp":
+        return [
+            {
+                "page": "table_of_contents",
+                "prompt": f"""# 📖 {pet_name}の性格分析レポート
+
+美しい目次を作成してください（200字以内）:
+
+1. 性格の全体像
+2. 学習スタイルと知性
+3. 飼い主との相性
+4. トレーニング戦略
+5. 社会化ガイド
+6. 理想の一日
+7. {pet_name}からのメッセージ
+
+各項目に絵文字と簡単な説明を1行ずつ追加。"""
+            },
+            {
+                "page": "deep_dive_traits",
+                "prompt": f"""# 🐕 {pet_name}の性格：{mbti_code}タイプ
+
+## なぜ{mbti_code}タイプなのか
+数値に基づいて説明:
+- 社交性 {stats.get('sociability', 50)}%: {'外向的で人懐っこい' if high_soc else '慎重で選択的'}
+- 知性 {stats.get('sagacity', 50)}%: {'観察力が鋭い' if high_sag else '直感的'}
+- 感情性 {stats.get('emotionality', 50)}%: {'感情豊か' if high_emo else '安定している'}
+- 従順性 {stats.get('obedience', 50)}%: {'ルールを好む' if high_obe else '自由を好む'}
+
+## 💪 {pet_name}の3つの強み
+具体例を挙げて説明。
+
+## ⚠️ 気をつけたいこと
+1-2つの注意点と対策。
+
+> {pet_name}を一言で表すと？"""
+            },
+            {
+                "page": "cognitive_strengths",
+                "prompt": f"""# 🧠 {pet_name}の学習スタイル
+
+知性スコア: **{stats.get('sagacity', 50)}%**
+
+## 学習パターン
+{'「見て→考えて→やる」タイプ' if high_sag else '「やって→感じて→覚える」タイプ'}
+- 新しいことを教える時のコツ
+- 避けるべき方法
+
+## 🧩 問題解決の得意分野
+- パズルおもちゃへの反応
+- 新しい環境での行動
+
+## 知性を活かす3つのアクティビティ
+具体的な遊び方を提案。"""
+            },
+            {
+                "page": "owner_chemistry",
+                "prompt": f"""# 💕 あなたと{pet_name}の相性
+
+飼い主: **{owner_summary}**
+{pet_name}: **{mbti_code}**
+
+## なぜ相性が良いのか
+3つの理由を具体的に。
+
+## 🔧 こんな時は要注意
+正直に1-2つの課題と解決策。
+
+## 絆を深める毎日の習慣
+すぐ実践できる3つの行動。
+
+> この組み合わせの魅力を一言で。"""
+            },
+            {
+                "page": "training_roadmap",
+                "prompt": f"""# 🎓 {pet_name}のトレーニング戦略
+
+従順性: **{stats.get('obedience', 50)}%**
+
+## 最適なスタイル
+{'ルールベース：一貫性と明確な境界が効果的' if high_obe else 'ゲームベース：遊びながら学ぶのが効果的'}
+
+## 📅 2週間プラン
+
+**Week 1:** 基礎
+- 教えるコマンド（3つ）
+- 練習時間と頻度
+
+**Week 2:** 応用
+- 次のステップ
+
+## 🏆 モチベーションのコツ
+- ご褒美の選び方
+- ベストタイミング
+- NGな方法"""
+            },
+            {
+                "page": "social_adaptation",
+                "prompt": f"""# 🐾 {pet_name}の社会化ガイド
+
+社交性: **{stats.get('sociability', 50)}%**
+
+## 他の犬との付き合い方
+{'積極的に交流したがるタイプ' if high_soc else '慎重に距離を取るタイプ'}
+- 初対面のコツ
+- ドッグパークでの注意点
+
+## 人への反応
+- 来客時の対応
+- 知らない人との接し方
+
+## 環境変化への適応
+感情性 {stats.get('emotionality', 50)}%
+- 引っ越し時のケア
+- 分離不安の{'予防策（リスク高め）' if high_emo else '心配は少ないが念のため'}"""
+            },
+            {
+                "page": "lifestyle_guide",
+                "prompt": f"""# ☀️ {pet_name}の理想的な一日
+
+## 🌅 朝 (6:00-9:00)
+- 起床後のルーティン
+- 朝散歩: {'活発に30-45分' if high_soc else '静かに20-30分'}
+
+## 🏠 日中 (9:00-17:00)
+- 留守番の環境設定
+- おすすめのおもちゃ
+
+## 🌆 夕方 (17:00-20:00)
+- 2回目の散歩
+- 頭を使う遊び
+
+## 🌙 夜 (20:00-)
+- 就寝準備
+- 寝床の環境
+
+時間と具体的なアクションをセットで。"""
+            },
+            {
+                "page": "heartfelt_message",
+                "prompt": f"""# 💌 {pet_name}からあなたへ
+
+{pet_name}の視点で飼い主へのメッセージを書いてください。
+
+内容:
+- {mbti_code}タイプとして感じること
+- {owner_summary}な飼い主への感謝
+- これからの日々への期待
+
+**トーン:** 温かく、でも甘すぎず
+**長さ:** 150-200字
+
+> 「あなたは{pet_name}にとって最高の飼い主です」という趣旨で締めくくり。"""
+            }
+        ]
+    
+    else:  # English
+        return [
+            {
+                "page": "table_of_contents",
+                "prompt": f"""# 📖 {pet_name}'s Personality Report
+
+Create a clean table of contents (under 150 words):
+
+1. Personality Overview
+2. Learning Style & Intelligence
+3. Owner Compatibility
+4. Training Strategy
+5. Socialization Guide
+6. Ideal Daily Routine
+7. Message from {pet_name}
+
+Add an emoji and one-line description for each."""
+            },
+            {
+                "page": "deep_dive_traits",
+                "prompt": f"""# 🐕 {pet_name}'s Personality: {mbti_code} Type
+
+## Why {mbti_code}?
+Based on the scores:
+- Sociability {stats.get('sociability', 50)}%: {'Outgoing and friendly' if high_soc else 'Cautious and selective'}
+- Sagacity {stats.get('sagacity', 50)}%: {'Sharp observer' if high_sag else 'Intuitive'}
+- Emotionality {stats.get('emotionality', 50)}%: {'Expressive' if high_emo else 'Stable'}
+- Obedience {stats.get('obedience', 50)}%: {'Loves structure' if high_obe else 'Values freedom'}
+
+## 💪 3 Key Strengths
+With specific examples.
+
+## ⚠️ Watch Out For
+1-2 challenges with solutions.
+
+> Describe {pet_name} in one sentence."""
+            },
+            {
+                "page": "cognitive_strengths",
+                "prompt": f"""# 🧠 How {pet_name} Learns
+
+Sagacity Score: **{stats.get('sagacity', 50)}%**
+
+## Learning Pattern
+{'Watch → Think → Do type' if high_sag else 'Do → Feel → Learn type'}
+- Tips for teaching new things
+- What to avoid
+
+## 🧩 Problem-Solving Strengths
+- Response to puzzle toys
+- Behavior in new places
+
+## 3 Activities to Engage Their Mind
+Specific suggestions."""
+            },
+            {
+                "page": "owner_chemistry",
+                "prompt": f"""# 💕 You & {pet_name}: Compatibility
+
+You: **{owner_summary}**
+{pet_name}: **{mbti_code}**
+
+## Why You're Great Together
+3 specific reasons.
+
+## 🔧 Potential Challenges
+1-2 honest points with solutions.
+
+## Daily Habits to Bond
+3 easy actions.
+
+> Sum up this pairing in one line."""
+            },
+            {
+                "page": "training_roadmap",
+                "prompt": f"""# 🎓 Training Strategy for {pet_name}
+
+Obedience: **{stats.get('obedience', 50)}%**
+
+## Best Approach
+{'Rule-based: Consistency and clear boundaries work best' if high_obe else 'Game-based: Learning through play works best'}
+
+## 📅 2-Week Plan
+
+**Week 1:** Foundation
+- Commands to teach (3)
+- Practice time & frequency
+
+**Week 2:** Building up
+- Next steps
+
+## 🏆 Motivation Tips
+- Best rewards
+- Optimal timing
+- What NOT to do"""
+            },
+            {
+                "page": "social_adaptation",
+                "prompt": f"""# 🐾 Socialization Guide for {pet_name}
+
+Sociability: **{stats.get('sociability', 50)}%**
+
+## Meeting Other Dogs
+{'Actively seeks interaction' if high_soc else 'Takes time to warm up'}
+- First meeting tips
+- Dog park advice
+
+## Meeting People
+- Handling guests
+- Strangers
+
+## Adapting to Change
+Emotionality {stats.get('emotionality', 50)}%
+- Moving tips
+- Separation anxiety: {'Higher risk - prevention tips' if high_emo else 'Lower risk but still'}"""
+            },
+            {
+                "page": "lifestyle_guide",
+                "prompt": f"""# ☀️ {pet_name}'s Perfect Day
+
+## 🌅 Morning (6:00-9:00)
+- Wake-up routine
+- Morning walk: {'Active 30-45 min' if high_soc else 'Calm 20-30 min'}
+
+## 🏠 Daytime (9:00-17:00)
+- Alone time setup
+- Recommended toys
+
+## 🌆 Evening (17:00-20:00)
+- Second walk
+- Mental stimulation
+
+## 🌙 Night (20:00-)
+- Bedtime routine
+- Sleep environment
+
+Include times and specific actions."""
+            },
+            {
+                "page": "heartfelt_message",
+                "prompt": f"""# 💌 A Message from {pet_name}
+
+Write from {pet_name}'s perspective to their owner.
+
+Include:
+- What being {mbti_code} feels like
+- Gratitude for a {owner_summary} owner
+- Hope for the future
+
+**Tone:** Warm but not overly sentimental
+**Length:** 100-150 words
+
+> End with: "You are the perfect owner for {pet_name}." variation."""
+            }
+        ]
+
+
+# ============================================================
+# [POST] 프리미엄 리포트 생성 API V2
 # ============================================================
 @app.post("/api/test/generate-report/{result_id}")
 async def generate_report(result_id: str, lang: str = "en"):
+    """
+    V2 리포트 생성 - 개선된 프롬프트 + 명확한 Markdown 출력
+    """
     try:
-        # 언어 검증: en 또는 jp만 허용
+        # 언어 검증
         if lang not in ["en", "jp"]:
             raise HTTPException(status_code=400, detail="Language must be 'en' or 'jp' only.")
         
@@ -437,400 +816,490 @@ async def generate_report(result_id: str, lang: str = "en"):
             raise HTTPException(status_code=404, detail="Result not found.")
         
         result_data = doc.to_dict()
-        pet_name = result_data.get("pet_name", "")
-        mbti_code = result_data.get("mbti_code", "")
+        pet_name = result_data.get("pet_name", "Pet")
+        mbti_code = result_data.get("mbti_code", "ESFP")
         stats = result_data.get("stats", {})
         answers = result_data.get("answers", [])
         
-        # 보너스 답변 추출 (21-25번 질문) - 보호자 성향 데이터
+        # 보너스 답변에서 보호자 성향 추출 (간소화)
         owner_answers = [a for a in answers if a.get("question_id", 0) > 20]
-        
-        # 보호자 성향 데이터 포맷팅 (언어별)
-        owner_traits = {}
         if owner_answers:
-            owner_summary = []
-            for ans in owner_answers:
-                likert = ans.get("likert_value", 0)
-                if lang == "jp":
-                    if likert > 0:
-                        owner_summary.append("活発で積極的な傾向")
-                    elif likert < 0:
-                        owner_summary.append("落ち着いて慎重な傾向")
-                    else:
-                        owner_summary.append("バランスの取れた傾向")
-                else:  # en
-                    if likert > 0:
-                        owner_summary.append("Active and proactive")
-                    elif likert < 0:
-                        owner_summary.append("Calm and cautious")
-                    else:
-                        owner_summary.append("Balanced")
-            owner_traits = {
-                "summary": ", ".join(set(owner_summary[:3])),
-                "answers": owner_answers
-            }
+            avg_likert = sum(a.get("likert_value", 0) for a in owner_answers) / len(owner_answers)
+            if lang == "jp":
+                owner_summary = "活発で積極的" if avg_likert > 0.5 else "バランス型" if avg_likert > -0.5 else "慎重で穏やか"
+            else:
+                owner_summary = "Active and proactive" if avg_likert > 0.5 else "Balanced and steady" if avg_likert > -0.5 else "Calm and cautious"
+        else:
+            owner_summary = "Balanced" if lang == "en" else "バランス型"
         
-        # Stats 데이터를 문자열로 포맷팅
-        trait_stats = ", ".join([f"{key}: {value}%" for key, value in stats.items()])
-        
-        # 1. 모든 페이지가 참고할 '개인화 컨텍스트' 생성
-        owner_summary_text = owner_traits.get('summary', 'Balanced' if lang == 'en' else 'バランス型')
-        personal_context = f"""
-- Pet Name: {pet_name}
-- Dog's Personality: {mbti_code} ({trait_stats})
-- Owner's Personality: {owner_summary_text}
-"""
-        
-        # 2. 리포트 상태를 'generating'으로 업데이트
+        # 2. 상태 업데이트
         doc_ref.update({
             "report_status": "generating",
             "report_pages": {}
         })
         
-        # 3. 공통 시스템 프롬프트 고도화 (블로그/잡지 스타일 + 개인화 강조)
+        # 3. 특성 판단 (프롬프트에서 사용)
+        high_soc = stats.get('sociability', 50) >= 55
+        high_sag = stats.get('sagacity', 50) >= 55
+        high_emo = stats.get('emotionality', 50) >= 55
+        high_obe = stats.get('obedience', 50) >= 55
+        
+        # 4. V2 시스템 프롬프트
         if lang == "jp":
-            system_prompt = f"""あなたは世界的なペット心理学者です。以下の情報を基に、一冊の高級雑誌のようなリポートを書いてください。
+            system_prompt = f"""あなたは犬の性格分析の専門家です。
 
-{personal_context}
+【重要: 出力形式】
+必ずMarkdown形式で書いてください:
+- # で大見出し (ページタイトル)
+- ## で中見出し (セクション)
+- **太字** で強調
+- > で引用ブロック
+- - でリスト
 
-【重要：個人化の指針】
-飼い主の傾向（{owner_summary_text}）に合わせて、アドバイスの内容や語調を調整してください。飼い主の性格を深く理解した上で、{pet_name}との関係性を分析してください。
-
-【重要：構造化の指針】
-- ページごとに必ず # 大見出し と ## 中見出し を使ってください
-- 中見出しは「性格数値分析」のような硬い表現ではなく、「なぜ{pet_name}は玄関の音に特に敏感なのでしょうか？」のように読者の興味を引く質問や魅力的なフレーズを使用してください
-- 箇条書き(- )と引用文(> )を積極的に使い、視覚的なリズムを作ってください
-- 単なるデータの羅列ではなく、日常のシーンを映画のように描写してください（例：「朝7時に{pet_name}があなたを見つめるその目つき」）
+【{pet_name}のデータ】
+性格: {mbti_code}
+社交性: {stats.get('sociability', 50)}% | 知性: {stats.get('sagacity', 50)}%
+感情性: {stats.get('emotionality', 50)}% | 従順性: {stats.get('obedience', 50)}%
+飼い主: {owner_summary}
 
 【スタイル】
-数値を列挙するのではなく、「飼い主が帰宅した時に{pet_name}が見せる具体的な行動」や「散歩中に知らない犬に会った時の目つき」のように日常的な描写をたっぷりと含めて書いてください。
-専門的でありながら感動的な語調を保ち、必ず日本語で「です/ます」調を使用して丁寧に書いてください。
-人気のあるペット雑誌のトーンを参考にしてください。
+- 各セクション2-3段落以内
+- 数値(%)を根拠として言及
+- 「です/ます」調
+- 抽象的な描写より具体的なアドバイス"""
 
-マークダウン形式で記述してください。"""
-        else:  # en
-            system_prompt = f"""You are a world-class pet psychologist and a gifted storyteller. 
-Write a premium magazine-style report based on: {personal_context}
+        else:  # English
+            system_prompt = f"""You are a dog personality analysis expert.
 
-【PERSONALIZATION GUIDELINE】
-Tailor all advice and the tone to match the owner's trait: {owner_summary_text}. Deeply understand the owner's personality and analyze their relationship with {pet_name} accordingly.
+【CRITICAL: Output Format】
+You MUST write in Markdown format:
+- # for main heading (page title)
+- ## for subheading (section)
+- **bold** for emphasis
+- > for blockquotes
+- - for bullet lists
 
-【STRUCTURAL GUIDELINE】
-- Use # H1 for the page title and ## H2 for sub-points
-- Subheadings should not be dry expressions like "Personality Score Analysis" but rather engaging questions or captivating phrases that spark the reader's curiosity, such as "Why is {pet_name} particularly sensitive to the sound of the front door?"
-- Use bullet points(-) and blockquotes(>) to create a dynamic visual flow
-- Describe daily life scenes vividly (e.g., "The way {pet_name} looks at you at 7 AM")
-- NO dry data listing. Focus on storytelling and emotional connection
+【{pet_name}'s Data】
+Personality: {mbti_code}
+Sociability: {stats.get('sociability', 50)}% | Sagacity: {stats.get('sagacity', 50)}%
+Emotionality: {stats.get('emotionality', 50)}% | Obedience: {stats.get('obedience', 50)}%
+Owner: {owner_summary}
 
-【STYLE】
-Instead of listing numbers, write with plenty of everyday descriptions like 'the specific behavior {pet_name} shows when the owner comes home from work' or 'the look in their eyes when meeting a strange dog during a walk'.
-Maintain a professional yet touching tone, and write everything in English with the sophisticated tone of a popular pet magazine editor.
+【Style】
+- Keep each section to 2-3 paragraphs
+- Reference stats (%) as evidence
+- Warm but professional tone
+- Specific advice over abstract descriptions"""
 
-Write in Markdown format."""
-        
-        # 4. 8개 페이지별 프롬프트 정의 (언어별 분기)
+        # 5. V2 페이지별 프롬프트
         if lang == "jp":
             page_prompts = [
                 {
                     "page": "table_of_contents",
-                    "prompt": f"""以下は{pet_name}のプレミアム性格分析レポートの目次です。
+                    "prompt": f"""# 📖 {pet_name}の性格分析レポート
 
-レポートは全8ページで構成され、以下の内容を含みます：
-1. 目次（現在のページ）
-2. 性格指標の深層解説
-3. 認知的強みと本能的才能
-4. 飼い主との特別な相性分析
-5. カスタマイズされたポジティブ強化トレーニングロードマップ
-6. 社会性および環境適応ガイド
-7. 完璧な一日のためのライフスタイル
-8. 飼い主への特別なメッセージ
+以下の目次を作成してください:
 
-【重要】この目次はレポート全体の雰囲気を決定する重要な第一印象です。GPT-5 miniが「簡単な作業」として軽視하지 않도록、非常に優雅で詳細に、そして魅力的に書いてください。上記の目次をマークダウン形式で美しくフォーマットして作成してください。各ページの簡単な説明（1-2行）も含めてください。"""
+1. **性格の全体像** - {mbti_code}タイプの特徴
+2. **学習スタイル** - {pet_name}の認知パターン
+3. **飼い主との相性** - 最高のチームになる理由
+4. **トレーニング戦略** - 効果的な教育法
+5. **社会化ガイド** - 他の犬や人との関わり方
+6. **理想の一日** - 完璧なルーティン
+7. **特別なメッセージ** - {pet_name}からあなたへ
+
+各項目に1行の説明を追加してください。"""
                 },
                 {
                     "page": "deep_dive_traits",
-                    "prompt": f"""# {pet_name}の心の中に描かれた地図
+                    "prompt": f"""# 🐕 {pet_name}の性格分析
 
-{pet_name}の性格特性が日常の習慣にどう現れるか分析してください。飼い主の性格（{owner_summary_text}）を考慮して、なぜこの二人が素晴らしいチームなのか説明してください。
+## なぜ{mbti_code}タイプなのか
 
-数値（{trait_stats}）を直接言及するのではなく、以下のような日常シーンを映画のように描写してください：
-- 散歩中に知らない人に会った時の{pet_name}の反応としっぽの動き
-- ご飯を食べる時の表情と最も幸せそうに見える瞬間
-- おもちゃを与える時、目が輝く瞬間
-- 飼い主（{owner_summary_text}）の性格と{pet_name}の性格がどう共鳴しているか
+以下のデータを基に説明してください:
+- 社交性 **{stats.get('sociability', 50)}%**: {'人懐っこく社交的' if high_soc else '慎重で選択的'}
+- 知性 **{stats.get('sagacity', 50)}%**: {'観察力が鋭い' if high_sag else '直感的'}
+- 感情性 **{stats.get('emotionality', 50)}%**: {'感情表現が豊か' if high_emo else '感情的に安定'}
+- 従順性 **{stats.get('obedience', 50)}%**: {'ルールを好む' if high_obe else '自由を好む'}
 
-飼い主の性格を深く理解した上で、{pet_name}との関係性を分析してください。"""
+## {pet_name}の3つの強み
+
+具体例を挙げて説明してください。
+
+## 注意すべきポイント
+
+1-2つの課題と対策を書いてください。
+
+> {pet_name}を一言で表すフレーズを入れてください。"""
                 },
                 {
                     "page": "cognitive_strengths",
-                    "prompt": f"""# {pet_name}が世界を理解する方法
+                    "prompt": f"""# 🧠 {pet_name}の学習スタイル
 
-{pet_name}の性格タイプ（{mbti_code}）を基に、この子が世界をどう理解し、問題をどう解決するか分析してください。飼い主（{owner_summary_text}）の認知スタイルと{pet_name}の認知スタイルがどう補完し合っているか説明してください。
+知性スコア: **{stats.get('sagacity', 50)}%**
 
-以下のような日常シーンをストーリーテリング方式で描写してください：
-- 新しいおもちゃを前にした時、{pet_name}の脳内で何が起きているのか？
-- 知らない道を歩く時、{pet_name}が辿る認知的プロセス
-- このタイプだけが持つ「天才的な瞬間」を日常のエピソードで説明
-- 飼い主の思考パターンと{pet_name}の認知パターンがどう共鳴しているか
+## 学習パターン
 
-飼い主が実際に目撃できる場面を生き生きと描いてください。"""
+{'「観察→分析→実行」タイプです。新しいことを教える時は、まず見本を見せてから挑戦させると効果的です。' if high_sag else '「体験→反応→学習」タイプです。実際にやりながら学ぶのが得意なので、短いセッションを繰り返しましょう。'}
+
+## 問題解決の得意分野
+
+- パズルおもちゃへの反応
+- 新しい環境での行動パターン
+
+## 知性を活かす3つのアクティビティ
+
+具体的な遊び方を提案してください。"""
                 },
                 {
                     "page": "owner_chemistry",
-                    "prompt": f"""# あなたと{pet_name}、異なるリズムが一つの旋律になる過程
+                    "prompt": f"""# 💕 あなたと{pet_name}の相性
 
-最も重要な分析です。飼い主の性格（{owner_summary_text}）と{pet_name}の性格（{mbti_code}）を深く対照し、なぜこの二人が完璧なチームなのか説明してください。
+**飼い主タイプ:** {owner_summary}
+**{pet_name}のタイプ:** {mbti_code}
 
-ストーリーテリング方式で以下の点を描写してください：
-1) 二人のエネルギーが最も合う瞬間 - 例えば「あなたが疲れて帰ってきた時、{pet_name}はどう反応しますか？」飼い主の性格（{owner_summary_text}）を考慮して説明してください
-2) お互いの傾向の違いによって発生する可能性のある潜在的な誤解と、それをどう乗り越えるか
-3) 飼い主の性格に合わせた{pet_name}の心を得るための「心理的アプローチ」 - 具体的な日常行動で説明してください
+## 相性が良い3つの理由
 
-飼い主の性格を深く理解した上で、非常に個人的で実用的なアドバイスを含めてください。"""
+具体的に説明してください。
+
+## 注意すべきポイント
+
+正直に1-2つの課題と解決策を書いてください。
+
+## 絆を深める毎日の習慣
+
+すぐ実践できる3つの行動を提案してください。
+
+> この組み合わせの魅力を一言で。"""
                 },
                 {
                     "page": "training_roadmap",
-                    "prompt": f"""# {pet_name}にぴったりのトレーニングロードマップ
+                    "prompt": f"""# 🎓 {pet_name}のトレーニング戦略
 
-{pet_name}の性格（{mbti_code}）と飼い主の性格（{owner_summary_text}）を考慮した最適な教育戦略を立ててください。飼い主の性格に合わせたトレーニングアプローチを提案してください。
+従順性スコア: **{stats.get('obedience', 50)}%**
 
-ストーリーテリング方式で以下の点を描写してください：
-- 「おすわり」のトレーニングをする時、{pet_name}が最もよく従う瞬間とは？飼い主の性格（{owner_summary_text}）を考慮して説明してください
-- 強圧的なトレーニングではなく、この子の動機を刺激できる具体的な方法（おやつ、褒め言葉、遊びなど）を日常の場面で描写
-- この性格タイプが簡単に退屈したりストレスを受けたりする可能性のある点と、飼い主の性格に合わせた克服法
-- 飼い主の性格に最適化された段階的なトレーニングガイドを「最初の週には...」「2週目には...」のように具体的に作成
+## 最適なトレーニングスタイル
 
-飼い主がすぐに実践できるように明確で温かく、個人的なアドバイスを含めてください。"""
+{'**ルールベースアプローチ**が効果的です。一貫性を保ち、明確な境界線を設定しましょう。' if high_obe else '**ゲームベースアプローチ**が効果的です。トレーニングを遊びに変えて、楽しみながら学ばせましょう。'}
+
+## 2週間プラン
+
+**Week 1: 基礎固め**
+- 教えるコマンド（3つ）
+- 1日の練習時間と回数
+
+**Week 2: 応用**
+- 次のステップ
+
+## モチベーションを上げるコツ
+
+- 最適なご褒美のタイプ
+- ベストなタイミング
+- 避けるべきこと"""
                 },
                 {
                     "page": "social_adaptation",
-                    "prompt": f"""# {pet_name}の社会性と環境適応ガイド
+                    "prompt": f"""# 🐾 {pet_name}の社会化ガイド
 
-{pet_name}の社会性と感情性を基に、社会生活ガイドを作成してください。飼い主の性格（{owner_summary_text}）を考慮して、飼い主が{pet_name}をサポートする最適な方法を提案してください。
+社交性スコア: **{stats.get('sociability', 50)}%**
 
-具体的な日常状況をストーリーテリング方式で描写してください：
-1) ドッグカフェや公園で他の犬に会った時、{pet_name}の反応としっぽの動き。飼い主の性格（{owner_summary_text}）に合わせたサポート方法
-2) 引っ越しや来客時、{pet_name}の適応過程を段階的に生き生きと描写。飼い主の性格を考慮した環境調整方法
-3) 分離不安を予防するために飼い主が提供すべき情緒的安全装置を、飼い主の性格に合わせた実際の行動で説明
+## 他の犬との付き合い方
 
-飼い主の性格を深く理解した上で、実用的で個人的なアドバイスを含めてください。"""
+{'**積極的に交流を求めるタイプ**です。' if high_soc else '**慎重に距離を置くタイプ**です。'}
+
+- 初対面時のコツ
+- ドッグパークでの注意点
+
+## 新しい人への反応
+
+- 来客時の対応法
+- 知らない人との接し方
+
+## 環境変化への適応
+
+感情性スコア: **{stats.get('emotionality', 50)}%**
+
+- 引っ越し時のケア
+- 分離不安の{'予防策（リスク高め）' if high_emo else '心配は低め'}"""
                 },
                 {
                     "page": "lifestyle_guide",
-                    "prompt": f"""# {pet_name}のための完璧な一日
+                    "prompt": f"""# ☀️ {pet_name}の理想的な一日
 
-{pet_name}のエネルギーレベルと傾向、そして飼い主の性格（{owner_summary_text}）にぴったりの「完璧な一日のスケジュール」を設計してください。飼い主のライフスタイルと{pet_name}のニーズを調和させてください。
+## 🌅 朝 (6:00-9:00)
 
-ストーリーテリング方式で一日を描いてください：
-- 朝：{pet_name}が目覚める様子と、飼い主の性格（{owner_summary_text}）に合わせた最適な散歩のタイミング
-- 散歩コースのスタイル（匂い中心 vs 活動量中心）を具体的なルートで説明。飼い主の性格を考慮した散歩スタイル
-- 昼：このタイプの知能を刺激できるノーズワークやおもちゃを実際の使用場面で描写。飼い主の性格に合わせた遊び方
-- 夜：休息時間に最も快適さを感じられる環境作りを、飼い主のライフスタイルに合わせて具体的に提案
+- 起床後のルーティン
+- 朝散歩: {'活発に30-45分' if high_soc else '静かに20-30分'}
+- 朝食のタイミング
 
-飼い主の性格とライフスタイルを深く理解した上で、実用的で個人的なアドバイスを含めてください。"""
+## 🏠 日中 (9:00-17:00)
+
+- 留守番時の環境設定
+- おすすめのおもちゃ
+
+## 🌆 夕方 (17:00-20:00)
+
+- 2回目の散歩スタイル
+- 頭を使う遊び
+
+## 🌙 夜 (20:00-)
+
+- 就寝準備のルーティン
+- 睡眠環境の整え方"""
                 },
                 {
                     "page": "heartfelt_message",
-                    "prompt": f"""# 世界のすべての犬が羨む、あなたという贈り物
+                    "prompt": f"""# 💌 {pet_name}からあなたへ
 
-これまでのすべての分析を総合して、{pet_name}が飼い主（{owner_summary_text}）の元に来たことはどんな意味があるか、感動的な締めくくりの手紙を書いてください。
+{pet_name}の視点から、飼い主への感謝のメッセージを書いてください。
 
-飼い主の性格（{owner_summary_text}）を深く理解した上で、以下の点を含めてください：
-- {pet_name}があなたの元に来た意味。飼い主の性格と{pet_name}の性格がどう共鳴しているか
-- この子の性格タイプが持つ「愛らしい欠点」さえも大切な理由。飼い主の性格がそれをどう補完しているか
-- 「あなたは{pet_name}にとって世界で最も完璧な飼い主です」というメッセージを含めて、飼い主の性格を考慮した個人的なメッセージ
+含めるべき内容:
+- {mbti_code}タイプとして感じること
+- {owner_summary}な飼い主への感謝
+- これからの日々への期待
 
-飼い主の性格を深く理解した上で、非常に個人的で感動的な内容を含めてください。"""
+**トーン:** 温かく感動的に、でも甘すぎず
+
+> 「あなたは{pet_name}にとって最高の飼い主です」という趣旨で締めくくってください。"""
                 }
             ]
-        else:  # en
+        else:  # English
             page_prompts = [
                 {
                     "page": "table_of_contents",
-                    "prompt": f"""The following is the table of contents for {pet_name}'s Premium Personality Analysis Report.
+                    "prompt": f"""# 📖 {pet_name}'s Personality Report
 
-The report consists of 8 pages total, including the following content:
-1. Table of Contents (current page)
-2. Deep Dive into Personality Indicators
-3. Cognitive Strengths and Instinctive Genius
-4. Special Chemistry Analysis with Owner
-5. Customized Positive Reinforcement Training Roadmap
-6. Social Adaptation and Environment Guide
-7. Lifestyle for a Perfect Day
-8. Special Message to the Owner
+Create this table of contents:
 
-【IMPORTANT】This table of contents is a crucial first impression that sets the tone for the entire report. Do not treat this as a simple task - write it with exceptional elegance, detail, and charm. Please format the above table of contents beautifully in Markdown format. Include a brief description (1-2 lines) for each page."""
+1. **Personality Overview** - {mbti_code} type characteristics
+2. **Learning Style** - How {pet_name} thinks
+3. **Owner Compatibility** - Why you're the perfect team
+4. **Training Strategy** - Effective methods
+5. **Socialization Guide** - Meeting dogs and people
+6. **Ideal Day** - The perfect routine
+7. **Special Message** - From {pet_name} to you
+
+Add a one-line description for each item."""
                 },
                 {
                     "page": "deep_dive_traits",
-                    "prompt": f"""# The Map Drawn in {pet_name}'s Heart
+                    "prompt": f"""# 🐕 {pet_name}'s Personality Analysis
 
-Analyze how {pet_name}'s personality traits manifest in daily habits. Use the context of the owner's personality ({owner_summary_text}) to explain why they make such a great team.
+## Why {mbti_code} Type?
 
-Instead of directly mentioning numbers ({trait_stats}), describe everyday scenes like a movie:
-- When meeting a stranger during a walk, how does {pet_name} react and how does their tail move?
-- Their expression and behavior when eating, and the moments they look happiest
-- The moment their eyes sparkle when given a toy
-- How the owner's personality ({owner_summary_text}) and {pet_name}'s personality resonate with each other
+Based on these scores:
+- Sociability **{stats.get('sociability', 50)}%**: {'Friendly and outgoing' if high_soc else 'Cautious and selective'}
+- Sagacity **{stats.get('sagacity', 50)}%**: {'Sharp observer' if high_sag else 'Intuitive'}
+- Emotionality **{stats.get('emotionality', 50)}%**: {'Expressive' if high_emo else 'Emotionally stable'}
+- Obedience **{stats.get('obedience', 50)}%**: {'Loves structure' if high_obe else 'Values freedom'}
 
-Deeply understand the owner's personality and analyze their relationship with {pet_name} accordingly."""
+## {pet_name}'s 3 Key Strengths
+
+Explain with specific examples.
+
+## Things to Watch For
+
+1-2 challenges with solutions.
+
+> Write a one-line phrase that captures {pet_name}'s essence."""
                 },
                 {
                     "page": "cognitive_strengths",
-                    "prompt": f"""# How {pet_name} Understands the World
+                    "prompt": f"""# 🧠 How {pet_name} Learns
 
-Based on {pet_name}'s personality type ({mbti_code}), analyze how this friend understands the world and solves problems. Explain how the owner's cognitive style ({owner_summary_text}) and {pet_name}'s cognitive style complement each other.
+Sagacity Score: **{stats.get('sagacity', 50)}%**
 
-Describe the following everyday scenes in a storytelling style:
-- What happens in {pet_name}'s mind when facing a new toy?
-- The cognitive process {pet_name} follows when walking an unfamiliar path
-- The genius moments unique to this type, through everyday episodes
-- How the owner's thinking patterns and {pet_name}'s cognitive patterns resonate with each other
+## Learning Pattern
 
-Vividly depict scenes the owner can actually witness."""
+{'**Watch → Analyze → Do type.** When teaching something new, show them first, then let them try.' if high_sag else '**Experience → React → Learn type.** They learn best by doing. Keep sessions short and repeat often.'}
+
+## Problem-Solving Strengths
+
+- Response to puzzle toys
+- Behavior in new environments
+
+## 3 Activities to Engage Their Mind
+
+Suggest specific games and exercises."""
                 },
                 {
                     "page": "owner_chemistry",
-                    "prompt": f"""# When Different Rhythms Meet to Create One Melody
+                    "prompt": f"""# 💕 You & {pet_name}: Compatibility
 
-This is the most important analysis. Deeply compare the owner's personality ({owner_summary_text}) with {pet_name}'s personality ({mbti_code}) and explain why they make a perfect team.
+**Your Type:** {owner_summary}
+**{pet_name}'s Type:** {mbti_code}
 
-Write in a storytelling style covering:
-1) Where the two energies match best - for example, "How does {pet_name} react when you come home tired?" Consider the owner's personality ({owner_summary_text}) in your explanation
-2) Potential misunderstandings that can arise from differences in tendencies and how to overcome them
-3) 'Psychological approaches' tailored to the owner's personality to win {pet_name}'s heart - explain through specific daily behaviors
+## 3 Reasons You're Great Together
 
-Deeply understand the owner's personality and include highly personalized and practical advice."""
+Explain specifically.
+
+## Potential Challenges
+
+1-2 honest points with solutions.
+
+## Daily Habits to Strengthen Your Bond
+
+3 easy actions you can start today.
+
+> Summarize this pairing's strength in one line."""
                 },
                 {
                     "page": "training_roadmap",
-                    "prompt": f"""# The Perfect Training Roadmap for {pet_name}
+                    "prompt": f"""# 🎓 Training Strategy for {pet_name}
 
-Create an optimal training strategy considering {pet_name}'s personality ({mbti_code}) and the owner's personality ({owner_summary_text}). Propose a training approach tailored to the owner's personality.
+Obedience Score: **{stats.get('obedience', 50)}%**
 
-Write in a storytelling style covering:
-- When doing "sit" training, when does {pet_name} follow best? Consider the owner's personality ({owner_summary_text}) in your explanation
-- Instead of forceful training, describe specific methods (treats, praise, play) that can motivate this friend, through everyday scenes
-- Points where this personality type can easily get bored or stressed, and how to overcome them tailored to the owner's personality
-- A step-by-step training guide optimized for the owner's personality, specifically like "In the first week...", "In the second week..."
+## Best Training Approach
 
-Write clearly and warmly with personalized advice so the owner can practice immediately."""
+{'**Rule-based approach** works best. Be consistent and set clear boundaries.' if high_obe else '**Game-based approach** works best. Make training feel like play.'}
+
+## 2-Week Plan
+
+**Week 1: Foundation**
+- Commands to teach (3)
+- Daily practice time and frequency
+
+**Week 2: Building Up**
+- Next steps
+
+## Motivation Tips
+
+- Best reward types
+- Optimal timing
+- What NOT to do"""
                 },
                 {
                     "page": "social_adaptation",
-                    "prompt": f"""# {pet_name}'s Social Adaptation Guide
+                    "prompt": f"""# 🐾 Socialization Guide for {pet_name}
 
-Create a social life guide based on {pet_name}'s sociability and emotionality. Consider the owner's personality ({owner_summary_text}) and propose optimal ways for the owner to support {pet_name}.
+Sociability Score: **{stats.get('sociability', 50)}%**
 
-Describe specific everyday situations in a storytelling style:
-1) When meeting other dogs at a dog cafe or park, how does {pet_name} react and how does their tail move? Support methods tailored to the owner's personality ({owner_summary_text})
-2) Vividly describe {pet_name}'s adaptation process step by step when moving or receiving visitors, with environment adjustments considering the owner's personality
-3) Explain the emotional safety measures the owner should provide to prevent separation anxiety, through actual behaviors tailored to the owner's personality
+## Meeting Other Dogs
 
-Deeply understand the owner's personality and include practical and personalized advice."""
+{'**Actively seeks interaction.**' if high_soc else '**Takes time to warm up.**'}
+
+- Tips for first meetings
+- Dog park advice
+
+## Meeting New People
+
+- Handling guests
+- Approaching strangers
+
+## Adapting to Change
+
+Emotionality Score: **{stats.get('emotionality', 50)}%**
+
+- Moving to a new home
+- Separation anxiety: {'Higher risk - prevention tips' if high_emo else 'Lower risk but still worth noting'}"""
                 },
                 {
                     "page": "lifestyle_guide",
-                    "prompt": f"""# A Perfect Day for {pet_name}
+                    "prompt": f"""# ☀️ {pet_name}'s Perfect Day
 
-Design a 'perfect daily routine' perfectly suited to {pet_name}'s energy level and tendencies, and harmonized with the owner's lifestyle ({owner_summary_text}).
+## 🌅 Morning (6:00-9:00)
 
-Draw a day in a storytelling style:
-- Morning: How {pet_name} wakes up and the optimal walk timing tailored to the owner's personality ({owner_summary_text})
-- Walk route style (scent-focused vs activity-focused) through specific paths, considering the owner's personality
-- Afternoon: Nose work and toys that stimulate this type's intelligence, through actual usage scenes, with play styles tailored to the owner's personality
-- Evening: How to create the most comfortable rest environment, specifically tailored to the owner's lifestyle
+- Wake-up routine
+- Morning walk: {'Active 30-45 min' if high_soc else 'Calm 20-30 min'}
+- Breakfast timing
 
-Deeply understand the owner's personality and lifestyle and include practical and personalized advice."""
+## 🏠 Daytime (9:00-17:00)
+
+- Environment when home alone
+- Recommended toys
+
+## 🌆 Evening (17:00-20:00)
+
+- Second walk style
+- Mental stimulation ideas
+
+## 🌙 Night (20:00-)
+
+- Bedtime routine
+- Sleep environment tips"""
                 },
                 {
                     "page": "heartfelt_message",
-                    "prompt": f"""# The Gift That Every Dog in the World Would Envy
+                    "prompt": f"""# 💌 A Message from {pet_name}
 
-Synthesizing all the analysis so far, write a touching closing letter about what it means that {pet_name} came to the owner ({owner_summary_text}).
+Write from {pet_name}'s perspective to their owner.
 
-Deeply understand the owner's personality ({owner_summary_text}) and include:
-- What it means that {pet_name} came to you. How the owner's personality and {pet_name}'s personality resonate with each other
-- Why even the 'adorable flaws' of this personality type are precious, and how the owner's personality complements them
-- Include the message 'You are the most perfect owner in the world for {pet_name}' with a personalized message considering the owner's personality
+Include:
+- What being {mbti_code} type feels like
+- Gratitude for a {owner_summary} owner
+- Hope for the future together
 
-Deeply understand the owner's personality and include highly personal and touching content."""
+**Tone:** Warm and touching, but not overly sentimental
+
+> End with a variation of "You are the perfect owner for {pet_name}." """
                 }
             ]
-        
-        # 5. 8개 페이지를 병렬로 생성 (최신 OpenAI API 사용)
-        async def generate_page(page_info: Dict) -> Dict:
-            """페이지 생성 (최대 3회 재시도 로직 포함)"""
-            max_retries = 3
-            retry_delay = 1.5  # 초기 대기 시간 (초)
 
+        # 6. 페이지 생성 함수 (chat.completions 사용)
+        async def generate_page(page_info: dict) -> dict:
+            """표준 chat.completions.create 사용"""
+            max_retries = 3
+            retry_delay = 1.5
+            
             for attempt in range(max_retries):
                 try:
-                    print(f"🔄 [{page_info['page']}] 생성 시도 {attempt + 1}/{max_retries}...")
+                    print(f"🔄 [{page_info['page']}] Attempt {attempt + 1}/{max_retries}...")
                     
-                    response = await openai_client.responses.create(
-                        model="gpt-5-mini",
-                        input=[
-                            {
-                                "role": "system",
-                                "content": system_prompt
-                            },
-                            {
-                                "role": "user",
-                                "content": page_info["prompt"]
-                            }
+                    # ✅ 표준 OpenAI API 호출
+                    response = await openai_client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": page_info["prompt"]}
                         ],
-                        max_output_tokens=1500
+                        max_tokens=1000,
+                        temperature=0.7
                     )
                     
-                    content = response.output_text
+                    # ✅ 표준 응답 추출
+                    content = response.choices[0].message.content
                     
-                    # 응답이 비어있는지 빡세게 검사
-                    if not content or len(content.strip()) < 10:
-                        raise ValueError("AI 응답 내용이 너무 짧거나 비어있습니다.")
-
+                    print(f"✅ [{page_info['page']}] Success: {len(content)} chars")
+                    
+                    if not content or len(content.strip()) < 50:
+                        raise ValueError(f"Response too short: {len(content)} chars")
+                    
                     return {
                         "page": page_info["page"],
                         "content": content,
                         "status": "success"
                     }
-
-                except Exception as e:
-                    print(f"⚠️ [{page_info['page']}] 시도 {attempt + 1} 실패: {str(e)}")
                     
+                except Exception as e:
+                    print(f"⚠️ [{page_info['page']}] Attempt {attempt + 1} failed: {str(e)}")
                     if attempt < max_retries - 1:
-                        # 지수 백오프 + 지터(Jitter) 적용: 1.5초, 3초, 6초 순으로 대기
-                        wait_time = (retry_delay * (2 ** attempt)) + (random.random() * 0.5)
-                        print(f"⏳ {wait_time:.1f}초 후 다시 시도합니다...")
+                        wait_time = retry_delay * (2 ** attempt) + random.random() * 0.5
                         await asyncio.sleep(wait_time)
                     else:
-                        # 최종 실패 시 에러 반환
                         return {
                             "page": page_info["page"],
-                            "content": f"페이지 생성 실패 (3회 시도): {str(e)}",
+                            "content": f"Generation failed: {str(e)}",
                             "status": "error"
                         }
         
-        # 세마포어로 동시성 제한 (레이트 리밋 방지)
-        semaphore = asyncio.Semaphore(3)  # 최대 3개 동시 요청
+        # 7. 동시성 제한 (3개씩)
+        semaphore = asyncio.Semaphore(3)
         
-        async def generate_page_limited(page_info: Dict) -> Dict:
-            """세마포어로 제한된 페이지 생성"""
+        async def generate_with_limit(page_info: dict) -> dict:
             async with semaphore:
                 return await generate_page(page_info)
         
-        # 병렬 실행 (8개 페이지, 최대 3개씩 동시 실행)
-        print(f"\n{'='*60}")
-        print(f"📝 리포트 생성 시작: {result_id}")
-        print(f"📄 총 8페이지 생성 (목차 + 7개 내용 페이지)")
-        print(f"⚡ 동시성 제한: 최대 3개씩 순차 처리")
-        print(f"{'='*60}")
+        # 8. 병렬 실행
+        print(f"\n{'='*50}")
+        print(f"📝 Report V2: {result_id}")
+        print(f"🐕 {pet_name} | {mbti_code} | {lang}")
+        print(f"{'='*50}")
         
         page_results = await asyncio.gather(
-            *[generate_page_limited(page) for page in page_prompts]
+            *[generate_with_limit(page) for page in page_prompts]
         )
         
-        # 6. 결과를 하나의 객체로 묶기
+        # 9. 결과 정리
         report_pages = {}
         for result in page_results:
             report_pages[result["page"]] = {
@@ -838,22 +1307,22 @@ Deeply understand the owner's personality and include highly personal and touchi
                 "status": result["status"]
             }
         
-        # 7. Firestore에 저장
-        now = datetime.utcnow()
+        # 10. Firestore 저장
         doc_ref.update({
             "report_pages": report_pages,
             "report_status": "ready",
-            "generated_at": now
+            "generated_at": datetime.utcnow(),
+            "report_version": "v2"
         })
         
-        print(f"✅ 리포트 생성 완료: {result_id}")
-        print(f"{'='*60}\n")
+        print(f"✅ Report V2 Complete!")
         
         return {
             "status": "success",
             "result_id": result_id,
             "report_status": "ready",
-            "pages": list(report_pages.keys())
+            "pages": list(report_pages.keys()),
+            "version": "v2"
         }
         
     except HTTPException:
@@ -862,16 +1331,12 @@ Deeply understand the owner's personality and include highly personal and touchi
         import traceback
         print(traceback.format_exc())
         
-        # 오류 발생 시 상태 업데이트
         try:
-            doc_ref = db.collection("test_results").document(result_id)
-            doc_ref.update({
-                "report_status": "failed"
-            })
+            doc_ref.update({"report_status": "failed"})
         except:
             pass
         
-        raise HTTPException(status_code=500, detail=f"리포트 생성 중 오류 발생: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Report generation error: {str(e)}")
 
 
 # uvicorn.run은 항상 파일의 맨 마지막에 위치해야 합니다!

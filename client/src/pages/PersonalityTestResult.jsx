@@ -416,10 +416,6 @@ function PersonalityTestResult() {
   
   const displayPetName = capitalizeFirstLetter(pet_name)
   
-  // 디버깅: stats 값 확인
-  console.log('📊 Result Data:', { pet_name, stats, mbti_code })
-  console.log('📊 Stats values:', stats)
-  
   // Archetype 데이터에서 현재 언어 텍스트 추출
   const getLocalizedText = (obj) => {
     if (!obj) return ''
