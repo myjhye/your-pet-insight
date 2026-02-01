@@ -3,7 +3,7 @@ import axios from 'axios'
 
 const QuestionsContext = createContext()
 
-const API_BASE_URL = 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export function QuestionsProvider({ children }) {
   // 버전+언어별 질문 캐시 (예: "dog_v1_en", "dog_v1_ko")

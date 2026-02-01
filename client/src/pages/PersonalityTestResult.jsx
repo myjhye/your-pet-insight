@@ -7,6 +7,9 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { motion, AnimatePresence } from 'framer-motion'
 
+// API Base URL (환경 변수 또는 기본값)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 // Stats 고정 순서 및 설정
 const STATS_ORDER = [
   { key: 'sociability', color: 'bg-red-500' },
@@ -521,7 +524,7 @@ function PersonalityTestResult() {
     
     try {
       // URL이나 Context에서 가져온 lang을 쿼리 파라미터로 전달
-      const response = await axios.post(`http://localhost:8000/api/test/generate-report/${resultId}?lang=${lang}`)
+      const response = await axios.post(`${API_BASE_URL}/api/test/generate-report/${resultId}?lang=${lang}`)
       
       if (response.data.status === 'success') {
         // 리포트 생성 완료, 상태 확인을 위해 결과 다시 불러오기
@@ -534,7 +537,7 @@ function PersonalityTestResult() {
         const checkStatus = setInterval(async () => {
           attempts++
           try {
-            const resultResponse = await axios.get(`http://localhost:8000/api/results/${resultId}`)
+            const resultResponse = await axios.get(`${API_BASE_URL}/api/results/${resultId}`)
             const updatedData = resultResponse.data
             
             if (updatedData.report_status === 'ready') {

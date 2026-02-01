@@ -3,7 +3,7 @@ import axios from 'axios'
 
 const ResultsContext = createContext()
 
-const API_BASE_URL = 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export function ResultsProvider({ children }) {
   // resultId별 결과 캐시
