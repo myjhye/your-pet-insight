@@ -1,11 +1,10 @@
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 
 const LanguageContext = createContext()
 
 export const LANGUAGES = {
   en: { code: 'en', label: 'English', flag: '🇺🇸' },
-  ko: { code: 'ko', label: '한국어', flag: '🇰🇷' },
   jp: { code: 'jp', label: '日本語', flag: '🇯🇵' },
 }
 
@@ -18,6 +17,16 @@ export function LanguageProvider({ children }) {
   
   // URL에서 언어 코드 가져오기 (없으면 기본값 en)
   const currentLang = LANGUAGES[lang] ? lang : DEFAULT_LANG
+  
+  // body 태그에 언어 속성 추가 (일본어 폰트 최적화용)
+  useEffect(() => {
+    document.body.setAttribute('data-lang', currentLang)
+    document.documentElement.setAttribute('lang', currentLang)
+    return () => {
+      document.body.removeAttribute('data-lang')
+      document.documentElement.removeAttribute('lang')
+    }
+  }, [currentLang])
 
   // 언어 변경 함수
   const changeLang = (newLang) => {

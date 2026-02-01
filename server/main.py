@@ -305,14 +305,23 @@ async def calculate_mbti(request: CalculateRequest):
         if archetype_doc.exists:
             archetype_data = archetype_doc.to_dict()
             
-            # {{pet_name}} 플레이스홀더 치환 함수
+            # {{pet_name}} 플레이스홀더 치환 함수 (첫 글자 대문자 변환)
+            def capitalize_first_letter(s: str) -> str:
+                """문자열의 첫 글자를 대문자로 변환"""
+                if not s:
+                    return s
+                return s[0].upper() + s[1:] if len(s) > 1 else s.upper()
+            
             def replace_placeholders(obj, pet_name: str, locale: str):
+                # 펫 이름 첫 글자 대문자 변환
+                display_pet_name = capitalize_first_letter(pet_name)
+                
                 if isinstance(obj, str):
-                    return obj.replace("{{pet_name}}", pet_name)
+                    return obj.replace("{{pet_name}}", display_pet_name)
                 elif isinstance(obj, dict):
                     # 다국어 처리: locale 키가 있으면 해당 언어만 추출
                     if locale in obj and isinstance(obj[locale], str):
-                        return obj[locale].replace("{{pet_name}}", pet_name)
+                        return obj[locale].replace("{{pet_name}}", display_pet_name)
                     return {k: replace_placeholders(v, pet_name, locale) for k, v in obj.items()}
                 elif isinstance(obj, list):
                     return [replace_placeholders(item, pet_name, locale) for item in obj]
@@ -415,12 +424,16 @@ async def setup_archetypes():
 @app.post("/api/test/generate-report/{result_id}")
 async def generate_report(result_id: str, lang: str = "en"):
     try:
+        # 언어 검증: en 또는 jp만 허용
+        if lang not in ["en", "jp"]:
+            raise HTTPException(status_code=400, detail="Language must be 'en' or 'jp' only.")
+        
         # 1. Firestore에서 결과 데이터 조회
         doc_ref = db.collection("test_results").document(result_id)
         doc = doc_ref.get()
         
         if not doc.exists:
-            raise HTTPException(status_code=404, detail="결과를 찾을 수 없습니다.")
+            raise HTTPException(status_code=404, detail="Result not found.")
         
         result_data = doc.to_dict()
         pet_name = result_data.get("pet_name", "")
@@ -431,21 +444,28 @@ async def generate_report(result_id: str, lang: str = "en"):
         # 보너스 답변 추출 (21-25번 질문) - 보호자 성향 데이터
         owner_answers = [a for a in answers if a.get("question_id", 0) > 20]
         
-        # 보호자 성향 데이터 포맷팅
+        # 보호자 성향 데이터 포맷팅 (언어별)
         owner_traits = {}
         if owner_answers:
-            # 보호자 답변을 간단한 요약으로 변환
             owner_summary = []
             for ans in owner_answers:
                 likert = ans.get("likert_value", 0)
-                if likert > 0:
-                    owner_summary.append("활발하고 적극적인 성향")
-                elif likert < 0:
-                    owner_summary.append("차분하고 신중한 성향")
-                else:
-                    owner_summary.append("균형잡힌 성향")
+                if lang == "jp":
+                    if likert > 0:
+                        owner_summary.append("活発で積極的な傾向")
+                    elif likert < 0:
+                        owner_summary.append("落ち着いて慎重な傾向")
+                    else:
+                        owner_summary.append("バランスの取れた傾向")
+                else:  # en
+                    if likert > 0:
+                        owner_summary.append("Active and proactive")
+                    elif likert < 0:
+                        owner_summary.append("Calm and cautious")
+                    else:
+                        owner_summary.append("Balanced")
             owner_traits = {
-                "summary": ", ".join(set(owner_summary[:3])),  # 중복 제거 후 최대 3개
+                "summary": ", ".join(set(owner_summary[:3])),
                 "answers": owner_answers
             }
         
@@ -458,131 +478,251 @@ async def generate_report(result_id: str, lang: str = "en"):
             "report_pages": {}
         })
         
-        # 3. 공통 시스템 프롬프트 (언어 및 톤 지시 포함 - 대폭 강화)
-        lang_names = {"ko": "한국어", "en": "English", "jp": "日本語"}
-        lang_name = lang_names.get(lang, "English")
+        # 3. 공통 시스템 프롬프트 (언어별 톤 지시)
+        if lang == "jp":
+            system_prompt = f"""あなたはペットの心を読み取る温かいストーリーテラーであり、行動専門家です。
+数値を列挙するのではなく、「飼い主が帰宅した時に{pet_name}が見せる具体的な行動」や「散歩中に知らない犬に会った時の目つき」のように日常的な描写をたっぷりと含めて書いてください。
+専門的でありながら感動的な語調を保ち、必ず日本語で「です/ます」調を使用して丁寧に書いてください。
+マークダウン形式で記述してください。"""
+        else:  # en
+            system_prompt = f"""You are a warm storyteller and behavior expert who reads the hearts of pets.
+Instead of listing numbers, write with plenty of everyday descriptions like 'the specific behavior {pet_name} shows when the owner comes home from work' or 'the look in their eyes when meeting a strange dog during a walk'.
+Maintain a professional yet touching tone, and write everything in English with the sophisticated tone of a magazine editor.
+Write in Markdown format."""
         
-        system_prompt = f"""너는 반려동물의 마음을 읽어주는 따뜻한 스토리텔러이자 행동 전문가야. 
-수치를 나열하지 말고 '보호자가 퇴근하고 집에 왔을 때 {pet_name}가 보여주는 구체적인 행동'이나 '산책 중 낯선 개를 만났을 때의 눈빛'처럼 일상적인 묘사를 듬뿍 담아서 써줘. 
-전문적이면서도 감동적인 어투를 유지하고, 반드시 사용자가 요청한 '{lang_name}' 언어로 작성해.
-마크다운 형식으로 작성하라."""
-        
-        # 4. 8개 페이지별 프롬프트 정의 (목차 + 7개 내용 페이지)
-        page_prompts = [
-            {
-                "page": "table_of_contents",
-                "prompt": f"""다음은 {pet_name}의 프리미엄 성격 분석 리포트 목차입니다.
+        # 4. 8개 페이지별 프롬프트 정의 (언어별 분기)
+        if lang == "jp":
+            page_prompts = [
+                {
+                    "page": "table_of_contents",
+                    "prompt": f"""以下は{pet_name}のプレミアム性格分析レポートの目次です。
 
-리포트는 총 8페이지로 구성되며, 다음 내용을 포함합니다:
-1. 목차 (현재 페이지)
-2. 성격 지표 심층 해설
-3. 인지적 강점과 본능적 천재성
-4. 보호자와의 특별한 케미 분석
-5. 맞춤형 긍정 강화 교육 로드맵
-6. 사회성 및 환경 적응 가이드
-7. 완벽한 하루를 위한 라이프스타일
-8. 보호자에게 보내는 특별한 메시지
+レポートは全8ページで構成され、以下の内容を含みます：
+1. 目次（現在のページ）
+2. 性格指標の深層解説
+3. 認知的強みと本能的才能
+4. 飼い主との特別な相性分析
+5. カスタマイズされたポジティブ強化トレーニングロードマップ
+6. 社会性および環境適応ガイド
+7. 完璧な一日のためのライフスタイル
+8. 飼い主への特別なメッセージ
 
-위 목차를 마크다운 형식으로 예쁘게 포맷팅하여 작성해주세요. 각 페이지에 대한 간단한 설명(1-2줄)도 포함해주세요."""
-            },
-            {
-                "page": "deep_dive_traits",
-                "prompt": f"""우리 {pet_name}의 마음속에는 어떤 지도가 그려져 있을까요?
+上記の目次をマークダウン形式で美しくフォーマットして作成してください。各ページの簡単な説明（1-2行）も含めてください。"""
+                },
+                {
+                    "page": "deep_dive_traits",
+                    "prompt": f"""私たちの{pet_name}の心の中には、どんな地図が描かれているのでしょうか？
 
-반려견 {pet_name}의 5가지 성격 수치 데이터인 {trait_stats}를 분석해줘. 
+犬の{pet_name}の5つの性格数値データである{trait_stats}を分析してください。
 
-중요: "지표가 몇 %라서 이렇다"는 설명 대신 "이 수치는 일상에서 이런 귀여운 모습으로 나타납니다"라는 스토리텔링 방식으로 써줘.
+重要：「指標が何%だからこうだ」という説明ではなく、「この数値は日常でこんな可愛い姿として現れます」というストーリーテリング方式で書いてください。
 
-보호자가 일상에서 느낄 만한 구체적인 순간을 묘사해줘:
-- 산책 중 낯선 사람을 만날 때 {pet_name}의 반응은? 꼬리는 어떻게 움직이나요?
-- 밥 먹을 때의 표정과 행동은? 어떤 순간에 가장 행복해 보이나요?
-- 장난감을 줄 때 어떤 표정을 짓나? 눈이 반짝이는 순간은 언제인가요?
-- 가장 높은 수치와 가장 낮은 수치가 부딪힐 때 나타나는 독특한 개성은?
+飼い主が日常で感じられる具体的な瞬間を描写してください：
+- 散歩中に知らない人に会った時の{pet_name}の反応は？しっぽはどう動きますか？
+- ご飯を食べる時の表情と行動は？どんな瞬間に最も幸せそうに見えますか？
+- おもちゃを与える時、どんな表情をしますか？目が輝く瞬間はいつですか？
+- 最も高い数値と最も低い数値がぶつかった時に現れる独特な個性は？
 
-반려동물 잡지 기사처럼 세련되게, 전문 용어는 쉽게 풀어서 설명해줘. 한 페이지 분량의 심층 보고서를 작성해줘.
+ペット雑誌の記事のように洗練され、専門用語は分かりやすく説明してください。1ページ分の深層レポートを作成してください。
 
-MBTI 유형: {mbti_code}"""
-            },
-            {
-                "page": "cognitive_strengths",
-                "prompt": f"""{pet_name}의 성격 유형인 {mbti_code}과 사가시티(Sagacity) 수치를 바탕으로, 이 친구가 세상을 어떻게 이해하고 문제를 해결하는지 분석해줘.
+MBTIタイプ：{mbti_code}"""
+                },
+                {
+                    "page": "cognitive_strengths",
+                    "prompt": f"""{pet_name}の性格タイプである{mbti_code}とサガシティ（Sagacity）数値を基に、この子が世界をどう理解し、問題をどう解決するか分析してください。
 
-스토리텔링 방식으로 작성해줘:
-- 새로운 장난감을 줬을 때 {pet_name}의 첫 반응은? 코로 냄새를 맡는가, 바로 물어보는가, 조심스럽게 관찰하는가?
-- 낯선 길을 갈 때 어떤 인지적 프로세스를 거치는지 구체적인 순간을 묘사해줘
-- 이 유형만이 가진 '천재적인 모먼트'는 무엇인지 일상 속 에피소드로 설명해줘
+ストーリーテリング方式で書いてください：
+- 新しいおもちゃを与えた時の{pet_name}の最初の反応は？鼻で匂いを嗅ぐか、すぐに噛むか、慎重に観察するか？
+- 知らない道を歩く時、どんな認知的プロセスを経るか、具体的な瞬間を描写してください
+- このタイプだけが持つ「天才的な瞬間」は何か、日常のエピソードで説明してください
 
-보호자가 실제로 목격할 수 있는 장면을 생생하게 그려줘. 반려동물 잡지 기사처럼 세련되게 작성해줘.
+飼い主が実際に目撃できる場面を生き生きと描いてください。ペット雑誌の記事のように洗練されて書いてください。
 
-성격 통계: {trait_stats}"""
-            },
-            {
-                "page": "owner_chemistry",
-                "prompt": f"""당신과 {pet_name} 사이에는 어떤 특별한 케미가 있을까요?
+性格統計：{trait_stats}"""
+                },
+                {
+                    "page": "owner_chemistry",
+                    "prompt": f"""あなたと{pet_name}の間には、どんな特別な相性があるのでしょうか？
 
-가장 중요한 분석이야. 강아지 성향 데이터 {trait_stats}와 보호자의 성향 데이터 {owner_traits.get('summary', '보호자 성향 데이터 없음')}를 대조해줘. 
+最も重要な分析です。犬の傾向データ{trait_stats}と飼い主の傾向データ{owner_traits.get('summary', '飼い主の傾向データなし')}を対照してください。
 
-스토리텔링 방식으로 작성해줘:
-1) 두 사람의 에너지가 가장 잘 맞는 부분 - 예를 들어 "당신이 피곤해 돌아왔을 때 {pet_name}는 어떻게 반응하나요?"
-2) 서로의 성향 차이로 인해 발생할 수 있는 잠재적 오해 - "때로는 {pet_name}가 당신의 의도를 오해할 수 있는 순간은?"
-3) 보호자가 {pet_name}의 마음을 얻기 위해 실천할 수 있는 '심리적 접근법' - 구체적인 일상 행동으로 설명해줘
+ストーリーテリング方式で書いてください：
+1) 二人のエネルギーが最も合う部分 - 例えば「あなたが疲れて帰ってきた時、{pet_name}はどう反応しますか？」
+2) お互いの傾向の違いによって発生する可能性のある潜在的な誤解 - 「時には{pet_name}があなたの意図を誤解する可能性のある瞬間は？」
+3) 飼い主が{pet_name}の心を得るために実践できる「心理的アプローチ」 - 具体的な日常行動で説明してください
 
-데이터에 기반하여 아주 개인화된 내용을 담아줘.
+データに基づいて非常に個人的な内容を含めてください。
 
-{pet_name}의 MBTI 유형: {mbti_code}"""
-            },
-            {
-                "page": "training_roadmap",
-                "prompt": f"""{pet_name}의 순종도(Obedience)와 기질(Temperament) 수치를 고려한 최적의 교육 전략을 세워줘.
+{pet_name}のMBTIタイプ：{mbti_code}"""
+                },
+                {
+                    "page": "training_roadmap",
+                    "prompt": f"""{pet_name}の従順度（Obedience）と気質（Temperament）数値を考慮した最適な教育戦略を立ててください。
 
-스토리텔링 방식으로 작성해줘:
-- "앉아" 훈련을 할 때 {pet_name}의 반응은? 어떤 순간에 가장 잘 따라오는가?
-- 강압적인 훈련 대신 이 친구의 동기부여를 자극할 수 있는 구체적인 방법(간식, 칭찬, 놀이 등)을 일상 속 장면으로 묘사해줘
-- 이 성격 유형이 쉽게 지루해하거나 스트레스받을 수 있는 지점을 실제 상황으로 설명해줘
-- 이를 극복하는 단계별 훈련 가이드를 "첫 주에는...", "두 번째 주에는..."처럼 구체적으로 작성해줘
+ストーリーテリング方式で書いてください：
+- 「おすわり」のトレーニングをする時、{pet_name}の反応は？どんな瞬間に最もよく従いますか？
+- 強圧的なトレーニングではなく、この子の動機を刺激できる具体的な方法（おやつ、褒め言葉、遊びなど）を日常の場面で描写してください
+- この性格タイプが簡単に退屈したりストレスを受けたりする可能性のある点を実際の状況で説明してください
+- これを克服する段階的なトレーニングガイドを「最初の週には...」「2週目には...」のように具体的に作成してください
 
-보호자가 바로 실천할 수 있도록 명확하고 따뜻하게 작성해줘.
+飼い主がすぐに実践できるように明確で温かく書いてください。
 
-성격 통계: {trait_stats}
-MBTI 유형: {mbti_code}"""
-            },
-            {
-                "page": "social_adaptation",
-                "prompt": f"""{pet_name}의 사회성(Sociability)과 감정성(Emotionality) 수치를 바탕으로 사회생활 가이드를 작성해줘.
+性格統計：{trait_stats}
+MBTIタイプ：{mbti_code}"""
+                },
+                {
+                    "page": "social_adaptation",
+                    "prompt": f"""{pet_name}の社会性（Sociability）と感情性（Emotionality）数値を基に、社会生活ガイドを作成してください。
 
-구체적인 일상 상황을 묘사하며 작성해줘:
-1) 애견 카페나 공원에서 다른 강아지를 만날 때 {pet_name}의 반응은? 꼬리를 흔드는가, 조심스럽게 다가가는가? 이런 순간에 보호자가 어떻게 도와줄 수 있는지
-2) 이사를 가거나 낯선 사람이 집에 왔을 때 {pet_name}의 적응 과정을 단계별로 생생하게 묘사해줘
-3) 분리불안을 예방하기 위해 보호자가 제공해야 할 정서적 안전장치를 실제 행동으로 설명해줘 (예: "출근 전 10분은 꼭 함께 놀아주세요")
+具体的な日常状況を描写しながら書いてください：
+1) ドッグカフェや公園で他の犬に会った時、{pet_name}の反応は？しっぽを振るか、慎重に近づくか？こんな瞬間に飼い主がどう助けられるか
+2) 引っ越しをしたり、知らない人が家に来た時、{pet_name}の適応過程を段階的に生き生きと描写してください
+3) 分離不安を予防するために飼い主が提供すべき情緒的安全装置を実際の行動で説明してください（例：「出勤前10分は必ず一緒に遊んでください」）
 
-반려동물 잡지 기사처럼 세련되고 실용적으로 작성해줘.
+ペット雑誌の記事のように洗練され、実用的に書いてください。
 
-성격 통계: {trait_stats}
-MBTI 유형: {mbti_code}"""
-            },
-            {
-                "page": "lifestyle_guide",
-                "prompt": f"""{pet_name}의 에너지 레벨과 성향에 딱 맞는 '완벽한 하루 일과'를 설계해줘.
+性格統計：{trait_stats}
+MBTIタイプ：{mbti_code}"""
+                },
+                {
+                    "page": "lifestyle_guide",
+                    "prompt": f"""{pet_name}のエネルギーレベルと傾向にぴったりの「完璧な一日のスケジュール」を設計してください。
 
-스토리텔링 방식으로 하루를 그려줘:
-- 아침: {pet_name}이 일어나서 어떤 모습인가? 산책은 언제가 좋은가?
-- 산책 코스의 스타일(냄새 위주 vs 활동량 위주)을 구체적인 경로로 설명해줘
-- 점심: 이 유형의 지능을 자극할 수 있는 노즈워크나 장난감 종류를 실제 사용 장면으로 묘사해줘
-- 저녁: 휴식 시간에 가장 편안함을 느낄 수 있는 환경 조성법을 구체적으로 제안해줘
+ストーリーテリング方式で一日を描いてください：
+- 朝：{pet_name}が起きてどんな様子ですか？散歩はいつが良いですか？
+- 散歩コースのスタイル（匂い中心 vs 活動量中心）を具体的なルートで説明してください
+- 昼：このタイプの知能を刺激できるノーズワークやおもちゃの種類を実際の使用場面で描写してください
+- 夜：休息時間に最も快適さを感じられる環境作りを具体的に提案してください
 
-실제 제품 카테고리를 언급해도 좋아. 반려동물 잡지 기사처럼 세련되게 작성해줘.
+実際の製品カテゴリーを言及しても構いません。ペット雑誌の記事のように洗練されて書いてください。
 
-성격 통계: {trait_stats}
-MBTI 유형: {mbti_code}"""
-            },
-            {
-                "page": "heartfelt_message",
-                "prompt": f"""지금까지의 모든 분석을 종합하여, {pet_name}이 보호자에게 온 것은 어떤 의미인지 감동적인 마무리 편지를 써줘. 이 친구의 성격 유형이 가진 '사랑스러운 단점'마저도 소중한 이유를 언급해줘. 마지막에는 '당신은 {pet_name}에게 세상에서 가장 완벽한 보호자입니다'라는 메시지를 포함해 한 페이지를 채워줘.
+性格統計：{trait_stats}
+MBTIタイプ：{mbti_code}"""
+                },
+                {
+                    "page": "heartfelt_message",
+                    "prompt": f"""これまでのすべての分析を総合して、{pet_name}が飼い主の元に来たことはどんな意味があるか、感動的な締めくくりの手紙を書いてください。この子の性格タイプが持つ「愛らしい欠点」さえも大切な理由を言及してください。最後には「あなたは{pet_name}にとって世界で最も完璧な飼い主です」というメッセージを含めて1ページを埋めてください。
 
-{pet_name}의 MBTI 유형: {mbti_code}
-성격 통계: {trait_stats}"""
-            }
-        ]
+{pet_name}のMBTIタイプ：{mbti_code}
+性格統計：{trait_stats}"""
+                }
+            ]
+        else:  # en
+            page_prompts = [
+                {
+                    "page": "table_of_contents",
+                    "prompt": f"""The following is the table of contents for {pet_name}'s Premium Personality Analysis Report.
+
+The report consists of 8 pages total, including the following content:
+1. Table of Contents (current page)
+2. Deep Dive into Personality Indicators
+3. Cognitive Strengths and Instinctive Genius
+4. Special Chemistry Analysis with Owner
+5. Customized Positive Reinforcement Training Roadmap
+6. Social Adaptation and Environment Guide
+7. Lifestyle for a Perfect Day
+8. Special Message to the Owner
+
+Please format the above table of contents beautifully in Markdown format. Include a brief description (1-2 lines) for each page."""
+                },
+                {
+                    "page": "deep_dive_traits",
+                    "prompt": f"""What kind of map is drawn in {pet_name}'s heart?
+
+Analyze the 5 personality data points for {pet_name}: {trait_stats}.
+
+Important: Instead of explaining "the indicator is X% so this is why," write in a storytelling style: "this value appears in daily life as this adorable behavior."
+
+Describe specific moments the owner can feel in everyday life:
+- When meeting a stranger during a walk, how does {pet_name} react? How does their tail move?
+- What is their expression and behavior when eating? When do they look happiest?
+- What expression do they make when given a toy? When do their eyes sparkle?
+- What unique personality emerges when the highest and lowest values collide?
+
+Write like a sophisticated pet magazine article, explaining technical terms in simple language. Create a one-page in-depth report.
+
+MBTI Type: {mbti_code}"""
+                },
+                {
+                    "page": "cognitive_strengths",
+                    "prompt": f"""Based on {pet_name}'s personality type {mbti_code} and Sagacity score, analyze how this friend understands the world and solves problems.
+
+Write in a storytelling style:
+- What is {pet_name}'s first reaction when given a new toy? Do they sniff with their nose, bite immediately, or observe carefully?
+- Describe the specific moment of the cognitive process when walking an unfamiliar path
+- Explain what 'genius moments' unique to this type are, through everyday episodes
+
+Vividly depict scenes the owner can actually witness. Write like a sophisticated pet magazine article.
+
+Personality Stats: {trait_stats}"""
+                },
+                {
+                    "page": "owner_chemistry",
+                    "prompt": f"""What special chemistry exists between you and {pet_name}?
+
+This is the most important analysis. Compare the dog's tendency data {trait_stats} with the owner's tendency data {owner_traits.get('summary', 'Owner tendency data not available')}.
+
+Write in a storytelling style:
+1) Where the two energies match best - for example, "How does {pet_name} react when you come home tired?"
+2) Potential misunderstandings that can arise from differences in tendencies - "What moments might {pet_name} misunderstand your intentions?"
+3) 'Psychological approaches' the owner can practice to win {pet_name}'s heart - explain through specific daily behaviors
+
+Include highly personalized content based on the data.
+
+{pet_name}'s MBTI Type: {mbti_code}"""
+                },
+                {
+                    "page": "training_roadmap",
+                    "prompt": f"""Create an optimal training strategy considering {pet_name}'s Obedience and Temperament scores.
+
+Write in a storytelling style:
+- When doing "sit" training, how does {pet_name} react? What moments do they follow best?
+- Instead of forceful training, describe specific methods (treats, praise, play) that can motivate this friend, through everyday scenes
+- Explain points where this personality type can easily get bored or stressed, through actual situations
+- Create a step-by-step training guide to overcome this, specifically like "In the first week...", "In the second week..."
+
+Write clearly and warmly so the owner can practice immediately.
+
+Personality Stats: {trait_stats}
+MBTI Type: {mbti_code}"""
+                },
+                {
+                    "page": "social_adaptation",
+                    "prompt": f"""Create a social life guide based on {pet_name}'s Sociability and Emotionality scores.
+
+Write while describing specific everyday situations:
+1) When meeting other dogs at a dog cafe or park, how does {pet_name} react? Do they wag their tail or approach cautiously? How can the owner help in these moments?
+2) Vividly describe {pet_name}'s adaptation process step by step when moving or when a stranger visits the home
+3) Explain the emotional safety measures the owner should provide to prevent separation anxiety, through actual behaviors (e.g., "Please play together for 10 minutes before going to work")
+
+Write like a sophisticated and practical pet magazine article.
+
+Personality Stats: {trait_stats}
+MBTI Type: {mbti_code}"""
+                },
+                {
+                    "page": "lifestyle_guide",
+                    "prompt": f"""Design a 'perfect daily routine' perfectly suited to {pet_name}'s energy level and tendencies.
+
+Draw a day in a storytelling style:
+- Morning: What does {pet_name} look like when they wake up? When is the best time for a walk?
+- Explain the walk route style (scent-focused vs activity-focused) through specific paths
+- Afternoon: Describe nose work or toy types that can stimulate this type's intelligence, through actual usage scenes
+- Evening: Specifically suggest how to create an environment where they can feel most comfortable during rest time
+
+You may mention actual product categories. Write like a sophisticated pet magazine article.
+
+Personality Stats: {trait_stats}
+MBTI Type: {mbti_code}"""
+                },
+                {
+                    "page": "heartfelt_message",
+                    "prompt": f"""Synthesizing all the analysis so far, write a touching closing letter about what it means that {pet_name} came to the owner. Mention why even the 'adorable flaws' of this personality type are precious. Finally, fill one page including the message 'You are the most perfect owner in the world for {pet_name}'.
+
+{pet_name}'s MBTI Type: {mbti_code}
+Personality Stats: {trait_stats}"""
+                }
+            ]
         
         # 5. 8개 페이지를 병렬로 생성 (최신 OpenAI API 사용)
         async def generate_page(page_info: Dict) -> Dict:
@@ -600,7 +740,6 @@ MBTI 유형: {mbti_code}"""
                             "content": page_info["prompt"]
                         }
                     ],
-                    temperature=0.7,
                     max_output_tokens=1500
                 )
                 

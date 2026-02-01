@@ -26,6 +26,28 @@ body {
   color: #2D3436;
 }
 
+/* Japanese font optimization */
+html[lang="jp"] body,
+body[data-lang="jp"] {
+  font-family: 'Noto Sans JP', 'Poppins', sans-serif;
+  line-height: 1.7; /* Slightly wider line spacing for better Japanese readability */
+}
+
+html[lang="jp"] h1,
+html[lang="jp"] h2,
+html[lang="jp"] h3,
+html[lang="jp"] h4,
+html[lang="jp"] h5,
+html[lang="jp"] h6,
+body[data-lang="jp"] h1,
+body[data-lang="jp"] h2,
+body[data-lang="jp"] h3,
+body[data-lang="jp"] h4,
+body[data-lang="jp"] h5,
+body[data-lang="jp"] h6 {
+  font-family: 'Noto Sans JP', 'Montserrat', sans-serif;
+}
+
 ::selection {
   background-color: #FFB38A;
   color: #1B4D3E;

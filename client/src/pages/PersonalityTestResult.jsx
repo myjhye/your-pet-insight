@@ -15,32 +15,144 @@ const STATS_ORDER = [
   { key: 'temperament', color: 'bg-yellow-400' },
 ]
 
+// UI 텍스트 다국어 정의
+const UI_TEXT = {
+  en: {
+    loading: {
+      title: 'Analyzing Results...',
+      subtitle: "Creating your pet's personality profile"
+    },
+    error: {
+      title: "Oops! Something went wrong",
+      tryAgain: "Try Again",
+      noData: "Result data not found."
+    },
+    tabs: {
+      basic: "Basic Results",
+      premium: "Premium Report"
+    },
+    petName: {
+      subtitle: "Your Beloved Companion"
+    },
+    sections: {
+      coreTraits: "Core Traits",
+      dailyLife: "Daily Life with You"
+    },
+    premium: {
+      title: "Premium Deep Report",
+      subtitle: "AI's complete personality profile of {name}",
+      pageTitles: {
+        table_of_contents: "Table of Contents",
+        deep_dive_traits: "Personality Analysis",
+        cognitive_strengths: "Cognitive Strengths",
+        owner_chemistry: "Chemistry Analysis",
+        training_roadmap: "Training Guide",
+        social_adaptation: "Social Adaptation",
+        lifestyle_guide: "Lifestyle Guide",
+        heartfelt_message: "Special Message"
+      },
+      cta: {
+        title: "Go Beyond the Surface",
+        description: "Unlock the 25-page Premium Report to discover detailed training roadmaps, breed-specific insights, and scientific cognitive benchmarks.",
+        getReport: "Get Premium Full Report",
+        generating: "Generating your premium report...",
+        generatingSub: "This may take up to 30 seconds",
+        viewReport: "View Premium Report",
+        ready: "Report ready! Click to view",
+        failed: "Report generation failed. Please try again.",
+        retry: "Retry",
+        devTest: "Premium Report Generation Test (Dev Only)",
+        join: "Join 50,000+ happy pet parents worldwide."
+      }
+    },
+    share: {
+      title: "Share your result",
+      copyLink: "Copy Link"
+    }
+  },
+  jp: {
+    loading: {
+      title: '結果を分析中...',
+      subtitle: "ペットの性格プロファイルを作成しています"
+    },
+    error: {
+      title: "エラーが発生しました",
+      tryAgain: "再試行",
+      noData: "結果データが見つかりません。"
+    },
+    tabs: {
+      basic: "基本結果",
+      premium: "プレミアムレポート"
+    },
+    petName: {
+      subtitle: "あなたの愛するパートナー"
+    },
+    sections: {
+      coreTraits: "コア特性",
+      dailyLife: "あなたとの日常生活"
+    },
+    premium: {
+      title: "プレミアム詳細レポート",
+      subtitle: "AIが分析した{name}の完全な性格プロファイル",
+      pageTitles: {
+        table_of_contents: "目次",
+        deep_dive_traits: "性格分析",
+        cognitive_strengths: "認知的強み",
+        owner_chemistry: "相性分析",
+        training_roadmap: "トレーニングガイド",
+        social_adaptation: "社会適応",
+        lifestyle_guide: "ライフスタイルガイド",
+        heartfelt_message: "特別なメッセージ"
+      },
+      cta: {
+        title: "表面を超えて",
+        description: "25ページのプレミアムレポートを解除して、詳細なトレーニングロードマップ、品種固有の洞察、科学的認知ベンチマークを発見してください。",
+        getReport: "プレミアム完全レポートを取得",
+        generating: "プレミアムレポートを生成中...",
+        generatingSub: "最大30秒かかる場合があります",
+        viewReport: "プレミアムレポートを表示",
+        ready: "レポート準備完了！クリックして表示",
+        failed: "レポート生成に失敗しました。もう一度お試しください。",
+        retry: "再試行",
+        devTest: "プレミアムレポート生成テスト（開発者専用）",
+        join: "世界中の50,000人以上の幸せなペットの親に参加してください。"
+      }
+    },
+    share: {
+      title: "結果を共有",
+      copyLink: "リンクをコピー"
+    }
+  }
+}
+
 // 로딩 컴포넌트
-function LoadingScreen() {
+function LoadingScreen({ lang = 'en' }) {
+  const text = UI_TEXT[lang] || UI_TEXT.en
   return (
     <main className="min-h-screen bg-[#F9FBF9] flex items-center justify-center">
       <div className="text-center">
         <div className="w-20 h-20 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-        <p className="text-primary font-display text-xl font-bold">Analyzing Results...</p>
-        <p className="text-primary/60 mt-2">Creating your pet's personality profile</p>
+        <p className="text-primary font-display text-xl font-bold">{text.loading.title}</p>
+        <p className="text-primary/60 mt-2">{text.loading.subtitle}</p>
       </div>
     </main>
   )
 }
 
 // 에러 컴포넌트
-function ErrorScreen({ message, onRetry }) {
+function ErrorScreen({ message, onRetry, lang = 'en' }) {
+  const text = UI_TEXT[lang] || UI_TEXT.en
   return (
     <main className="min-h-screen bg-[#F9FBF9] flex items-center justify-center">
       <div className="text-center max-w-md px-6">
         <span className="material-symbols-outlined text-7xl text-red-400 mb-6">error</span>
-        <h2 className="text-2xl font-display font-bold text-primary mb-4">Oops! Something went wrong</h2>
+        <h2 className="text-2xl font-display font-bold text-primary mb-4">{text.error.title}</h2>
         <p className="text-primary/60 mb-6">{message}</p>
         <button
           onClick={onRetry}
           className="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors"
         >
-          Try Again
+          {text.error.tryAgain}
         </button>
       </div>
     </main>
@@ -275,19 +387,22 @@ function PersonalityTestResult() {
     }
   }
 
+  // UI 텍스트 가져오기 (언어별)
+  const uiText = UI_TEXT[lang] || UI_TEXT.en
+  
   // 로딩 중
   if (loading) {
-    return <LoadingScreen />
+    return <LoadingScreen lang={lang} />
   }
 
   // 에러 발생
   if (error) {
-    return <ErrorScreen message={error} onRetry={() => window.location.reload()} />
+    return <ErrorScreen message={error} onRetry={() => window.location.reload()} lang={lang} />
   }
 
   // 데이터 없음
   if (!resultData) {
-    return <ErrorScreen message="결과 데이터를 찾을 수 없습니다." onRetry={() => window.location.reload()} />
+    return <ErrorScreen message={uiText.error.noData} onRetry={() => window.location.reload()} lang={lang} />
   }
 
   // 데이터 추출
@@ -357,7 +472,7 @@ function PersonalityTestResult() {
               </h1>
               <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
             </div>
-            <p className="text-sm text-primary/60 font-medium">Your Beloved Companion</p>
+            <p className="text-sm text-primary/60 font-medium">{uiText.petName.subtitle}</p>
           </div>
 
           {/* 메인 탭 버튼 (기본 결과 / 프리미엄 리포트) */}
@@ -371,7 +486,7 @@ function PersonalityTestResult() {
                     : 'bg-gray-50 text-primary hover:bg-primary/10'
                 }`}
               >
-                기본 결과
+                {uiText.tabs.basic}
               </button>
               <button
                 onClick={() => {
@@ -394,7 +509,7 @@ function PersonalityTestResult() {
                 {reportStatus !== 'ready' && (
                   <span className="material-symbols-outlined text-lg">lock</span>
                 )}
-                프리미엄 리포트
+                {uiText.tabs.premium}
               </button>
             </div>
           </div>
@@ -483,7 +598,7 @@ function PersonalityTestResult() {
             {coreTraits.length > 0 && (
               <div className="space-y-12 mb-16">
                 <div className="flex items-center gap-4 mb-8">
-                  <h2 className="text-3xl font-display font-bold text-primary">Core Traits</h2>
+                  <h2 className="text-3xl font-display font-bold text-primary">{uiText.sections.coreTraits}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -504,7 +619,7 @@ function PersonalityTestResult() {
             {dailyLife.length > 0 && (
               <div className="space-y-12 mb-16">
                 <div className="flex items-center gap-4 my-8">
-                  <h2 className="text-3xl font-display font-bold text-primary">Daily Life with You</h2>
+                  <h2 className="text-3xl font-display font-bold text-primary">{uiText.sections.dailyLife}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -530,9 +645,9 @@ function PersonalityTestResult() {
             <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-[#2D5A47]/30 rounded-full blur-3xl"></div>
             <div className="relative z-10">
               <span className="material-symbols-outlined text-white text-6xl mb-6">workspace_premium</span>
-              <h4 className="text-3xl md:text-4xl font-display font-bold text-white mb-6">Go Beyond the Surface</h4>
+              <h4 className="text-3xl md:text-4xl font-display font-bold text-white mb-6">{uiText.premium.cta.title}</h4>
               <p className="text-white/70 mb-10 max-w-xl mx-auto text-lg leading-relaxed">
-                Unlock the 25-page Premium Report to discover detailed training roadmaps, breed-specific insights, and scientific cognitive benchmarks.
+                {uiText.premium.cta.description}
               </p>
               
               {/* 리포트 생성 상태에 따른 버튼 표시 */}
@@ -542,15 +657,15 @@ function PersonalityTestResult() {
                   disabled={isGeneratingReport}
                   className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Get Premium Full Report
+                  {uiText.premium.cta.getReport}
                 </button>
               )}
               
               {reportStatus === 'generating' && (
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-white/90 text-lg font-medium">Generating your premium report...</p>
-                  <p className="text-white/60 text-sm">This may take up to 30 seconds</p>
+                  <p className="text-white/90 text-lg font-medium">{uiText.premium.cta.generating}</p>
+                  <p className="text-white/60 text-sm">{uiText.premium.cta.generatingSub}</p>
                 </div>
               )}
               
@@ -560,23 +675,23 @@ function PersonalityTestResult() {
                     onClick={() => setCurrentTab('premium')}
                     className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95"
                   >
-                    View Premium Report
+                    {uiText.premium.cta.viewReport}
                   </button>
                   <div className="text-white/80 text-sm">
                     <span className="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>
-                    Report ready! Click to view
+                    {uiText.premium.cta.ready}
                   </div>
                 </div>
               )}
               
               {reportStatus === 'failed' && (
                 <div className="space-y-4">
-                  <p className="text-white/90 text-lg">Report generation failed. Please try again.</p>
+                  <p className="text-white/90 text-lg">{uiText.premium.cta.failed}</p>
                   <button 
                     onClick={handleGenerateReport}
                     className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-lg py-3 px-8 rounded-full shadow-xl transition-all"
                   >
-                    Retry
+                    {uiText.premium.cta.retry}
                   </button>
                 </div>
               )}
@@ -589,14 +704,14 @@ function PersonalityTestResult() {
                     disabled={isGeneratingReport}
                     className="bg-white/20 hover:bg-white/30 text-white text-sm font-medium py-2 px-6 rounded-full transition-all disabled:opacity-50"
                   >
-                    {isGeneratingReport ? 'Generating...' : '프리미엄 리포트 생성 테스트 (Dev Only)'}
+                    {isGeneratingReport ? (lang === 'jp' ? '生成中...' : 'Generating...') : uiText.premium.cta.devTest}
                   </button>
                 </div>
               )}
               
               <div className="mt-8 flex items-center justify-center gap-2 text-white/40 text-sm">
                 <span className="material-symbols-outlined text-sm">verified_user</span>
-                <span>Join 50,000+ happy pet parents worldwide.</span>
+                <span>{uiText.premium.cta.join}</span>
               </div>
             </div>
           </div>
@@ -615,16 +730,7 @@ function PersonalityTestResult() {
             'heartfelt_message'
           ]
           
-          const pageTitles = {
-            'table_of_contents': '목차',
-            'deep_dive_traits': '성격 분석',
-            'cognitive_strengths': '인지 강점',
-            'owner_chemistry': '케미 분석',
-            'training_roadmap': '훈련법',
-            'social_adaptation': '사회성',
-            'lifestyle_guide': '라이프스타일',
-            'heartfelt_message': '특별한 메시지'
-          }
+          const pageTitles = uiText.premium.pageTitles
           
           const availablePages = pageOrder.filter(pageKey => reportPages[pageKey])
           const activePageData = reportPages[activeTab]
@@ -640,9 +746,9 @@ function PersonalityTestResult() {
                 <header className="bg-primary/5 p-10 md:p-12 text-center border-b border-primary/10">
                   <span className="material-symbols-outlined text-primary text-5xl mb-4 block">workspace_premium</span>
                   <h2 className="text-3xl md:text-4xl font-display font-bold text-primary mb-2">
-                    프리미엄 심층 리포트
+                    {uiText.premium.title}
                   </h2>
-                  <p className="text-primary/60 text-lg">AI가 분석한 {displayPetName}의 완전한 성격 프로필</p>
+                  <p className="text-primary/60 text-lg">{uiText.premium.subtitle.replace('{name}', displayPetName)}</p>
                 </header>
 
                 {/* 2. 네비게이션 (탭 메뉴) */}
@@ -736,14 +842,14 @@ function PersonalityTestResult() {
         {/* 결과 공유 (기본 탭에서만 표시) */}
         {currentTab === 'basic' && (
           <div className="mt-12 text-center">
-            <p className="text-primary/40 text-sm mb-4">Share your result</p>
+            <p className="text-primary/40 text-sm mb-4">{uiText.share.title}</p>
             <div className="flex justify-center gap-4">
               <button 
                 onClick={() => navigator.clipboard.writeText(window.location.href)}
                 className="flex items-center gap-2 px-6 py-3 bg-white border border-primary/10 rounded-full text-primary hover:bg-primary/5 transition-colors"
               >
                 <span className="material-symbols-outlined text-xl">link</span>
-                <span className="font-medium">Copy Link</span>
+                <span className="font-medium">{uiText.share.copyLink}</span>
               </button>
             </div>
           </div>
