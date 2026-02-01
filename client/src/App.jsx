@@ -9,6 +9,7 @@ import Home from './pages/Home'
 import DogTest from './pages/DogTest'
 import PersonalityTest from './pages/PersonalityTest'
 import PersonalityTestResult from './pages/PersonalityTestResult'
+import NotFound from './pages/NotFound'
 
 function Layout({ children }) {
   return (
@@ -44,6 +45,8 @@ function LangRoutes() {
             <Route path="/dog-test" element={<Layout><DogTest /></Layout>} />
             <Route path="/dog-test/personality" element={<TestLayout><PersonalityTest /></TestLayout>} />
             <Route path="/dog-test/personality/result/:resultId" element={<Layout><PersonalityTestResult /></Layout>} />
+            {/* 404 라우트 - 반드시 가장 마지막에! */}
+            <Route path="*" element={<Layout><NotFound /></Layout>} />
           </Routes>
         </ResultsProvider>
       </QuestionsProvider>
