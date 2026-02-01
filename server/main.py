@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import uuid
 import asyncio
 import os
+import random
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
@@ -472,22 +473,59 @@ async def generate_report(result_id: str, lang: str = "en"):
         # Stats 데이터를 문자열로 포맷팅
         trait_stats = ", ".join([f"{key}: {value}%" for key, value in stats.items()])
         
+        # 1. 모든 페이지가 참고할 '개인화 컨텍스트' 생성
+        owner_summary_text = owner_traits.get('summary', 'Balanced' if lang == 'en' else 'バランス型')
+        personal_context = f"""
+- Pet Name: {pet_name}
+- Dog's Personality: {mbti_code} ({trait_stats})
+- Owner's Personality: {owner_summary_text}
+"""
+        
         # 2. 리포트 상태를 'generating'으로 업데이트
         doc_ref.update({
             "report_status": "generating",
             "report_pages": {}
         })
         
-        # 3. 공통 시스템 프롬프트 (언어별 톤 지시)
+        # 3. 공통 시스템 프롬프트 고도화 (블로그/잡지 스타일 + 개인화 강조)
         if lang == "jp":
-            system_prompt = f"""あなたはペットの心を読み取る温かいストーリーテラーであり、行動専門家です。
+            system_prompt = f"""あなたは世界的なペット心理学者です。以下の情報を基に、一冊の高級雑誌のようなリポートを書いてください。
+
+{personal_context}
+
+【重要：個人化の指針】
+飼い主の傾向（{owner_summary_text}）に合わせて、アドバイスの内容や語調を調整してください。飼い主の性格を深く理解した上で、{pet_name}との関係性を分析してください。
+
+【重要：構造化の指針】
+- ページごとに必ず # 大見出し と ## 中見出し を使ってください
+- 中見出しは「性格数値分析」のような硬い表現ではなく、「なぜ{pet_name}は玄関の音に特に敏感なのでしょうか？」のように読者の興味を引く質問や魅力的なフレーズを使用してください
+- 箇条書き(- )と引用文(> )を積極的に使い、視覚的なリズムを作ってください
+- 単なるデータの羅列ではなく、日常のシーンを映画のように描写してください（例：「朝7時に{pet_name}があなたを見つめるその目つき」）
+
+【スタイル】
 数値を列挙するのではなく、「飼い主が帰宅した時に{pet_name}が見せる具体的な行動」や「散歩中に知らない犬に会った時の目つき」のように日常的な描写をたっぷりと含めて書いてください。
 専門的でありながら感動的な語調を保ち、必ず日本語で「です/ます」調を使用して丁寧に書いてください。
+人気のあるペット雑誌のトーンを参考にしてください。
+
 マークダウン形式で記述してください。"""
         else:  # en
-            system_prompt = f"""You are a warm storyteller and behavior expert who reads the hearts of pets.
+            system_prompt = f"""You are a world-class pet psychologist and a gifted storyteller. 
+Write a premium magazine-style report based on: {personal_context}
+
+【PERSONALIZATION GUIDELINE】
+Tailor all advice and the tone to match the owner's trait: {owner_summary_text}. Deeply understand the owner's personality and analyze their relationship with {pet_name} accordingly.
+
+【STRUCTURAL GUIDELINE】
+- Use # H1 for the page title and ## H2 for sub-points
+- Subheadings should not be dry expressions like "Personality Score Analysis" but rather engaging questions or captivating phrases that spark the reader's curiosity, such as "Why is {pet_name} particularly sensitive to the sound of the front door?"
+- Use bullet points(-) and blockquotes(>) to create a dynamic visual flow
+- Describe daily life scenes vividly (e.g., "The way {pet_name} looks at you at 7 AM")
+- NO dry data listing. Focus on storytelling and emotional connection
+
+【STYLE】
 Instead of listing numbers, write with plenty of everyday descriptions like 'the specific behavior {pet_name} shows when the owner comes home from work' or 'the look in their eyes when meeting a strange dog during a walk'.
-Maintain a professional yet touching tone, and write everything in English with the sophisticated tone of a magazine editor.
+Maintain a professional yet touching tone, and write everything in English with the sophisticated tone of a popular pet magazine editor.
+
 Write in Markdown format."""
         
         # 4. 8개 페이지별 프롬프트 정의 (언어별 분기)
@@ -507,104 +545,102 @@ Write in Markdown format."""
 7. 完璧な一日のためのライフスタイル
 8. 飼い主への特別なメッセージ
 
-上記の目次をマークダウン形式で美しくフォーマットして作成してください。各ページの簡単な説明（1-2行）も含めてください。"""
+【重要】この目次はレポート全体の雰囲気を決定する重要な第一印象です。GPT-5 miniが「簡単な作業」として軽視하지 않도록、非常に優雅で詳細に、そして魅力的に書いてください。上記の目次をマークダウン形式で美しくフォーマットして作成してください。各ページの簡単な説明（1-2行）も含めてください。"""
                 },
                 {
                     "page": "deep_dive_traits",
-                    "prompt": f"""私たちの{pet_name}の心の中には、どんな地図が描かれているのでしょうか？
+                    "prompt": f"""# {pet_name}の心の中に描かれた地図
 
-犬の{pet_name}の5つの性格数値データである{trait_stats}を分析してください。
+{pet_name}の性格特性が日常の習慣にどう現れるか分析してください。飼い主の性格（{owner_summary_text}）を考慮して、なぜこの二人が素晴らしいチームなのか説明してください。
 
-重要：「指標が何%だからこうだ」という説明ではなく、「この数値は日常でこんな可愛い姿として現れます」というストーリーテリング方式で書いてください。
+数値（{trait_stats}）を直接言及するのではなく、以下のような日常シーンを映画のように描写してください：
+- 散歩中に知らない人に会った時の{pet_name}の反応としっぽの動き
+- ご飯を食べる時の表情と最も幸せそうに見える瞬間
+- おもちゃを与える時、目が輝く瞬間
+- 飼い主（{owner_summary_text}）の性格と{pet_name}の性格がどう共鳴しているか
 
-飼い主が日常で感じられる具体的な瞬間を描写してください：
-- 散歩中に知らない人に会った時の{pet_name}の反応は？しっぽはどう動きますか？
-- ご飯を食べる時の表情と行動は？どんな瞬間に最も幸せそうに見えますか？
-- おもちゃを与える時、どんな表情をしますか？目が輝く瞬間はいつですか？
-- 最も高い数値と最も低い数値がぶつかった時に現れる独特な個性は？
-
-ペット雑誌の記事のように洗練され、専門用語は分かりやすく説明してください。1ページ分の深層レポートを作成してください。
-
-MBTIタイプ：{mbti_code}"""
+飼い主の性格を深く理解した上で、{pet_name}との関係性を分析してください。"""
                 },
                 {
                     "page": "cognitive_strengths",
-                    "prompt": f"""{pet_name}の性格タイプである{mbti_code}とサガシティ（Sagacity）数値を基に、この子が世界をどう理解し、問題をどう解決するか分析してください。
+                    "prompt": f"""# {pet_name}が世界を理解する方法
 
-ストーリーテリング方式で書いてください：
-- 新しいおもちゃを与えた時の{pet_name}の最初の反応は？鼻で匂いを嗅ぐか、すぐに噛むか、慎重に観察するか？
-- 知らない道を歩く時、どんな認知的プロセスを経るか、具体的な瞬間を描写してください
-- このタイプだけが持つ「天才的な瞬間」は何か、日常のエピソードで説明してください
+{pet_name}の性格タイプ（{mbti_code}）を基に、この子が世界をどう理解し、問題をどう解決するか分析してください。飼い主（{owner_summary_text}）の認知スタイルと{pet_name}の認知スタイルがどう補完し合っているか説明してください。
 
-飼い主が実際に目撃できる場面を生き生きと描いてください。ペット雑誌の記事のように洗練されて書いてください。
+以下のような日常シーンをストーリーテリング方式で描写してください：
+- 新しいおもちゃを前にした時、{pet_name}の脳内で何が起きているのか？
+- 知らない道を歩く時、{pet_name}が辿る認知的プロセス
+- このタイプだけが持つ「天才的な瞬間」を日常のエピソードで説明
+- 飼い主の思考パターンと{pet_name}の認知パターンがどう共鳴しているか
 
-性格統計：{trait_stats}"""
+飼い主が実際に目撃できる場面を生き生きと描いてください。"""
                 },
                 {
                     "page": "owner_chemistry",
-                    "prompt": f"""あなたと{pet_name}の間には、どんな特別な相性があるのでしょうか？
+                    "prompt": f"""# あなたと{pet_name}、異なるリズムが一つの旋律になる過程
 
-最も重要な分析です。犬の傾向データ{trait_stats}と飼い主の傾向データ{owner_traits.get('summary', '飼い主の傾向データなし')}を対照してください。
+最も重要な分析です。飼い主の性格（{owner_summary_text}）と{pet_name}の性格（{mbti_code}）を深く対照し、なぜこの二人が完璧なチームなのか説明してください。
 
-ストーリーテリング方式で書いてください：
-1) 二人のエネルギーが最も合う部分 - 例えば「あなたが疲れて帰ってきた時、{pet_name}はどう反応しますか？」
-2) お互いの傾向の違いによって発生する可能性のある潜在的な誤解 - 「時には{pet_name}があなたの意図を誤解する可能性のある瞬間は？」
-3) 飼い主が{pet_name}の心を得るために実践できる「心理的アプローチ」 - 具体的な日常行動で説明してください
+ストーリーテリング方式で以下の点を描写してください：
+1) 二人のエネルギーが最も合う瞬間 - 例えば「あなたが疲れて帰ってきた時、{pet_name}はどう反応しますか？」飼い主の性格（{owner_summary_text}）を考慮して説明してください
+2) お互いの傾向の違いによって発生する可能性のある潜在的な誤解と、それをどう乗り越えるか
+3) 飼い主の性格に合わせた{pet_name}の心を得るための「心理的アプローチ」 - 具体的な日常行動で説明してください
 
-データに基づいて非常に個人的な内容を含めてください。
-
-{pet_name}のMBTIタイプ：{mbti_code}"""
+飼い主の性格を深く理解した上で、非常に個人的で実用的なアドバイスを含めてください。"""
                 },
                 {
                     "page": "training_roadmap",
-                    "prompt": f"""{pet_name}の従順度（Obedience）と気質（Temperament）数値を考慮した最適な教育戦略を立ててください。
+                    "prompt": f"""# {pet_name}にぴったりのトレーニングロードマップ
 
-ストーリーテリング方式で書いてください：
-- 「おすわり」のトレーニングをする時、{pet_name}の反応は？どんな瞬間に最もよく従いますか？
-- 強圧的なトレーニングではなく、この子の動機を刺激できる具体的な方法（おやつ、褒め言葉、遊びなど）を日常の場面で描写してください
-- この性格タイプが簡単に退屈したりストレスを受けたりする可能性のある点を実際の状況で説明してください
-- これを克服する段階的なトレーニングガイドを「最初の週には...」「2週目には...」のように具体的に作成してください
+{pet_name}の性格（{mbti_code}）と飼い主の性格（{owner_summary_text}）を考慮した最適な教育戦略を立ててください。飼い主の性格に合わせたトレーニングアプローチを提案してください。
 
-飼い主がすぐに実践できるように明確で温かく書いてください。
+ストーリーテリング方式で以下の点を描写してください：
+- 「おすわり」のトレーニングをする時、{pet_name}が最もよく従う瞬間とは？飼い主の性格（{owner_summary_text}）を考慮して説明してください
+- 強圧的なトレーニングではなく、この子の動機を刺激できる具体的な方法（おやつ、褒め言葉、遊びなど）を日常の場面で描写
+- この性格タイプが簡単に退屈したりストレスを受けたりする可能性のある点と、飼い主の性格に合わせた克服法
+- 飼い主の性格に最適化された段階的なトレーニングガイドを「最初の週には...」「2週目には...」のように具体的に作成
 
-性格統計：{trait_stats}
-MBTIタイプ：{mbti_code}"""
+飼い主がすぐに実践できるように明確で温かく、個人的なアドバイスを含めてください。"""
                 },
                 {
                     "page": "social_adaptation",
-                    "prompt": f"""{pet_name}の社会性（Sociability）と感情性（Emotionality）数値を基に、社会生活ガイドを作成してください。
+                    "prompt": f"""# {pet_name}の社会性と環境適応ガイド
 
-具体的な日常状況を描写しながら書いてください：
-1) ドッグカフェや公園で他の犬に会った時、{pet_name}の反応は？しっぽを振るか、慎重に近づくか？こんな瞬間に飼い主がどう助けられるか
-2) 引っ越しをしたり、知らない人が家に来た時、{pet_name}の適応過程を段階的に生き生きと描写してください
-3) 分離不安を予防するために飼い主が提供すべき情緒的安全装置を実際の行動で説明してください（例：「出勤前10分は必ず一緒に遊んでください」）
+{pet_name}の社会性と感情性を基に、社会生活ガイドを作成してください。飼い主の性格（{owner_summary_text}）を考慮して、飼い主が{pet_name}をサポートする最適な方法を提案してください。
 
-ペット雑誌の記事のように洗練され、実用的に書いてください。
+具体的な日常状況をストーリーテリング方式で描写してください：
+1) ドッグカフェや公園で他の犬に会った時、{pet_name}の反応としっぽの動き。飼い主の性格（{owner_summary_text}）に合わせたサポート方法
+2) 引っ越しや来客時、{pet_name}の適応過程を段階的に生き生きと描写。飼い主の性格を考慮した環境調整方法
+3) 分離不安を予防するために飼い主が提供すべき情緒的安全装置を、飼い主の性格に合わせた実際の行動で説明
 
-性格統計：{trait_stats}
-MBTIタイプ：{mbti_code}"""
+飼い主の性格を深く理解した上で、実用的で個人的なアドバイスを含めてください。"""
                 },
                 {
                     "page": "lifestyle_guide",
-                    "prompt": f"""{pet_name}のエネルギーレベルと傾向にぴったりの「完璧な一日のスケジュール」を設計してください。
+                    "prompt": f"""# {pet_name}のための完璧な一日
+
+{pet_name}のエネルギーレベルと傾向、そして飼い主の性格（{owner_summary_text}）にぴったりの「完璧な一日のスケジュール」を設計してください。飼い主のライフスタイルと{pet_name}のニーズを調和させてください。
 
 ストーリーテリング方式で一日を描いてください：
-- 朝：{pet_name}が起きてどんな様子ですか？散歩はいつが良いですか？
-- 散歩コースのスタイル（匂い中心 vs 活動量中心）を具体的なルートで説明してください
-- 昼：このタイプの知能を刺激できるノーズワークやおもちゃの種類を実際の使用場面で描写してください
-- 夜：休息時間に最も快適さを感じられる環境作りを具体的に提案してください
+- 朝：{pet_name}が目覚める様子と、飼い主の性格（{owner_summary_text}）に合わせた最適な散歩のタイミング
+- 散歩コースのスタイル（匂い中心 vs 活動量中心）を具体的なルートで説明。飼い主の性格を考慮した散歩スタイル
+- 昼：このタイプの知能を刺激できるノーズワークやおもちゃを実際の使用場面で描写。飼い主の性格に合わせた遊び方
+- 夜：休息時間に最も快適さを感じられる環境作りを、飼い主のライフスタイルに合わせて具体的に提案
 
-実際の製品カテゴリーを言及しても構いません。ペット雑誌の記事のように洗練されて書いてください。
-
-性格統計：{trait_stats}
-MBTIタイプ：{mbti_code}"""
+飼い主の性格とライフスタイルを深く理解した上で、実用的で個人的なアドバイスを含めてください。"""
                 },
                 {
                     "page": "heartfelt_message",
-                    "prompt": f"""これまでのすべての分析を総合して、{pet_name}が飼い主の元に来たことはどんな意味があるか、感動的な締めくくりの手紙を書いてください。この子の性格タイプが持つ「愛らしい欠点」さえも大切な理由を言及してください。最後には「あなたは{pet_name}にとって世界で最も完璧な飼い主です」というメッセージを含めて1ページを埋めてください。
+                    "prompt": f"""# 世界のすべての犬が羨む、あなたという贈り物
 
-{pet_name}のMBTIタイプ：{mbti_code}
-性格統計：{trait_stats}"""
+これまでのすべての分析を総合して、{pet_name}が飼い主（{owner_summary_text}）の元に来たことはどんな意味があるか、感動的な締めくくりの手紙を書いてください。
+
+飼い主の性格（{owner_summary_text}）を深く理解した上で、以下の点を含めてください：
+- {pet_name}があなたの元に来た意味。飼い主の性格と{pet_name}の性格がどう共鳴しているか
+- この子の性格タイプが持つ「愛らしい欠点」さえも大切な理由。飼い主の性格がそれをどう補完しているか
+- 「あなたは{pet_name}にとって世界で最も完璧な飼い主です」というメッセージを含めて、飼い主の性格を考慮した個人的なメッセージ
+
+飼い主の性格を深く理解した上で、非常に個人的で感動的な内容を含めてください。"""
                 }
             ]
         else:  # en
@@ -623,143 +659,157 @@ The report consists of 8 pages total, including the following content:
 7. Lifestyle for a Perfect Day
 8. Special Message to the Owner
 
-Please format the above table of contents beautifully in Markdown format. Include a brief description (1-2 lines) for each page."""
+【IMPORTANT】This table of contents is a crucial first impression that sets the tone for the entire report. Do not treat this as a simple task - write it with exceptional elegance, detail, and charm. Please format the above table of contents beautifully in Markdown format. Include a brief description (1-2 lines) for each page."""
                 },
                 {
                     "page": "deep_dive_traits",
-                    "prompt": f"""What kind of map is drawn in {pet_name}'s heart?
+                    "prompt": f"""# The Map Drawn in {pet_name}'s Heart
 
-Analyze the 5 personality data points for {pet_name}: {trait_stats}.
+Analyze how {pet_name}'s personality traits manifest in daily habits. Use the context of the owner's personality ({owner_summary_text}) to explain why they make such a great team.
 
-Important: Instead of explaining "the indicator is X% so this is why," write in a storytelling style: "this value appears in daily life as this adorable behavior."
+Instead of directly mentioning numbers ({trait_stats}), describe everyday scenes like a movie:
+- When meeting a stranger during a walk, how does {pet_name} react and how does their tail move?
+- Their expression and behavior when eating, and the moments they look happiest
+- The moment their eyes sparkle when given a toy
+- How the owner's personality ({owner_summary_text}) and {pet_name}'s personality resonate with each other
 
-Describe specific moments the owner can feel in everyday life:
-- When meeting a stranger during a walk, how does {pet_name} react? How does their tail move?
-- What is their expression and behavior when eating? When do they look happiest?
-- What expression do they make when given a toy? When do their eyes sparkle?
-- What unique personality emerges when the highest and lowest values collide?
-
-Write like a sophisticated pet magazine article, explaining technical terms in simple language. Create a one-page in-depth report.
-
-MBTI Type: {mbti_code}"""
+Deeply understand the owner's personality and analyze their relationship with {pet_name} accordingly."""
                 },
                 {
                     "page": "cognitive_strengths",
-                    "prompt": f"""Based on {pet_name}'s personality type {mbti_code} and Sagacity score, analyze how this friend understands the world and solves problems.
+                    "prompt": f"""# How {pet_name} Understands the World
 
-Write in a storytelling style:
-- What is {pet_name}'s first reaction when given a new toy? Do they sniff with their nose, bite immediately, or observe carefully?
-- Describe the specific moment of the cognitive process when walking an unfamiliar path
-- Explain what 'genius moments' unique to this type are, through everyday episodes
+Based on {pet_name}'s personality type ({mbti_code}), analyze how this friend understands the world and solves problems. Explain how the owner's cognitive style ({owner_summary_text}) and {pet_name}'s cognitive style complement each other.
 
-Vividly depict scenes the owner can actually witness. Write like a sophisticated pet magazine article.
+Describe the following everyday scenes in a storytelling style:
+- What happens in {pet_name}'s mind when facing a new toy?
+- The cognitive process {pet_name} follows when walking an unfamiliar path
+- The genius moments unique to this type, through everyday episodes
+- How the owner's thinking patterns and {pet_name}'s cognitive patterns resonate with each other
 
-Personality Stats: {trait_stats}"""
+Vividly depict scenes the owner can actually witness."""
                 },
                 {
                     "page": "owner_chemistry",
-                    "prompt": f"""What special chemistry exists between you and {pet_name}?
+                    "prompt": f"""# When Different Rhythms Meet to Create One Melody
 
-This is the most important analysis. Compare the dog's tendency data {trait_stats} with the owner's tendency data {owner_traits.get('summary', 'Owner tendency data not available')}.
+This is the most important analysis. Deeply compare the owner's personality ({owner_summary_text}) with {pet_name}'s personality ({mbti_code}) and explain why they make a perfect team.
 
-Write in a storytelling style:
-1) Where the two energies match best - for example, "How does {pet_name} react when you come home tired?"
-2) Potential misunderstandings that can arise from differences in tendencies - "What moments might {pet_name} misunderstand your intentions?"
-3) 'Psychological approaches' the owner can practice to win {pet_name}'s heart - explain through specific daily behaviors
+Write in a storytelling style covering:
+1) Where the two energies match best - for example, "How does {pet_name} react when you come home tired?" Consider the owner's personality ({owner_summary_text}) in your explanation
+2) Potential misunderstandings that can arise from differences in tendencies and how to overcome them
+3) 'Psychological approaches' tailored to the owner's personality to win {pet_name}'s heart - explain through specific daily behaviors
 
-Include highly personalized content based on the data.
-
-{pet_name}'s MBTI Type: {mbti_code}"""
+Deeply understand the owner's personality and include highly personalized and practical advice."""
                 },
                 {
                     "page": "training_roadmap",
-                    "prompt": f"""Create an optimal training strategy considering {pet_name}'s Obedience and Temperament scores.
+                    "prompt": f"""# The Perfect Training Roadmap for {pet_name}
 
-Write in a storytelling style:
-- When doing "sit" training, how does {pet_name} react? What moments do they follow best?
+Create an optimal training strategy considering {pet_name}'s personality ({mbti_code}) and the owner's personality ({owner_summary_text}). Propose a training approach tailored to the owner's personality.
+
+Write in a storytelling style covering:
+- When doing "sit" training, when does {pet_name} follow best? Consider the owner's personality ({owner_summary_text}) in your explanation
 - Instead of forceful training, describe specific methods (treats, praise, play) that can motivate this friend, through everyday scenes
-- Explain points where this personality type can easily get bored or stressed, through actual situations
-- Create a step-by-step training guide to overcome this, specifically like "In the first week...", "In the second week..."
+- Points where this personality type can easily get bored or stressed, and how to overcome them tailored to the owner's personality
+- A step-by-step training guide optimized for the owner's personality, specifically like "In the first week...", "In the second week..."
 
-Write clearly and warmly so the owner can practice immediately.
-
-Personality Stats: {trait_stats}
-MBTI Type: {mbti_code}"""
+Write clearly and warmly with personalized advice so the owner can practice immediately."""
                 },
                 {
                     "page": "social_adaptation",
-                    "prompt": f"""Create a social life guide based on {pet_name}'s Sociability and Emotionality scores.
+                    "prompt": f"""# {pet_name}'s Social Adaptation Guide
 
-Write while describing specific everyday situations:
-1) When meeting other dogs at a dog cafe or park, how does {pet_name} react? Do they wag their tail or approach cautiously? How can the owner help in these moments?
-2) Vividly describe {pet_name}'s adaptation process step by step when moving or when a stranger visits the home
-3) Explain the emotional safety measures the owner should provide to prevent separation anxiety, through actual behaviors (e.g., "Please play together for 10 minutes before going to work")
+Create a social life guide based on {pet_name}'s sociability and emotionality. Consider the owner's personality ({owner_summary_text}) and propose optimal ways for the owner to support {pet_name}.
 
-Write like a sophisticated and practical pet magazine article.
+Describe specific everyday situations in a storytelling style:
+1) When meeting other dogs at a dog cafe or park, how does {pet_name} react and how does their tail move? Support methods tailored to the owner's personality ({owner_summary_text})
+2) Vividly describe {pet_name}'s adaptation process step by step when moving or receiving visitors, with environment adjustments considering the owner's personality
+3) Explain the emotional safety measures the owner should provide to prevent separation anxiety, through actual behaviors tailored to the owner's personality
 
-Personality Stats: {trait_stats}
-MBTI Type: {mbti_code}"""
+Deeply understand the owner's personality and include practical and personalized advice."""
                 },
                 {
                     "page": "lifestyle_guide",
-                    "prompt": f"""Design a 'perfect daily routine' perfectly suited to {pet_name}'s energy level and tendencies.
+                    "prompt": f"""# A Perfect Day for {pet_name}
+
+Design a 'perfect daily routine' perfectly suited to {pet_name}'s energy level and tendencies, and harmonized with the owner's lifestyle ({owner_summary_text}).
 
 Draw a day in a storytelling style:
-- Morning: What does {pet_name} look like when they wake up? When is the best time for a walk?
-- Explain the walk route style (scent-focused vs activity-focused) through specific paths
-- Afternoon: Describe nose work or toy types that can stimulate this type's intelligence, through actual usage scenes
-- Evening: Specifically suggest how to create an environment where they can feel most comfortable during rest time
+- Morning: How {pet_name} wakes up and the optimal walk timing tailored to the owner's personality ({owner_summary_text})
+- Walk route style (scent-focused vs activity-focused) through specific paths, considering the owner's personality
+- Afternoon: Nose work and toys that stimulate this type's intelligence, through actual usage scenes, with play styles tailored to the owner's personality
+- Evening: How to create the most comfortable rest environment, specifically tailored to the owner's lifestyle
 
-You may mention actual product categories. Write like a sophisticated pet magazine article.
-
-Personality Stats: {trait_stats}
-MBTI Type: {mbti_code}"""
+Deeply understand the owner's personality and lifestyle and include practical and personalized advice."""
                 },
                 {
                     "page": "heartfelt_message",
-                    "prompt": f"""Synthesizing all the analysis so far, write a touching closing letter about what it means that {pet_name} came to the owner. Mention why even the 'adorable flaws' of this personality type are precious. Finally, fill one page including the message 'You are the most perfect owner in the world for {pet_name}'.
+                    "prompt": f"""# The Gift That Every Dog in the World Would Envy
 
-{pet_name}'s MBTI Type: {mbti_code}
-Personality Stats: {trait_stats}"""
+Synthesizing all the analysis so far, write a touching closing letter about what it means that {pet_name} came to the owner ({owner_summary_text}).
+
+Deeply understand the owner's personality ({owner_summary_text}) and include:
+- What it means that {pet_name} came to you. How the owner's personality and {pet_name}'s personality resonate with each other
+- Why even the 'adorable flaws' of this personality type are precious, and how the owner's personality complements them
+- Include the message 'You are the most perfect owner in the world for {pet_name}' with a personalized message considering the owner's personality
+
+Deeply understand the owner's personality and include highly personal and touching content."""
                 }
             ]
         
         # 5. 8개 페이지를 병렬로 생성 (최신 OpenAI API 사용)
         async def generate_page(page_info: Dict) -> Dict:
-            """단일 페이지 생성"""
-            try:
-                response = await openai_client.responses.create(
-                    model="gpt-5-mini",
-                    input=[
-                        {
-                            "role": "system",
-                            "content": system_prompt
-                        },
-                        {
-                            "role": "user",
-                            "content": page_info["prompt"]
+            """페이지 생성 (최대 3회 재시도 로직 포함)"""
+            max_retries = 3
+            retry_delay = 1.5  # 초기 대기 시간 (초)
+
+            for attempt in range(max_retries):
+                try:
+                    print(f"🔄 [{page_info['page']}] 생성 시도 {attempt + 1}/{max_retries}...")
+                    
+                    response = await openai_client.responses.create(
+                        model="gpt-5-mini",
+                        input=[
+                            {
+                                "role": "system",
+                                "content": system_prompt
+                            },
+                            {
+                                "role": "user",
+                                "content": page_info["prompt"]
+                            }
+                        ],
+                        max_output_tokens=1500
+                    )
+                    
+                    content = response.output_text
+                    
+                    # 응답이 비어있는지 빡세게 검사
+                    if not content or len(content.strip()) < 10:
+                        raise ValueError("AI 응답 내용이 너무 짧거나 비어있습니다.")
+
+                    return {
+                        "page": page_info["page"],
+                        "content": content,
+                        "status": "success"
+                    }
+
+                except Exception as e:
+                    print(f"⚠️ [{page_info['page']}] 시도 {attempt + 1} 실패: {str(e)}")
+                    
+                    if attempt < max_retries - 1:
+                        # 지수 백오프 + 지터(Jitter) 적용: 1.5초, 3초, 6초 순으로 대기
+                        wait_time = (retry_delay * (2 ** attempt)) + (random.random() * 0.5)
+                        print(f"⏳ {wait_time:.1f}초 후 다시 시도합니다...")
+                        await asyncio.sleep(wait_time)
+                    else:
+                        # 최종 실패 시 에러 반환
+                        return {
+                            "page": page_info["page"],
+                            "content": f"페이지 생성 실패 (3회 시도): {str(e)}",
+                            "status": "error"
                         }
-                    ],
-                    max_output_tokens=1500
-                )
-                
-                content = response.output_text
-                
-                if not content:
-                    raise ValueError("응답 내용이 비어있습니다.")
-                
-                return {
-                    "page": page_info["page"],
-                    "content": content,
-                    "status": "success"
-                }
-            except Exception as e:
-                print(f"페이지 생성 실패 ({page_info['page']}): {str(e)}")
-                return {
-                    "page": page_info["page"],
-                    "content": f"페이지 생성 중 오류: {str(e)}",
-                    "status": "error"
-                }
         
         # 세마포어로 동시성 제한 (레이트 리밋 방지)
         semaphore = asyncio.Semaphore(3)  # 최대 3개 동시 요청

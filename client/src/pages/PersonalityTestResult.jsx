@@ -797,32 +797,28 @@ function PersonalityTestResult() {
                           </div>
                         </div>
                         
-                        {/* ReactMarkdown으로 마크다운 렌더링 - 잡지 스타일 고도화 */}
+                        {/* ReactMarkdown으로 마크다운 렌더링 - 에디토리얼 타이포그래피 */}
                         <div className="prose prose-lg prose-slate max-w-none text-[#2D3436] 
-                          prose-headings:font-display prose-headings:font-bold prose-headings:text-primary
-                          prose-headings:mt-8 prose-headings:mb-4
-                          prose-h2:text-2xl prose-h2:border-l-4 prose-h2:border-primary prose-h2:pl-4 prose-h2:mt-10
-                          prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:pl-4 prose-h3:relative
-                          prose-h3:before:content-['▪'] prose-h3:before:text-primary prose-h3:before:absolute prose-h3:before:left-0
-                          prose-p:leading-loose prose-p:mb-6 prose-p:text-[#2D3436]
+                          prose-h1:text-4xl prose-h1:font-black prose-h1:mb-10 prose-h1:text-primary 
+                          prose-h1:border-b-4 prose-h1:border-primary/10 prose-h1:pb-4 prose-h1:font-display
+                          prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-primary/90 
+                          prose-h2:flex prose-h2:items-center prose-h2:before:content-[''] prose-h2:before:w-1.5 
+                          prose-h2:before:h-6 prose-h2:before:bg-secondary prose-h2:before:mr-3 prose-h2:before:rounded-full
+                          prose-h2:font-display
+                          prose-p:mb-8 prose-p:text-[#2D3436] prose-p:leading-relaxed
                           prose-strong:text-primary prose-strong:font-bold
                           prose-ul:my-6 prose-ol:my-6
                           prose-li:my-3 prose-li:leading-relaxed
-                          prose-blockquote:border-l-4 prose-blockquote:border-primary/30 
-                          prose-blockquote:bg-primary/5 prose-blockquote:pl-8 prose-blockquote:py-4 
-                          prose-blockquote:rounded-r-xl prose-blockquote:my-6 prose-blockquote:italic
-                          prose-blockquote:relative prose-blockquote:before:content-none prose-blockquote:after:content-none
-                          [&>p:first-child]:first-letter:text-6xl [&>p:first-child]:first-letter:font-display 
-                          [&>p:first-child]:first-letter:font-bold [&>p:first-child]:first-letter:text-primary 
-                          [&>p:first-child]:first-letter:float-left [&>p:first-child]:first-letter:leading-none 
-                          [&>p:first-child]:first-letter:mr-2 [&>p:first-child]:first-letter:mt-1">
+                          prose-blockquote:italic prose-blockquote:border-l-8 prose-blockquote:border-secondary 
+                          prose-blockquote:bg-secondary/5 prose-blockquote:p-8 prose-blockquote:my-10 
+                          prose-blockquote:rounded-r-2xl prose-blockquote:text-lg prose-blockquote:font-medium
+                          prose-blockquote:text-[#2D3436]">
                           <ReactMarkdown
                             components={{
-                              // 인용구에 아이콘 추가
+                              // 인용구 커스텀 스타일
                               blockquote: ({ children }) => (
-                                <blockquote className="relative pl-8">
-                                  <span className="material-symbols-outlined absolute left-0 top-2 text-primary/40 text-2xl">format_quote</span>
-                                  <div>{children}</div>
+                                <blockquote className="italic border-l-8 border-secondary bg-secondary/5 p-8 my-10 rounded-r-2xl text-lg font-medium text-[#2D3436]">
+                                  {children}
                                 </blockquote>
                               ),
                             }}
