@@ -4,6 +4,7 @@ import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // Stats 고정 순서 및 설정
@@ -794,29 +795,44 @@ function PersonalityTestResult() {
                         </div>
                         
                         {/* ReactMarkdown으로 마크다운 렌더링 - 에디토리얼 타이포그래피 */}
-                        <div className="prose prose-lg prose-slate max-w-none text-[#2D3436] 
-                          prose-h1:text-4xl prose-h1:font-black prose-h1:mb-10 prose-h1:text-primary 
-                          prose-h1:border-b-4 prose-h1:border-primary/10 prose-h1:pb-4 prose-h1:font-display
-                          prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-primary/90 
-                          prose-h2:flex prose-h2:items-center prose-h2:before:content-[''] prose-h2:before:w-1.5 
-                          prose-h2:before:h-6 prose-h2:before:bg-secondary prose-h2:before:mr-3 prose-h2:before:rounded-full
-                          prose-h2:font-display
-                          prose-p:mb-8 prose-p:text-[#2D3436] prose-p:leading-relaxed
-                          prose-strong:text-primary prose-strong:font-bold
-                          prose-ul:my-6 prose-ol:my-6
-                          prose-li:my-3 prose-li:leading-relaxed
-                          prose-blockquote:italic prose-blockquote:border-l-8 prose-blockquote:border-secondary 
-                          prose-blockquote:bg-secondary/5 prose-blockquote:p-8 prose-blockquote:my-10 
-                          prose-blockquote:rounded-r-2xl prose-blockquote:text-lg prose-blockquote:font-medium
-                          prose-blockquote:text-[#2D3436]">
+                        <div className="report-content">
                           <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
                             components={{
-                              // 인용구 커스텀 스타일
+                              h1: ({ children }) => (
+                                <h1 className="text-3xl md:text-4xl font-display font-black text-primary mb-8 pb-4 border-b-4 border-primary/10">
+                                  {children}
+                                </h1>
+                              ),
+                              h2: ({ children }) => (
+                                <h2 className="text-2xl font-display font-bold text-primary/90 mt-10 mb-6 flex items-center">
+                                  <span className="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                                  {children}
+                                </h2>
+                              ),
+                              h3: ({ children }) => (
+                                <h3 className="text-xl font-display font-semibold text-primary/80 mt-8 mb-4">
+                                  {children}
+                                </h3>
+                              ),
+                              p: ({ children }) => (
+                                <p className="text-[#2D3436] leading-relaxed mb-6 text-base">{children}</p>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-bold text-primary">{children}</strong>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="my-6 ml-6 space-y-3 list-disc list-outside marker:text-secondary">{children}</ul>
+                              ),
+                              li: ({ children }) => (
+                                <li className="text-[#2D3436] leading-relaxed pl-2">{children}</li>
+                              ),
                               blockquote: ({ children }) => (
-                                <blockquote className="italic border-l-8 border-secondary bg-secondary/5 p-8 my-10 rounded-r-2xl text-lg font-medium text-[#2D3436]">
+                                <blockquote className="border-l-4 border-secondary bg-secondary/5 p-6 my-8 rounded-r-xl italic text-lg text-[#2D3436]">
                                   {children}
                                 </blockquote>
                               ),
+                              hr: () => <hr className="my-10 border-t-2 border-primary/10" />,
                             }}
                           >
                             {activePageData.content}
