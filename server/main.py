@@ -798,8 +798,8 @@ Include:
 # ============================================================
 # V3 프롬프트 함수들 - Markdown 헤딩 강제 버전
 # ============================================================
-def get_system_prompt_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, owner_summary: str) -> str:
-    """V3 시스템 프롬프트 - Markdown 강제"""
+def get_system_prompt_v3(lang: str, pet_name: str, mbti_code: str, archetype_alias: str, stats: dict, owner_summary: str) -> str:
+    """V3 시스템 프롬프트 - Markdown 강제 + 직관적 별명 사용"""
     
     if lang == "jp":
         return f"""あなたは犬の性格分析ブロガーです。
@@ -812,20 +812,20 @@ def get_system_prompt_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, 
 5. リストは - で始めてください
 
 【{pet_name}のデータ】
-性格タイプ: {mbti_code}
+性格タイプ: **{archetype_alias}** ({mbti_code})
 社交性: {stats.get('sociability', 50)}% | 知性: {stats.get('sagacity', 50)}%
 感情性: {stats.get('emotionality', 50)}% | 従順性: {stats.get('obedience', 50)}%
 飼い主タイプ: {owner_summary}
+
+【重要】
+- MBTIコード({mbti_code})の代わりに「{archetype_alias}」という直感的な名前を使用してください
+- 例: "ISTJ"ではなく「{archetype_alias}」と書く
 
 【出力例】
 # 🐕 タイトルはここ
 
 ## セクション1
 本文テキスト。**重要な単語**は太字で。
-
-## セクション2
-- リスト項目1
-- リスト項目2
 
 > 引用ブロックはこのように書きます。"""
 
@@ -840,10 +840,14 @@ def get_system_prompt_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, 
 5. Lists start with -
 
 【{pet_name}'s Data】
-Type: {mbti_code}
+Personality Type: **{archetype_alias}** ({mbti_code})
 Sociability: {stats.get('sociability', 50)}% | Sagacity: {stats.get('sagacity', 50)}%
 Emotionality: {stats.get('emotionality', 50)}% | Obedience: {stats.get('obedience', 50)}%
 Owner: {owner_summary}
+
+【IMPORTANT】
+- Use the intuitive name "{archetype_alias}" instead of the MBTI code "{mbti_code}"
+- Example: Write "{archetype_alias}" NOT "ISTJ"
 
 【OUTPUT FORMAT EXAMPLE】
 # 🐕 Title Goes Here
@@ -851,15 +855,11 @@ Owner: {owner_summary}
 ## Section 1
 Body text here. **Important words** in bold.
 
-## Section 2
-- List item 1
-- List item 2
-
 > Quote blocks look like this."""
 
 
-def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, owner_summary: str) -> list:
-    """V3 페이지별 프롬프트 - 출력 형식 예시 포함"""
+def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alias: str, stats: dict, owner_summary: str) -> list:
+    """V3 페이지별 프롬프트 - 직관적인 별명 사용"""
     
     high_soc = stats.get('sociability', 50) >= 55
     high_sag = stats.get('sagacity', 50) >= 55
@@ -870,13 +870,13 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
         return [
             {
                 "page": "table_of_contents",
-                "prompt": f"""次の 형식으로 정확に 작성してください:
+                "prompt": f"""次の形式で正確に作成してください:
 
 # 📖 {pet_name}の性格分析レポート
 
 ## 目次
 
-1. **性格の全体像** - {mbti_code}タイプの特徴
+1. **性格の全体像** - 「{archetype_alias}」タイプの特徴
 2. **学習スタイル** - {pet_name}の認知パターン
 3. **飼い主との相性** - 最高のチームになる理由
 4. **トレーニング戦略** - 効果的な教育法
@@ -886,17 +886,19 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ---
 
-> このレポートは{pet_name}の独特な性格を理解し、より深い絆を築くのに役立ちます。
+> このレポートは「{archetype_alias}」タイプの{pet_name}の独特な性格を理解し、より深い絆を築くのに役立ちます。
 
-上記の 형식을 정확に 따라 작성してください。"""
+上記の形式を正確に従って作成してください。"""
             },
             {
                 "page": "deep_dive_traits",
-                "prompt": f"""次の 형식으로 정확に 작성してください:
+                "prompt": f"""次の形式で正確に作成してください:
 
 # 🐕 {pet_name}の性格分析
 
-## なぜ{mbti_code}タイプなのか
+## なぜ「{archetype_alias}」タイプなのか
+
+{pet_name}は「**{archetype_alias}**」タイプです。このタイプの特徴:
 
 {pet_name}のスコアに基づいて説明:
 - **社交性 {stats.get('sociability', 50)}%**: {'外向的で人懐っこい' if high_soc else '慎重で選択的'}
@@ -921,13 +923,13 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ---
 
-> "{pet_name}を一言で表すと..."
+> "{pet_name}を一言で表すと: 「{archetype_alias}」らしい..."
 
-上記の 형식을 정확に 따라 작성してください。"""
+上記の形式を正確に従って作成してください。MBTIコードではなく「{archetype_alias}」を使用してください。"""
             },
             {
                 "page": "cognitive_strengths",
-                "prompt": f"""次の 형식으로 정확に 작성してください:
+                "prompt": f"""次の形式で正確に作成してください:
 
 # 🧠 {pet_name}の学習スタイル
 
@@ -935,7 +937,7 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ## 学習パターン
 
-{pet_name}は**{'観察→分析→実行' if high_sag else '体験→反応→学習'}**タイプの学習者です。
+「{archetype_alias}」タイプの{pet_name}は**{'観察→分析→実行' if high_sag else '体験→反応→学習'}**タイプの学習者です。
 
 {'これは、まず観察し、状況を分析してから行動することを意味します。新しいことを教える時は、試す前に明確に実演してください。' if high_sag else 'これは、実践的な経験を通じて最もよく学ぶことを意味します。トレーニングセッションは短く、楽しく、繰り返し行いましょう。'}
 
@@ -961,16 +963,16 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 > "精神的に刺激された{pet_name}は幸せな{pet_name}です。"
 
-上記の 형식을 정확に 따라 작성してください。#で始め、##でセクションを使用してください。"""
+上記の形式を正確に従って作成してください。"""
             },
             {
                 "page": "owner_chemistry",
-                "prompt": f"""次の 형식으로 정확に 작성してください:
+                "prompt": f"""次の形式で正確に作成してください:
 
 # 💕 あなたと{pet_name}: 完璧なマッチ
 
 **あなたのタイプ:** {owner_summary}
-**{pet_name}のタイプ:** {mbti_code}
+**{pet_name}のタイプ:** 「{archetype_alias}」
 
 ## なぜ相性が良いのか
 
@@ -999,13 +1001,13 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ---
 
-> "一緒に、あなたと{pet_name}は[あなたのダイナミクスの1行要約]です。"
+> "一緒に、あなたと「{archetype_alias}」タイプの{pet_name}は最高のチームです。"
 
-上記の 형식을 정확に 따라 작성してください。#で始め、##でセクションを使用してください。"""
+上記の形式を正確に従って作成してください。"""
             },
             {
                 "page": "training_roadmap",
-                "prompt": f"""次の 형식으로 정확に 작성してください:
+                "prompt": f"""次の形式で正確に作成してください:
 
 # 🎓 {pet_name}のトレーニング戦略
 
@@ -1013,9 +1015,9 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ## 最適なトレーニングアプローチ
 
-{pet_name}は**{'ルールベース' if high_obe else 'ゲームベース'}**アプローチに最もよく反応します。
+「{archetype_alias}」タイプの{pet_name}は**{'ルールベース' if high_obe else 'ゲームベース'}**アプローチに最もよく反応します。
 
-{'これは、明確な境界、一貫したコマンド、構造化されたセッションが効果的であることを意味します。彼らは何が期待されているかを正確に知ることを高く評価します。' if high_obe else 'これは、トレーニングを遊びのように感じさせることを意味します。短く、楽しく、多様性のあるセッションで彼らを引き付けます。'}
+{'これは、明確な境界、一貫したコマンド、構造化されたセッションが効果的であることを意味します。' if high_obe else 'これは、トレーニングを遊びのように感じさせることを意味します。短く、楽しく、多様性のあるセッションで彼らを引き付けます。'}
 
 ## 📅 2週間トレーニングプラン
 
@@ -1043,13 +1045,13 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ---
 
-> "{pet_name}との一貫性が鍵です。小さな毎日の努力が大きな結果につながります。"
+> "「{archetype_alias}」タイプの{pet_name}には一貫性が鍵です。"
 
-上記の 형식을 정확に 따라 작성してください。#で始め、##でセクションを使用してください。"""
+上記の形式を正確に従って作成してください。"""
             },
             {
                 "page": "social_adaptation",
-                "prompt": f"""次の 형式으로 정확に 작성してください:
+                "prompt": f"""次の形式で正確に作成してください:
 
 # 🐾 {pet_name}の社会化ガイド
 
@@ -1057,7 +1059,7 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ## 他の犬との出会い
 
-{pet_name}は**{'友達を作ることに熱心' if high_soc else '友情に選択的'}**です。
+「{archetype_alias}」タイプの{pet_name}は**{'友達を作ることに熱心' if high_soc else '友情に選択的'}**です。
 
 ### 初対面のコツ:
 - [コツ1]
@@ -1094,18 +1096,18 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 > "よく社会化された{pet_name}は、どんな状況でも自信があり、幸せです。"
 
-上記の 형식을 정확に 따라 작성してください。#で始め、##でセクションを使用してください。"""
+上記の形式を正確に従って作成してください。"""
             },
             {
                 "page": "lifestyle_guide",
-                "prompt": f"""次の 형식으로 정확に 작성してください:
+                "prompt": f"""次の形式で正確に作成してください:
 
 # ☀️ {pet_name}の完璧な一日
 
 ## 🌅 朝 (6:00 - 9:00)
 
 **起床ルーティン:**
-{pet_name}は{'行動の準備ができてベッドから跳び出る' if high_soc else 'ストレッチしてゆっくり目を覚ます時間を取る'}。
+「{archetype_alias}」タイプの{pet_name}は{'行動の準備ができてベッドから跳び出る' if high_soc else 'ストレッチしてゆっくり目を覚ます時間を取る'}。
 
 **朝散歩:** {'30-45分の活発な探索' if high_soc else '20-30分の静かで匂いに焦点を当てた散歩'}
 - 最適なルートタイプ: [説明]
@@ -1144,15 +1146,15 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 > "良いルーティンは{pet_name}を安全で愛されていると感じさせます。"
 
-上記の 형식을 정확に 따라 작성してください。#で始め、##でセクションを使用してください。"""
+上記の形式を正確に従って作成してください。"""
             },
             {
                 "page": "heartfelt_message",
-                "prompt": f"""次の 형式으로 정확に 작성してください:
+                "prompt": f"""次の形式で正確に作成してください:
 
 # 💌 {pet_name}からあなたへ
 
-*{pet_name}の視点から飼い主への手紙*
+*「{archetype_alias}」タイプの{pet_name}の視点から飼い主への手紙*
 
 ---
 
@@ -1160,7 +1162,7 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 [{pet_name}の視点から3-4段落を書いてください。含めるべき内容:]
 
-- {mbti_code}タイプの犬であることの感じ方
+- 「{archetype_alias}」タイプの犬であることの感じ方
 - {owner_summary}な飼い主を持つことへの感謝
 - すべてを意味する小さな瞬間
 - 一緒に過ごす未来への希望
@@ -1169,12 +1171,12 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ---
 
-> "あなたは私の飼い主だけではありません。あなたは私の全世界です。そして、その世界があなたであることに、私はとても感謝しています。"
+> "あなたは私の飼い主だけではありません。あなたは私の全世界です。"
 
 愛としっぽの振りを込めて、
 **{pet_name}** 🐾
 
-上記の 형식을 정확に 따라 작성してください。#で始め、最後に署名を含めてください。"""
+上記の形式を正確に従って作成してください。"""
             }
         ]
     
@@ -1188,7 +1190,7 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ## Table of Contents
 
-1. **Personality Overview** — Understanding {mbti_code} characteristics
+1. **Personality Overview** — Understanding the "{archetype_alias}" type
 2. **Learning Style** — How {pet_name} processes information
 3. **Owner Compatibility** — Why you make a great team
 4. **Training Strategy** — Methods that work best
@@ -1198,9 +1200,9 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, stats: dict, o
 
 ---
 
-> This report will help you understand {pet_name}'s unique personality and build a deeper bond.
+> This report will help you understand your "{archetype_alias}" type {pet_name}'s unique personality and build a deeper bond.
 
-Follow this exact format."""
+Follow this exact format. Use "{archetype_alias}" instead of "{mbti_code}"."""
             },
             {
                 "page": "deep_dive_traits",
@@ -1208,7 +1210,9 @@ Follow this exact format."""
 
 # 🐕 {pet_name}'s Personality Analysis
 
-## Why {mbti_code} Type?
+## Why "{archetype_alias}" Type?
+
+{pet_name} is a **"{archetype_alias}"** type. Here's what that means:
 
 Based on {pet_name}'s scores:
 - **Sociability {stats.get('sociability', 50)}%**: {'Outgoing and friendly' if high_soc else 'Cautious and selective'}
@@ -1233,9 +1237,9 @@ Explain with a specific real-life example.
 
 ---
 
-> "{pet_name} in one sentence: ..."
+> "{pet_name} in one sentence: A true '{archetype_alias}' who..."
 
-Follow this exact format. Start with # and use ## for sections."""
+Follow this exact format. Use "{archetype_alias}" instead of "{mbti_code}"."""
             },
             {
                 "page": "cognitive_strengths",
@@ -1247,7 +1251,7 @@ Follow this exact format. Start with # and use ## for sections."""
 
 ## Learning Pattern
 
-{pet_name} is a **{'Watch → Think → Do' if high_sag else 'Do → Feel → Learn'}** type learner.
+As a "{archetype_alias}" type, {pet_name} is a **{'Watch → Think → Do' if high_sag else 'Do → Feel → Learn'}** learner.
 
 {'This means they prefer to observe first, analyze the situation, then act. When teaching something new, demonstrate it clearly before asking them to try.' if high_sag else 'This means they learn best through hands-on experience. Keep training sessions short, fun, and repetitive.'}
 
@@ -1273,7 +1277,7 @@ Follow this exact format. Start with # and use ## for sections."""
 
 > "A mentally stimulated {pet_name} is a happy {pet_name}."
 
-Follow this exact format. Start with # and use ## for sections."""
+Follow this exact format."""
             },
             {
                 "page": "owner_chemistry",
@@ -1282,7 +1286,7 @@ Follow this exact format. Start with # and use ## for sections."""
 # 💕 You & {pet_name}: Perfect Match
 
 **Your Type:** {owner_summary}
-**{pet_name}'s Type:** {mbti_code}
+**{pet_name}'s Type:** "{archetype_alias}"
 
 ## Why You're Great Together
 
@@ -1311,9 +1315,9 @@ Here are 3 simple things you can start today:
 
 ---
 
-> "Together, you and {pet_name} are [one-line summary of your dynamic]."
+> "Together, you and your '{archetype_alias}' {pet_name} are the perfect team."
 
-Follow this exact format. Start with # and use ## for sections."""
+Follow this exact format."""
             },
             {
                 "page": "training_roadmap",
@@ -1325,7 +1329,7 @@ Follow this exact format. Start with # and use ## for sections."""
 
 ## Best Training Approach
 
-{pet_name} responds best to a **{'rule-based' if high_obe else 'game-based'}** approach.
+As a "{archetype_alias}" type, {pet_name} responds best to a **{'rule-based' if high_obe else 'game-based'}** approach.
 
 {'This means clear boundaries, consistent commands, and structured sessions work well. They appreciate knowing exactly what is expected.' if high_obe else 'This means making training feel like play. Short, fun sessions with lots of variety keep them engaged.'}
 
@@ -1355,9 +1359,9 @@ Follow this exact format. Start with # and use ## for sections."""
 
 ---
 
-> "Consistency is key with {pet_name}. Small daily efforts lead to big results."
+> "Consistency is key with your '{archetype_alias}' {pet_name}."
 
-Follow this exact format. Start with # and use ## for sections."""
+Follow this exact format."""
             },
             {
                 "page": "social_adaptation",
@@ -1369,7 +1373,7 @@ Follow this exact format. Start with # and use ## for sections."""
 
 ## Meeting Other Dogs
 
-{pet_name} is **{'eager to make friends' if high_soc else 'selective about friendships'}**.
+As a "{archetype_alias}" type, {pet_name} is **{'eager to make friends' if high_soc else 'selective about friendships'}**.
 
 ### First Meeting Tips:
 - [Tip 1]
@@ -1406,7 +1410,7 @@ Follow this exact format. Start with # and use ## for sections."""
 
 > "A well-socialized {pet_name} is confident and happy in any situation."
 
-Follow this exact format. Start with # and use ## for sections."""
+Follow this exact format."""
             },
             {
                 "page": "lifestyle_guide",
@@ -1417,7 +1421,7 @@ Follow this exact format. Start with # and use ## for sections."""
 ## 🌅 Morning (6:00 - 9:00)
 
 **Wake-up routine:**
-{pet_name} {'bounces out of bed ready for action' if high_soc else 'takes a moment to stretch and slowly wake up'}.
+As a "{archetype_alias}" type, {pet_name} {'bounces out of bed ready for action' if high_soc else 'takes a moment to stretch and slowly wake up'}.
 
 **Morning walk:** {'30-45 minutes of active exploration' if high_soc else '20-30 minutes of calm, sniff-focused walking'}
 - Best route type: [description]
@@ -1456,7 +1460,7 @@ Follow this exact format. Start with # and use ## for sections."""
 
 > "A good routine makes {pet_name} feel secure and loved."
 
-Follow this exact format. Start with # and use ## for sections."""
+Follow this exact format."""
             },
             {
                 "page": "heartfelt_message",
@@ -1464,7 +1468,7 @@ Follow this exact format. Start with # and use ## for sections."""
 
 # 💌 A Message from {pet_name}
 
-*Written from {pet_name}'s perspective to their owner*
+*Written from {pet_name}'s perspective — a "{archetype_alias}" type — to their owner*
 
 ---
 
@@ -1472,7 +1476,7 @@ Dear Human,
 
 [Write 3-4 paragraphs from {pet_name}'s point of view, including:]
 
-- What it feels like to be an {mbti_code} type dog
+- What it feels like to be a "{archetype_alias}" type dog
 - Gratitude for having a {owner_summary} owner
 - Small moments that mean everything
 - Hope for the future together
@@ -1486,7 +1490,7 @@ Dear Human,
 With love and tail wags,
 **{pet_name}** 🐾
 
-Follow this exact format. Start with # and include the signature at the end."""
+Follow this exact format."""
             }
         ]
 
@@ -1517,6 +1521,18 @@ async def generate_report(result_id: str, lang: str = "en"):
         stats = result_data.get("stats", {})
         answers = result_data.get("answers", [])
         
+        # ✅ 추가: archetype alias 추출 (The Reliable Sentinel 등)
+        archetype_data = result_data.get("archetype", {})
+        if archetype_data:
+            # 다국어 지원: lang에 맞는 alias 추출
+            alias_data = archetype_data.get("alias", {})
+            if isinstance(alias_data, dict):
+                archetype_alias = alias_data.get(lang, alias_data.get("en", mbti_code))
+            else:
+                archetype_alias = alias_data if alias_data else mbti_code
+        else:
+            archetype_alias = mbti_code
+        
         # 보너스 답변에서 보호자 성향 추출 (간소화)
         owner_answers = [a for a in answers if a.get("question_id", 0) > 20]
         if owner_answers:
@@ -1541,8 +1557,8 @@ async def generate_report(result_id: str, lang: str = "en"):
         high_obe = stats.get('obedience', 50) >= 55
         
         # 4. V3 프롬프트 생성
-        system_prompt = get_system_prompt_v3(lang, pet_name, mbti_code, stats, owner_summary)
-        page_prompts = get_page_prompts_v3(lang, pet_name, mbti_code, stats, owner_summary)
+        system_prompt = get_system_prompt_v3(lang, pet_name, mbti_code, archetype_alias, stats, owner_summary)
+        page_prompts = get_page_prompts_v3(lang, pet_name, mbti_code, archetype_alias, stats, owner_summary)
 
         # 5. 페이지 생성 함수
         async def generate_page(page_info: dict) -> dict:
