@@ -53,22 +53,65 @@ const UI_TEXT = {
         heartfelt_message: "Special Message"
       },
       cta: {
-        title: "Go Beyond the Surface",
-        description: "Unlock the 25-page Premium Report to discover detailed training roadmaps, breed-specific insights, and scientific cognitive benchmarks.",
-        getReport: "Get Premium Full Report",
-        generating: "Generating your premium report...",
+        title: "Unlock Your Premium Report",
+        description: "Get {name}'s complete personality analysis with personalized training strategies, daily routines, and compatibility insights.",
+        getReport: "Get Premium Report",
+        generating: "Generating your report...",
         generatingSub: "This may take up to 30 seconds",
         viewReport: "View Premium Report",
-        ready: "Report ready! Click to view",
-        failed: "Report generation failed. Please try again.",
-        retry: "Retry",
-        devTest: "Premium Report Generation Test (Dev Only)",
-        join: "Join 50,000+ happy pet parents worldwide."
+        ready: "Your report is ready!",
+        failed: "Generation failed. Please try again.",
+        retry: "Try Again"
+      },
+      premiumPreview: {
+        sectionTitle: "View Complete Results",
+        unlockButton: "Unlock",
+        lockedDescription: "This section contains personalized insights for {name}",
+        sections: [
+          {
+            key: "deep_dive_traits",
+            title: "Personality Analysis",
+            icon: "psychology",
+            preview: "Detailed breakdown of your pet's unique personality traits and behavioral patterns..."
+          },
+          {
+            key: "cognitive_strengths",
+            title: "Cognitive Strengths",
+            icon: "neurology",
+            preview: "Understanding how your pet learns, solves problems, and processes information..."
+          },
+          {
+            key: "owner_chemistry",
+            title: "Chemistry Analysis",
+            icon: "favorite",
+            preview: "Discover why you and your pet make a great team and how to strengthen your bond..."
+          },
+          {
+            key: "training_roadmap",
+            title: "Training Guide",
+            icon: "school",
+            preview: "Step-by-step training strategies tailored to your pet's personality type..."
+          },
+          {
+            key: "social_adaptation",
+            title: "Social Adaptation",
+            icon: "groups",
+            preview: "Tips for helping your pet interact with other dogs, people, and new environments..."
+          },
+          {
+            key: "lifestyle_guide",
+            title: "Lifestyle Guide",
+            icon: "routine",
+            preview: "The perfect daily routine designed specifically for your pet's needs..."
+          }
+        ]
       }
     },
     share: {
       title: "Share your result",
-      copyLink: "Copy Link"
+      copyLink: "Copy Link",
+      copied: "Copied!",
+      shareTest: "Take the test"
     }
   },
   jp: {
@@ -106,22 +149,65 @@ const UI_TEXT = {
         heartfelt_message: "特別なメッセージ"
       },
       cta: {
-        title: "表面を超えて",
-        description: "25ページのプレミアムレポートを解除して、詳細なトレーニングロードマップ、品種固有の洞察、科学的認知ベンチマークを発見してください。",
-        getReport: "プレミアム完全レポートを取得",
-        generating: "プレミアムレポートを生成中...",
+        title: "プレミアムレポートをアンロック",
+        description: "{name}の完全な性格分析、パーソナライズされたトレーニング戦略、毎日のルーティン、相性の洞察を入手してください。",
+        getReport: "プレミアムレポートを取得",
+        generating: "レポートを生成中...",
         generatingSub: "最大30秒かかる場合があります",
         viewReport: "プレミアムレポートを表示",
-        ready: "レポート準備完了！クリックして表示",
-        failed: "レポート生成に失敗しました。もう一度お試しください。",
-        retry: "再試行",
-        devTest: "プレミアムレポート生成テスト（開発者専用）",
-        join: "世界中の50,000人以上の幸せなペットの親に参加してください。"
+        ready: "レポートの準備ができました！",
+        failed: "生成に失敗しました。もう一度お試しください。",
+        retry: "再試行"
+      },
+      premiumPreview: {
+        sectionTitle: "完全な結果を確認",
+        unlockButton: "アンロック",
+        lockedDescription: "このセクションには{name}のためのパーソナライズされた洞察が含まれています",
+        sections: [
+          {
+            key: "deep_dive_traits",
+            title: "性格分析",
+            icon: "psychology",
+            preview: "ペットの独特な性格特性と行動パターンの詳細な分析..."
+          },
+          {
+            key: "cognitive_strengths",
+            title: "認知的強み",
+            icon: "neurology",
+            preview: "ペットがどのように学び、問題を解決し、情報を処理するかを理解..."
+          },
+          {
+            key: "owner_chemistry",
+            title: "相性分析",
+            icon: "favorite",
+            preview: "あなたとペットが最高のチームである理由と絆を深める方法..."
+          },
+          {
+            key: "training_roadmap",
+            title: "トレーニングガイド",
+            icon: "school",
+            preview: "ペットの性格タイプに合わせたステップバイステップのトレーニング戦略..."
+          },
+          {
+            key: "social_adaptation",
+            title: "社会適応",
+            icon: "groups",
+            preview: "他の犬、人、新しい環境との交流を助けるヒント..."
+          },
+          {
+            key: "lifestyle_guide",
+            title: "ライフスタイルガイド",
+            icon: "routine",
+            preview: "ペットのニーズに合わせて設計された完璧な毎日のルーティン..."
+          }
+        ]
       }
     },
     share: {
       title: "結果を共有",
-      copyLink: "リンクをコピー"
+      copyLink: "リンクをコピー",
+      copied: "コピーしました！",
+      shareTest: "テストを受ける"
     }
   }
 }
@@ -205,6 +291,39 @@ function TraitCard({ icon, title, description, variant = 'default' }) {
   )
 }
 
+function LockedPreviewCard({ icon, title, preview, petName, onUnlockClick, unlockButtonText }) {
+  return (
+    <div className="relative p-6 md:p-8 rounded-2xl bg-white border-l-4 border-primary/30 shadow-sm overflow-hidden group hover:shadow-md transition-all">
+      {/* 헤더: 아이콘 + 제목 + 자물쇠 */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg md:text-xl font-display font-bold text-primary flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary/70">{icon}</span>
+          {title}
+        </h3>
+        <span className="material-symbols-outlined text-primary/40 text-xl">lock</span>
+      </div>
+      
+      {/* 블러 처리된 미리보기 텍스트 */}
+      <div className="relative">
+        <p className="text-[#2D3436]/60 leading-relaxed text-sm blur-[6px] select-none pointer-events-none">
+          {preview}
+        </p>
+        
+        {/* 오버레이 + 언락 버튼 */}
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-white via-white/80 to-transparent">
+          <button
+            onClick={onUnlockClick}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary/10 text-primary font-medium rounded-full hover:bg-primary/20 transition-all text-sm"
+          >
+            <span className="material-symbols-outlined text-lg">lock_open</span>
+            {unlockButtonText}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PersonalityTestResult() {
   const { resultId } = useParams()
   const { lang } = useLang()
@@ -218,6 +337,9 @@ function PersonalityTestResult() {
   const [reportStatus, setReportStatus] = useState(null) // not_generated, generating, ready, failed
   const [reportPages, setReportPages] = useState(null)
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  
+  // Share 기능 상태
+  const [copied, setCopied] = useState(false)
   
   // 메인 탭 상태 관리 (기본 결과 / 프리미엄 리포트)
   const [currentTab, setCurrentTab] = useState('basic')
@@ -388,6 +510,50 @@ function PersonalityTestResult() {
     }
   }
 
+  // 링크 복사 함수
+  const handleCopyLink = async () => {
+    const shareUrl = `${window.location.origin}/${lang}/dog-test/personality`
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = shareUrl
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-9999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  // 네이티브 공유 함수 (모바일)
+  const handleNativeShare = async () => {
+    const shareUrl = `${window.location.origin}/${lang}/dog-test/personality`
+    const shareData = {
+      title: lang === 'jp' 
+        ? `${displayPetName}の性格テスト` 
+        : `${displayPetName}'s Personality Test`,
+      text: lang === 'jp'
+        ? `${displayPetName}の性格タイプを発見しました！あなたのペットもテストしてみてください。`
+        : `I just discovered ${displayPetName}'s personality type! Take the test for your pet too.`,
+      url: shareUrl
+    }
+    
+    try {
+      await navigator.share(shareData)
+    } catch (err) {
+      // 사용자가 취소하거나 지원 안 되는 경우
+      console.log('Share cancelled or not supported')
+    }
+  }
+
   // UI 텍스트 가져오기 (언어별)
   const uiText = UI_TEXT[lang] || UI_TEXT.en
   
@@ -469,7 +635,35 @@ function PersonalityTestResult() {
               </h1>
               <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
             </div>
-            <p className="text-sm text-primary/60 font-medium">{uiText.petName.subtitle}</p>
+            <p className="text-sm text-primary/60 font-medium mb-4">{uiText.petName.subtitle}</p>
+            
+            {/* Share 버튼 */}
+            <div className="flex justify-center gap-3">
+              <button 
+                onClick={handleCopyLink}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  copied 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-primary/10 text-primary hover:bg-primary/20'
+                }`}
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {copied ? 'check' : 'link'}
+                </span>
+                <span>{copied ? uiText.share.copied : uiText.share.copyLink}</span>
+              </button>
+              
+              {/* 네이티브 공유 버튼 (모바일에서 유용) */}
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <button 
+                  onClick={handleNativeShare}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-all"
+                >
+                  <span className="material-symbols-outlined text-lg">share</span>
+                  <span>{lang === 'jp' ? '共有' : 'Share'}</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* 메인 탭 버튼 (기본 결과 / 프리미엄 리포트) */}
@@ -632,67 +826,115 @@ function PersonalityTestResult() {
                 </div>
               </div>
             )}
+
+            {/* Premium Content Preview (잠긴 카드들) */}
+            <div className="space-y-8 mb-16">
+              {/* 섹션 헤더 */}
+              <div className="flex items-center gap-4">
+                <h2 className="text-3xl font-display font-bold text-primary">
+                  {uiText.premium.premiumPreview.sectionTitle}
+                </h2>
+                <div className="flex-grow h-[1px] bg-primary/10"></div>
+                <span className="material-symbols-outlined text-primary/40 text-2xl">workspace_premium</span>
+              </div>
+              
+              {/* 잠긴 카드 그리드 (2열) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {uiText.premium.premiumPreview.sections.map((section) => (
+                  <LockedPreviewCard
+                    key={section.key}
+                    icon={section.icon}
+                    title={section.title}
+                    preview={section.preview}
+                    petName={displayPetName}
+                    unlockButtonText={uiText.premium.premiumPreview.unlockButton}
+                    onUnlockClick={() => {
+                      const premiumSection = document.getElementById('premium-cta')
+                      if (premiumSection) {
+                        premiumSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           </>
         )}
 
         {/* Premium CTA (기본 탭에서만 표시) */}
         {currentTab === 'basic' && (
-          <div id="premium-cta" className="relative bg-primary rounded-[2.5rem] p-10 md:p-16 text-center overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-white/20 rounded-full blur-3xl"></div>
+          <div id="premium-cta" className="relative bg-primary rounded-[2.5rem] p-10 md:p-16 overflow-hidden shadow-2xl">
+            {/* 배경 장식 */}
+            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-[#2D5A47]/30 rounded-full blur-3xl"></div>
+            
             <div className="relative z-10">
-              <span className="material-symbols-outlined text-white text-6xl mb-6">workspace_premium</span>
-              <h4 className="text-3xl md:text-4xl font-display font-bold text-white mb-6">{uiText.premium.cta.title}</h4>
-              <p className="text-white/70 mb-10 max-w-xl mx-auto text-lg leading-relaxed">
-                {uiText.premium.cta.description}
+              {/* 아이콘 */}
+              <div className="flex justify-center mb-6">
+                <span className="material-symbols-outlined text-white text-6xl">workspace_premium</span>
+              </div>
+              
+              {/* 타이틀 */}
+              <h4 className="text-3xl md:text-4xl font-display font-bold text-white mb-4 text-center">
+                {uiText.premium.cta.title}
+              </h4>
+              
+              {/* 설명 */}
+              <p className="text-white/70 mb-10 max-w-lg mx-auto text-lg leading-relaxed text-center">
+                {uiText.premium.cta.description.replace('{name}', displayPetName)}
               </p>
               
-              {/* 리포트 생성 상태에 따른 버튼 표시 */}
-              {reportStatus === 'generating' && (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-white/90 text-lg font-medium">{uiText.premium.cta.generating}</p>
-                  <p className="text-white/60 text-sm">{uiText.premium.cta.generatingSub}</p>
-                </div>
-              )}
-              
-              {(reportStatus === 'not_generated' || reportStatus === 'ready' || reportStatus === 'failed') && (
-                <div className="space-y-6">
-                  <button 
-                    onClick={() => {
-                      if (reportStatus === 'ready' && reportPages) {
-                        // 리포트가 준비되어 있으면 바로 보기
-                        setCurrentTab('premium')
-                      } else {
-                        // 리포트가 없거나 실패했으면 생성
-                        handleGenerateReport()
-                      }
-                    }}
-                    disabled={isGeneratingReport || reportStatus === 'generating'}
-                    className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {reportStatus === 'ready' && reportPages 
-                      ? uiText.premium.cta.viewReport 
-                      : reportStatus === 'failed'
-                      ? uiText.premium.cta.retry
-                      : uiText.premium.cta.getReport}
-                  </button>
-                  {reportStatus === 'ready' && reportPages && (
-                    <div className="text-white/80 text-sm">
-                      <span className="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>
-                      {uiText.premium.cta.ready}
-                    </div>
-                  )}
-                  {reportStatus === 'failed' && (
-                    <p className="text-white/70 text-sm">{uiText.premium.cta.failed}</p>
-                  )}
-                </div>
-              )}
-              
-              <div className="mt-8 flex items-center justify-center gap-2 text-white/40 text-sm">
-                <span className="material-symbols-outlined text-sm">verified_user</span>
-                <span>{uiText.premium.cta.join}</span>
+              {/* 버튼 영역 */}
+              <div className="flex flex-col items-center gap-4">
+                {reportStatus === 'generating' ? (
+                  <>
+                    <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-white/90 text-lg font-medium">{uiText.premium.cta.generating}</p>
+                    <p className="text-white/60 text-sm">{uiText.premium.cta.generatingSub}</p>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => {
+                        if (reportStatus === 'ready' && reportPages) {
+                          setCurrentTab('premium')
+                        } else {
+                          // TODO: 결제 시스템 연동 시 여기에 결제 플로우 추가
+                          handleGenerateReport()
+                        }
+                      }}
+                      disabled={isGeneratingReport}
+                      className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {reportStatus === 'ready' && reportPages 
+                        ? uiText.premium.cta.viewReport 
+                        : reportStatus === 'failed'
+                        ? uiText.premium.cta.retry
+                        : uiText.premium.cta.getReport}
+                    </button>
+                    
+                    {reportStatus === 'ready' && reportPages && (
+                      <div className="flex items-center gap-2 text-white/80">
+                        <span className="material-symbols-outlined text-lg">check_circle</span>
+                        <span className="text-sm font-medium">{uiText.premium.cta.ready}</span>
+                      </div>
+                    )}
+                    
+                    {reportStatus === 'failed' && (
+                      <p className="text-white/70 text-sm">{uiText.premium.cta.failed}</p>
+                    )}
+                  </>
+                )}
               </div>
+              
+              {/* 결제 시스템 연동 시 추가할 가격 표시 영역 (주석 처리) */}
+              {/* 
+              <div className="mt-8 pt-6 border-t border-white/20">
+                <p className="text-white/60 text-sm text-center">
+                  One-time purchase • Instant access • No subscription
+                </p>
+              </div>
+              */}
             </div>
           </div>
         )}
@@ -830,21 +1072,6 @@ function PersonalityTestResult() {
           )
         })()}
 
-        {/* 결과 공유 (기본 탭에서만 표시) */}
-        {currentTab === 'basic' && (
-          <div className="mt-12 text-center">
-            <p className="text-primary/40 text-sm mb-4">{uiText.share.title}</p>
-            <div className="flex justify-center gap-4">
-              <button 
-                onClick={() => navigator.clipboard.writeText(window.location.href)}
-                className="flex items-center gap-2 px-6 py-3 bg-white border border-primary/10 rounded-full text-primary hover:bg-primary/5 transition-colors"
-              >
-                <span className="material-symbols-outlined text-xl">link</span>
-                <span className="font-medium">{uiText.share.copyLink}</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </main>
   )
