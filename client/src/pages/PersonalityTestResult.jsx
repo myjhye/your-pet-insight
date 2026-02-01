@@ -683,6 +683,10 @@ function PersonalityTestResult() {
                 onClick={() => {
                   if (reportStatus === 'ready') {
                     setCurrentTab('premium')
+                    // Premium 탭으로 전환 후 최상단으로 스크롤
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }, 100)
                   } else {
                     // 결제 유도 섹션으로 스크롤
                     const premiumSection = document.getElementById('premium-cta')
@@ -898,6 +902,10 @@ function PersonalityTestResult() {
                       onClick={() => {
                         if (reportStatus === 'ready' && reportPages) {
                           setCurrentTab('premium')
+                          // Premium 탭으로 전환 후 최상단으로 스크롤
+                          setTimeout(() => {
+                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                          }, 100)
                         } else {
                           // TODO: 결제 시스템 연동 시 여기에 결제 플로우 추가
                           handleGenerateReport()
