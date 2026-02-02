@@ -101,6 +101,19 @@ function PersonalityTest() {
     fetchQuestions(QUESTION_VERSION, lang)
   }, [fetchQuestions, lang])
 
+  // ✅ 언어 변경 시 테스트 상태 초기화
+  useEffect(() => {
+    // 언어가 변경되면 테스트를 처음부터 다시 시작
+    setStage(1)
+    setMainAnswers({})
+    setBonusAnswers({})
+    setPetName('')
+    setIsSubmitting(false)
+    questionRefs.current = []
+    // 스크롤 최상단으로
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [lang])
+
   // Context에서 데이터 읽기 (버전 + 언어 조합)
   const questions = getQuestions(QUESTION_VERSION, lang) || { stage1: [], stage2: [] }
   const loading = isLoading(QUESTION_VERSION, lang)
