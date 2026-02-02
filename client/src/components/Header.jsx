@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
+import { useProgress } from '../contexts/ProgressContext'
 
 function Header({ fixed = false }) {
   const { lang, langInfo, changeLang, localePath, languages } = useLang()
+  const { progress } = useProgress()
   const [isLangOpen, setIsLangOpen] = useState(false)
   const location = useLocation()
   
@@ -11,7 +13,7 @@ function Header({ fixed = false }) {
   const isResultPage = location.pathname.includes('/result/')
 
   return (
-    <div className={`w-full bg-primary ${fixed ? 'fixed top-0 left-0 z-50' : ''}`}>
+    <div className="sticky top-0 z-50 w-full bg-primary">
       <header className="w-full px-8 py-6 flex justify-between items-center max-w-7xl mx-auto relative z-10">
         <div className="flex items-center gap-4">
           <Link to={localePath('/')} className="flex items-center gap-2 group">
@@ -86,6 +88,16 @@ function Header({ fixed = false }) {
           </button>
         </div>
       </header>
+      
+      {/* ✅ 프로그레스바 - 헤더 하단 전체 너비 */}
+      {progress !== null && (
+        <div className="h-1 bg-white/20">
+          <div 
+            className="h-full bg-secondary transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
     </div>
   )
 }

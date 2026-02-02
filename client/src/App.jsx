@@ -5,6 +5,7 @@ import ScrollToTop from './components/ScrollToTop'
 import { LanguageProvider, DEFAULT_LANG } from './contexts/LanguageContext'
 import { QuestionsProvider } from './contexts/QuestionsContext'
 import { ResultsProvider } from './contexts/ResultsContext'
+import { ProgressProvider } from './contexts/ProgressContext'
 import Home from './pages/Home'
 import DogTest from './pages/DogTest'
 import PersonalityTest from './pages/PersonalityTest'
@@ -21,33 +22,23 @@ function Layout({ children }) {
   )
 }
 
-// 테스트 페이지용 레이아웃 (고정 Header + Footer 없음)
-function TestLayout({ children }) {
-  return (
-    <>
-      <Header fixed />
-      <div className="pt-[72px]">
-        {children}
-      </div>
-    </>
-  )
-}
-
 // 언어별 라우트를 감싸는 컴포넌트
 function LangRoutes() {
   return (
     <LanguageProvider>
       <QuestionsProvider>
         <ResultsProvider>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Layout><Home /></Layout>} />
-            <Route path="/dog-test" element={<Layout><DogTest /></Layout>} />
-            <Route path="/dog-test/personality" element={<TestLayout><PersonalityTest /></TestLayout>} />
-            <Route path="/dog-test/personality/result/:resultId" element={<Layout><PersonalityTestResult /></Layout>} />
-            {/* 404 라우트 - 반드시 가장 마지막에! */}
-            <Route path="*" element={<Layout><NotFound /></Layout>} />
-          </Routes>
+          <ProgressProvider>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Layout><Home /></Layout>} />
+              <Route path="/dog-test" element={<Layout><DogTest /></Layout>} />
+              <Route path="/dog-test/personality" element={<Layout><PersonalityTest /></Layout>} />
+              <Route path="/dog-test/personality/result/:resultId" element={<Layout><PersonalityTestResult /></Layout>} />
+              {/* 404 라우트 - 반드시 가장 마지막에! */}
+              <Route path="*" element={<Layout><NotFound /></Layout>} />
+            </Routes>
+          </ProgressProvider>
         </ResultsProvider>
       </QuestionsProvider>
     </LanguageProvider>

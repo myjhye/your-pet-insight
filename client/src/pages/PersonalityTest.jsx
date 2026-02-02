@@ -4,7 +4,8 @@ import axios from 'axios'
 import { useLang } from '../contexts/LanguageContext'
 import { useQuestions } from '../contexts/QuestionsContext'
 import { useResults } from '../contexts/ResultsContext'
-import TestNavbar from '../components/TestNavbar'
+import { useProgress } from '../contexts/ProgressContext'
+import Breadcrumb from '../components/Breadcrumb'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
 
@@ -83,6 +84,7 @@ function PersonalityTest() {
   const { lang, localePath } = useLang()
   const { fetchQuestions, getQuestions, isLoading, getError } = useQuestions()
   const { cacheResult } = useResults()
+  const { setProgress } = useProgress()
   
   // UI 텍스트 가져오기 (언어별)
   const uiText = UI_TEXT[lang] || UI_TEXT.en
@@ -120,6 +122,17 @@ function PersonalityTest() {
   const totalQuestions = (questions?.stage1?.length || 0) + (questions?.stage2?.length || 0)
   const totalAnswered = Object.keys(mainAnswers).length + Object.keys(bonusAnswers).length
   const allAnswered = currentQuestions.length > 0 && Object.keys(currentAnswers).length === currentQuestions.length
+  
+  // 진행률 계산
+  const progressPercent = totalQuestions > 0 ? (totalAnswered / totalQuestions) * 100 : 0
+  
+  // ✅ 프로그레스 상태 업데이트
+  useEffect(() => {
+    setProgress(progressPercent)
+    
+    // 컴포넌트 언마운트 시 프로그레스바 숨김
+    return () => setProgress(null)
+  }, [progressPercent, setProgress])
 
   // 다음 답변할 질문 인덱스 계산
   const getNextUnansweredIndex = () => {
@@ -194,6 +207,12 @@ function PersonalityTest() {
     return stage === 1 ? index + 1 : questions.stage1.length + index + 1
   }
 
+  const breadcrumbItems = [
+    { label: lang === 'jp' ? 'ホーム' : 'Home', href: '/' },
+    { label: lang === 'jp' ? '犬テスト' : 'Dog Tests', href: '/dog-test' },
+    { label: lang === 'jp' ? '性格テスト' : 'Personality Test' },
+  ]
+
   // 로딩 화면 (데이터가 아직 없을 때도 포함)
   if (loading || !questions?.stage1?.length) {
     return (
@@ -225,34 +244,40 @@ function PersonalityTest() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FBF9]">
-      {/* Progress Bar */}
-      <TestNavbar answered={totalAnswered} total={totalQuestions} lang={lang} />
-      
-      {/* ✅ pt 증가 (navbar 높이 고려), 좌우 패딩 증가 */}
-      <main className="pt-24 md:pt-20 pb-20 px-4 md:px-6">
-        <div className="max-w-2xl mx-auto">
+    <main className="flex-grow bg-[#F9FBF9] min-h-screen">
+      <div className="px-6 md:px-20 lg:px-40 py-8">
+        <div className="max-w-[800px] mx-auto">
           
-          {/* Title - 좌측 정렬 옵션 */}
-          <div className="mb-8 md:mb-10 mt-2">
-            <h1 className="font-display text-2xl md:text-3xl font-bold mb-2 text-primary text-left md:text-center">
+          {/* Breadcrumb */}
+          <Breadcrumb items={breadcrumbItems} />
+          
+          {/* 진행 상태 텍스트 */}
+          <div className="flex justify-end mb-4">
+            <span className="text-primary/60 text-sm font-medium">
+              {totalAnswered} / {totalQuestions} {lang === 'jp' ? '回答済み' : 'Answered'}
+            </span>
+          </div>
+          
+          {/* Title */}
+          <div className="mb-8">
+            <h1 className="text-primary text-3xl md:text-4xl font-display font-extrabold leading-tight tracking-tight mb-2">
               {stage === 1 ? uiText.stage1.title : uiText.stage2.title}
             </h1>
-            <p className="text-primary/60 text-base md:text-lg font-light text-left md:text-center">
+            <p className="text-primary/60 text-base font-normal leading-normal">
               {stage === 1 ? uiText.stage1.subtitle : uiText.stage2.subtitle}
             </p>
             {stage === 2 && (
-              <div className="mt-4 flex justify-start md:justify-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/20 rounded-full">
+              <div className="mt-4">
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/20 rounded-full">
                   <span className="material-symbols-outlined text-accent">favorite</span>
                   <span className="text-accent font-medium text-sm">{uiText.stage2.badge}</span>
-                </div>
+                </span>
               </div>
             )}
           </div>
 
-          {/* Questions - 간격 증가 */}
-          <div className="space-y-6 md:space-y-8">
+          {/* Questions */}
+          <div className="space-y-6">
             {currentQuestions.map((q, index) => {
               const isDisabled = index > currentActiveIndex
 
@@ -277,7 +302,7 @@ function PersonalityTest() {
             })}
           </div>
 
-          {/* Button - 하단 여백 */}
+          {/* Button */}
           <div className="pt-10 pb-8 flex justify-end">
             {stage === 1 ? (
               <button
@@ -342,8 +367,8 @@ function PersonalityTest() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   )
 }
 
