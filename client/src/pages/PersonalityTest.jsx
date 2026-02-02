@@ -229,49 +229,56 @@ function PersonalityTest() {
       {/* Progress Bar */}
       <TestNavbar answered={totalAnswered} total={totalQuestions} lang={lang} />
       
-      <main className="pt-16 pb-20 px-4 md:px-6">
-        <div className="max-w-2xl mx-auto space-y-8">
-          {/* Title */}
-          <div className="text-center mb-10 mt-4">
-            <h1 className="font-display text-3xl md:text-4xl font-bold mb-3 text-primary">
+      {/* ✅ pt 증가 (navbar 높이 고려), 좌우 패딩 증가 */}
+      <main className="pt-24 md:pt-20 pb-20 px-4 md:px-6">
+        <div className="max-w-2xl mx-auto">
+          
+          {/* Title - 좌측 정렬 옵션 */}
+          <div className="mb-8 md:mb-10 mt-2">
+            <h1 className="font-display text-2xl md:text-3xl font-bold mb-2 text-primary text-left md:text-center">
               {stage === 1 ? uiText.stage1.title : uiText.stage2.title}
             </h1>
-            <p className="text-primary/60 text-lg font-light tracking-wide">
+            <p className="text-primary/60 text-base md:text-lg font-light text-left md:text-center">
               {stage === 1 ? uiText.stage1.subtitle : uiText.stage2.subtitle}
             </p>
             {stage === 2 && (
-              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-accent/20 rounded-full">
-                <span className="material-symbols-outlined text-accent">favorite</span>
-                <span className="text-accent font-medium text-sm">{uiText.stage2.badge}</span>
+              <div className="mt-4 flex justify-start md:justify-center">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/20 rounded-full">
+                  <span className="material-symbols-outlined text-accent">favorite</span>
+                  <span className="text-accent font-medium text-sm">{uiText.stage2.badge}</span>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Questions */}
-          {currentQuestions.map((q, index) => {
-            const isDisabled = index > currentActiveIndex
+          {/* Questions - 간격 증가 */}
+          <div className="space-y-6 md:space-y-8">
+            {currentQuestions.map((q, index) => {
+              const isDisabled = index > currentActiveIndex
 
-            return (
-              <QuestionWithSideImage
-                key={`${stage}-${index}`}
-                questionIndex={index}
-                imageConfig={currentImageConfig}
-                basePath="/images/dog"
-              >
-                <QuestionCard
-                  ref={el => questionRefs.current[index] = el}
-                  number={getQuestionNumber(index)}
-                  question={q.text}
-                  value={currentAnswers[index]}
-                  onChange={(value) => handleAnswer(index, value)}
-                  disabled={isDisabled}
-                />
-              </QuestionWithSideImage>
-            )
-          })}
+              return (
+                <QuestionWithSideImage
+                  key={`${stage}-${index}`}
+                  questionIndex={index}
+                  imageConfig={currentImageConfig}
+                  basePath="/images/dog"
+                >
+                  <QuestionCard
+                    ref={el => questionRefs.current[index] = el}
+                    number={getQuestionNumber(index)}
+                    question={q.text}
+                    value={currentAnswers[index]}
+                    onChange={(value) => handleAnswer(index, value)}
+                    disabled={isDisabled}
+                    lang={lang}
+                  />
+                </QuestionWithSideImage>
+              )
+            })}
+          </div>
 
-          {/* Button */}
-          <div className="pt-8 pb-12 flex justify-end">
+          {/* Button - 하단 여백 */}
+          <div className="pt-10 pb-8 flex justify-end">
             {stage === 1 ? (
               <button
                 onClick={handleNext}
