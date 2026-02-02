@@ -41,7 +41,7 @@ function TestNavbar({ answered, total, lang = 'en' }) {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <span className="text-white/90 text-xs font-bold whitespace-nowrap min-w-[60px] text-right">
+          <span className="text-white/90 text-xs font-bold whitespace-nowrap">
             {answered} / {total} {uiText.answered}
           </span>
         </div>
