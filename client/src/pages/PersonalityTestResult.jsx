@@ -763,8 +763,10 @@ function PersonalityTestResult() {
             <div className="flex gap-2 justify-center md:justify-end">
               <button 
                 onClick={handleCopyLink}
-                className={`w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all ${
-                  copied ? 'bg-green-500 border-green-500 text-white' : ''
+                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all ${
+                  copied 
+                    ? 'bg-green-500 border-green-500 text-white' 
+                    : 'bg-white border-gray-200 text-primary hover:bg-gray-50'
                 }`}
                 title={copied ? uiText.share.copied : uiText.share.copyLink}
               >
@@ -794,8 +796,10 @@ function PersonalityTestResult() {
             <div className="absolute top-2 right-4 md:hidden z-30 flex gap-2">
               <button 
                 onClick={handleCopyLink}
-                className={`w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all shadow-md ${
-                  copied ? 'bg-green-500 border-green-500 text-white' : ''
+                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all shadow-md ${
+                  copied 
+                    ? 'bg-green-500 border-green-500 text-white' 
+                    : 'bg-white border-gray-200 text-primary hover:bg-gray-50'
                 }`}
                 title={copied ? uiText.share.copied : uiText.share.copyLink}
               >
@@ -865,9 +869,13 @@ function PersonalityTestResult() {
                 
                 {/* 2. Pet Name (이미지 바로 아래 - Mobile Only) */}
                 <div className="text-center -mt-4 mb-6 md:hidden relative z-20">
-                  <h1 className="text-xl font-display font-bold text-primary tracking-tight leading-none">
-                    {displayPetName}
-                  </h1>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-xl">pets</span>
+                    <h1 className="text-xl font-display font-bold text-primary tracking-tight leading-none">
+                      {displayPetName}
+                    </h1>
+                    <span className="material-symbols-outlined text-primary text-xl">pets</span>
+                  </div>
                   <p className="text-xs text-primary/60 font-medium mt-0.5">{uiText.petName.subtitle}</p>
                 </div>
               </div>
