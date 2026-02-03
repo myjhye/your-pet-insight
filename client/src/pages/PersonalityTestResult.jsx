@@ -297,15 +297,15 @@ function StatBar({ name, label, value, color }) {
   const strengthPercent = value >= 50 ? value : (100 - value)
   
   return (
-    <div className="space-y-1 md:space-y-3">
+    <div className="space-y-2 md:space-y-3">
       <div className="flex justify-between items-end">
-        <span className="text-[10px] md:text-sm font-bold text-primary/60 uppercase tracking-wider">{name}</span>
+        <span className="text-xs md:text-sm font-bold text-primary/60 uppercase tracking-wider">{name}</span>
         <div className="flex items-center gap-1 md:gap-2">
-          <span className="text-[10px] md:text-sm font-bold text-primary">{label}</span>
-          <span className={`text-[10px] md:text-sm font-bold ${color.replace('bg-', 'text-')}`}>{strengthPercent}%</span>
+          <span className="text-xs md:text-sm font-bold text-primary">{label}</span>
+          <span className={`text-xs md:text-sm font-bold ${color.replace('bg-', 'text-')}`}>{strengthPercent}%</span>
         </div>
       </div>
-      <div className="h-1.5 md:h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-2 md:h-3 w-full bg-gray-100 rounded-full overflow-hidden">
         <div
           className={`h-full ${color} rounded-full transition-all duration-1000`}
           style={{ width: `${strengthPercent}%` }}
@@ -881,7 +881,7 @@ function PersonalityTestResult() {
               </div>
 
               {/* 3. Stats (모바일에서는 이미지 아래로 내려옴) */}
-              <div className="w-full md:w-1/2 space-y-1 md:space-y-3 mt-2 md:mt-0 z-20 mb-2 md:mb-0">
+              <div className="w-full md:w-1/2 space-y-2 md:space-y-3 mt-2 md:mt-0 z-20 mb-2 md:mb-0">
                 {STATS_ORDER.map(({ key, color }) => {
                   const value = getStatValue(key)  // 안전한 값 추출
                   const label = getLocalizedText(statsLabels[key]) || key
