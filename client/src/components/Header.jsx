@@ -9,22 +9,30 @@ function Header({ fixed = false }) {
   const [isLangOpen, setIsLangOpen] = useState(false)
   const location = useLocation()
   
-  // 결과 페이지인지 확인 (result가 경로에 포함되어 있으면)
+  // 결과 페이지인지 확인
   const isResultPage = location.pathname.includes('/result/')
 
   return (
-    <div className="sticky top-0 z-50 w-full bg-primary">
-      <header className="w-full px-8 py-6 flex justify-between items-center max-w-7xl mx-auto relative z-10">
-        <div className="flex items-center gap-4">
+    <div className="sticky top-0 z-50 w-full bg-primary shadow-sm">
+      {/* [수정됨] 
+        1. py-6 -> py-3 md:py-5 : 모바일에서 상하 여백을 확 줄임
+        2. px-8 -> px-4 sm:px-6 md:px-8 : 모바일 좌우 여백 최적화
+      */}
+      <header className="w-full px-4 sm:px-6 md:px-8 py-3 md:py-5 flex justify-between items-center max-w-7xl mx-auto relative z-10">
+        <div className="flex items-center gap-3">
           <Link to={localePath('/')} className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-full border-2 border-secondary flex items-center justify-center group-hover:bg-secondary/10 transition-colors">
-              <span className="material-symbols-outlined text-secondary text-sm">pets</span>
+            {/* [수정됨] 로고 크기: w-8 h-8 -> w-7 h-7 md:w-8 md:h-8 */}
+            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-secondary flex items-center justify-center group-hover:bg-secondary/10 transition-colors">
+              <span className="material-symbols-outlined text-secondary text-xs md:text-sm">pets</span>
             </div>
-            <span className="font-display font-bold text-2xl tracking-tight text-white">
+            {/* [수정됨] 폰트 크기: text-2xl -> text-lg sm:text-xl md:text-2xl */}
+            <span className="font-display font-bold text-lg sm:text-xl md:text-2xl tracking-tight text-white">
               <span className="text-secondary font-light">Your</span> Pet Insight
             </span>
           </Link>
         </div>
+
+        {/* 데스크탑 메뉴 */}
         <div className="hidden md:flex items-center space-x-8">
           <nav className="flex space-x-6 text-sm font-medium text-secondary/80">
             <a className="hover:text-accent transition-colors" href="#">Methodology</a>
@@ -32,7 +40,6 @@ function Header({ fixed = false }) {
             <a className="hover:text-accent transition-colors" href="#">Blog</a>
           </nav>
           
-          {/* Language Selector - 결과 페이지에서는 숨김 */}
           {!isResultPage && (
             <div className="relative">
               <button 
@@ -48,13 +55,7 @@ function Header({ fixed = false }) {
               
               {isLangOpen && (
                 <>
-                  {/* Backdrop */}
-                  <div 
-                    className="fixed inset-0 z-40" 
-                    onClick={() => setIsLangOpen(false)}
-                  />
-                  
-                  {/* Dropdown */}
+                  <div className="fixed inset-0 z-40" onClick={() => setIsLangOpen(false)} />
                   <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl overflow-hidden z-50 min-w-[140px]">
                     {Object.values(languages).map((language) => (
                       <button
@@ -82,14 +83,17 @@ function Header({ fixed = false }) {
             </div>
           )}
         </div>
+
+        {/* 모바일 메뉴 버튼 */}
         <div className="md:hidden">
           <button className="text-white hover:text-accent focus:outline-none p-1">
-            <span className="material-symbols-outlined text-3xl">menu</span>
+            {/* [수정됨] 아이콘 크기: text-3xl -> text-2xl */}
+            <span className="material-symbols-outlined text-2xl">menu</span>
           </button>
         </div>
       </header>
       
-      {/* ✅ 프로그레스바 - 헤더 하단 전체 너비 */}
+      {/* 프로그레스바 */}
       {progress !== null && (
         <div className="h-1 bg-white/20">
           <div 

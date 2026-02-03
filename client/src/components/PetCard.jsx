@@ -45,11 +45,11 @@ function PetCard({ type, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="bg-card-bg rounded-xl md:rounded-2xl p-5 md:p-8 shadow-soft transform transition hover:-translate-y-2 hover:shadow-lg duration-300 flex flex-col items-center relative group overflow-hidden border border-white/10 cursor-pointer"
+      className="bg-card-bg rounded-xl md:rounded-2xl p-4 md:p-8 shadow-soft transform transition hover:-translate-y-2 hover:shadow-lg duration-300 flex flex-col items-center relative group overflow-hidden border border-white/10 cursor-pointer"
     >
       <div className={`absolute top-0 w-full h-1 bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo}`}></div>
       
-      <div className="w-full flex justify-between items-start mb-3 md:mb-6">
+      <div className="w-full flex justify-between items-start mb-2 md:mb-6">
         <div className={`${config.labelBg} ${config.labelText} px-2 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-semibold uppercase tracking-wide`}>
           {config.label}
         </div>
@@ -59,10 +59,10 @@ function PetCard({ type, onClick }) {
         </div>
       </div>
 
-      <div className="relative w-24 h-24 md:w-36 md:h-36 mb-3 md:mb-6 flex items-center justify-center">
+      <div className="relative w-20 h-20 md:w-36 md:h-36 mb-2 md:mb-6 flex items-center justify-center">
         <div className={`absolute inset-0 ${config.iconBg} rounded-full scale-90 group-hover:scale-100 transition-transform duration-500 ease-out`}></div>
         <svg
-          className={`w-16 h-16 md:w-24 md:h-24 ${config.iconColor} z-10 relative transform group-hover:scale-110 transition-transform duration-300`}
+          className={`w-14 h-14 md:w-24 md:h-24 ${config.iconColor} z-10 relative transform group-hover:scale-110 transition-transform duration-300`}
           fill="currentColor"
           viewBox="0 0 24 24"
         >
@@ -70,12 +70,12 @@ function PetCard({ type, onClick }) {
         </svg>
       </div>
 
-      <h2 className="text-lg md:text-2xl font-display font-bold text-text-dark mb-2 text-center px-2">{config.title}</h2>
-      <p className="text-gray-500 text-xs md:text-sm mb-4 md:mb-8 text-center px-2 md:px-4 font-light">
+      <h2 className="text-lg md:text-2xl font-display font-bold text-text-dark mb-1.5 md:mb-2 text-center px-2">{config.title}</h2>
+      <p className="text-gray-500 text-xs md:text-sm mb-3 md:mb-8 text-center px-2 md:px-4 font-light">
         {config.description}
       </p>
 
-      <div className={`w-full ${config.buttonBg} ${config.buttonText} font-semibold py-3 md:py-4 px-4 md:px-6 rounded-lg md:rounded-xl ${config.buttonHover} transition-all duration-300 flex items-center justify-center group/btn shadow-lg ${config.buttonShadow} text-sm md:text-base`}>
+      <div className={`w-full ${config.buttonBg} ${config.buttonText} font-semibold py-2.5 md:py-4 px-4 md:px-6 rounded-lg md:rounded-xl ${config.buttonHover} transition-all duration-300 flex items-center justify-center group/btn shadow-lg ${config.buttonShadow} text-sm md:text-base`}>
         <span>Begin Assessment</span>
         <span className="material-symbols-outlined ml-2 text-base md:text-lg transform group-hover:translate-x-1 transition-transform">
           arrow_forward

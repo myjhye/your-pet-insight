@@ -19,7 +19,7 @@ function Home() {
   }
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-center px-4 sm:px-6 py-6 md:py-16 relative overflow-hidden">
+    <main className="flex-grow flex flex-col items-center justify-center px-4 sm:px-6 py-4 md:py-16 relative overflow-hidden">
       <BackgroundEffects />
       <Hero />
 
