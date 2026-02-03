@@ -789,11 +789,11 @@ function PersonalityTestResult() {
           {currentTab === 'basic' && (
             <>
           <div className="p-6 md:p-10">
-            {/* TOP ROW: Image (Left) + Graph (Right) */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-2">
+            {/* TOP SECTION: Image & Stats */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 mb-0 md:mb-2">
               
-              {/* Left: Hero Image (Huge) */}
-              <div className="relative w-72 h-72 md:w-[28rem] md:h-[28rem] flex-shrink-0">
+              {/* 1. Image */}
+              <div className="relative w-64 h-64 md:w-[28rem] md:h-[28rem] flex-shrink-0 mb-0 md:mb-0">
                 <div className="absolute inset-8 bg-secondary/5 rounded-full blur-2xl"></div>
                 {imageSrc && !imageError ? (
                   <img 
@@ -835,8 +835,8 @@ function PersonalityTestResult() {
                 )}
               </div>
 
-              {/* Right: Stats Graph (Compact) */}
-              <div className="w-full md:w-1/2 space-y-2 md:space-y-3 z-20">
+              {/* 2. Stats (모바일에서는 이미지 아래로 내려옴) */}
+              <div className="w-full md:w-1/2 space-y-2 md:space-y-3 mt-4 md:mt-0 z-20">
                 {STATS_ORDER.map(({ key, color }) => {
                   const value = getStatValue(key)  // 안전한 값 추출
                   const label = getLocalizedText(statsLabels[key]) || key
@@ -854,9 +854,9 @@ function PersonalityTestResult() {
               </div>
             </div>
 
-            {/* BOTTOM ROW: Text Content */}
-            <div className="text-center relative z-30 -mt-6 md:-mt-10">
-              <h2 className="text-4xl md:text-7xl font-black text-primary uppercase tracking-tighter leading-none mb-2">
+            {/* BOTTOM SECTION: Text (Overlap 해결) */}
+            <div className="text-center pt-6 md:pt-0 mt-2 md:-mt-8 relative z-30">
+              <h2 className="text-4xl md:text-7xl font-black text-primary uppercase tracking-tighter leading-none mb-3">
                 {alias || mbti_code}
               </h2>
               {summary && (
