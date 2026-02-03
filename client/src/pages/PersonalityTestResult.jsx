@@ -337,29 +337,38 @@ function TraitCard({ icon, title, description, variant = 'default' }) {
 
 function LockedPreviewCard({ icon, title, preview, petName, onUnlockClick, unlockButtonText }) {
   return (
-    <div className="relative p-3 md:p-8 rounded-2xl bg-white border-l-4 border-primary/30 shadow-sm overflow-hidden group hover:shadow-md transition-all">
-      {/* 헤더: 아이콘 + 제목 + 자물쇠 */}
-      <div className="flex items-center justify-between mb-2 md:mb-4">
-        <h3 className="text-sm md:text-xl font-display font-bold text-primary flex items-center gap-1 md:gap-2">
-          <span className="material-symbols-outlined text-primary/70 text-base md:text-xl">{icon}</span>
-          {title}
-        </h3>
-        <span className="material-symbols-outlined text-primary/40 text-base md:text-xl">lock</span>
+    <div className="relative p-5 md:p-8 rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden group hover:shadow-md transition-all min-h-[120px]">
+      {/* Header: Icon Badge & Title */}
+      <div className="flex items-start gap-4 mb-3">
+        {/* Icon Badge */}
+        <div className="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center flex-shrink-0">
+          <span className="material-symbols-outlined text-primary text-2xl">{icon}</span>
+        </div>
+        {/* Title */}
+        <div className="flex-1 pt-1">
+          <h3 className="text-lg md:text-xl font-display font-bold text-primary leading-tight mb-1">
+            {title}
+          </h3>
+          <div className="flex items-center gap-1 text-xs text-primary/40 font-medium">
+            <span className="material-symbols-outlined text-sm">lock</span>
+            <span>Premium Content</span>
+          </div>
+        </div>
       </div>
       
-      {/* 블러 처리된 미리보기 텍스트 */}
-      <div className="relative">
-        <p className="text-[#2D3436]/60 leading-tight md:leading-relaxed text-xs md:text-sm blur-[6px] select-none pointer-events-none">
-          {preview}
+      {/* Blurred Preview Content */}
+      <div className="relative mt-2">
+        <p className="text-[#2D3436]/60 text-sm leading-relaxed blur-[5px] select-none pointer-events-none line-clamp-2">
+          {preview} {preview}
         </p>
         
-        {/* 오버레이 + 언락 버튼 */}
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-white via-white/80 to-transparent">
+        {/* Unlock Overlay & Button */}
+        <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
           <button
             onClick={onUnlockClick}
-            className="flex items-center gap-1 md:gap-2 px-3 md:px-5 py-1.5 md:py-2.5 bg-primary/10 text-primary font-medium rounded-full hover:bg-primary/20 transition-all text-[10px] md:text-sm"
+            className="px-5 py-2.5 bg-white border border-primary/20 shadow-md rounded-full text-primary text-sm font-bold flex items-center gap-2 hover:bg-gray-50 transition-all active:scale-95"
           >
-            <span className="material-symbols-outlined text-sm md:text-lg">lock_open</span>
+            <span className="material-symbols-outlined text-lg">lock_open</span>
             {unlockButtonText}
           </button>
         </div>
@@ -963,7 +972,7 @@ function PersonalityTestResult() {
             {/* Premium Content Preview (잠긴 카드들) */}
             <div className="space-y-4 md:space-y-8 mb-8 md:mb-16">
               {/* 섹션 헤더 */}
-              <div className="flex items-center gap-2 md:gap-4">
+              <div className="flex items-center gap-2 md:gap-4 mb-6 md:mb-8">
                 <h2 className="text-xl md:text-3xl font-display font-bold text-primary">
                   {uiText.premium.premiumPreview.sectionTitle}
                 </h2>
@@ -972,7 +981,7 @@ function PersonalityTestResult() {
               </div>
               
               {/* 잠긴 카드 그리드 (2열) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {uiText.premium.premiumPreview.sections.map((section) => (
                   <LockedPreviewCard
                     key={section.key}
