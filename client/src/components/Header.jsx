@@ -6,37 +6,41 @@ import { useProgress } from '../contexts/ProgressContext'
 function Header({ fixed = false }) {
   const { lang, langInfo, changeLang, localePath, languages } = useLang()
   const { progress } = useProgress()
-  const [isLangOpen, setIsLangOpen] = useState(false)
-  const location = useLocation()
   
-  // 결과 페이지인지 확인
+  // 언어 선택 드롭다운 상태 (데스크탑용)
+  const [isLangOpen, setIsLangOpen] = useState(false)
+  // 모바일 메뉴 열림/닫힘 상태 (새로 추가됨)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  
+  const location = useLocation()
   const isResultPage = location.pathname.includes('/result/')
+
+  // 모바일 메뉴 토글 함수
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen)
+    setIsLangOpen(false) // 모바일 메뉴 열 때 데스크탑 언어 메뉴는 닫음
+  }
 
   return (
     <div className="sticky top-0 z-50 w-full bg-primary shadow-sm">
-      {/* [수정됨] 
-        1. py-6 -> py-3 md:py-5 : 모바일에서 상하 여백을 확 줄임
-        2. px-8 -> px-4 sm:px-6 md:px-8 : 모바일 좌우 여백 최적화
-      */}
-      <header className="w-full px-4 sm:px-6 md:px-8 py-3 md:py-5 flex justify-between items-center max-w-7xl mx-auto relative z-10">
+      <header className="w-full px-4 sm:px-6 md:px-8 py-3 md:py-5 flex justify-between items-center max-w-7xl mx-auto relative z-20">
+        
+        {/* 1. 로고 영역 */}
         <div className="flex items-center gap-3">
-          <Link to={localePath('/')} className="flex items-center gap-2 group">
-            {/* [수정됨] 로고 크기: w-8 h-8 -> w-7 h-7 md:w-8 md:h-8 */}
+          <Link to={localePath('/')} className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-secondary flex items-center justify-center group-hover:bg-secondary/10 transition-colors">
               <span className="material-symbols-outlined text-secondary text-xs md:text-sm">pets</span>
             </div>
-            {/* [수정됨] 폰트 크기: text-2xl -> text-lg sm:text-xl md:text-2xl */}
             <span className="font-display font-bold text-lg sm:text-xl md:text-2xl tracking-tight text-white">
               <span className="text-secondary font-light">Your</span> Pet Insight
             </span>
           </Link>
         </div>
 
-        {/* 데스크탑 메뉴 */}
+        {/* 2. 데스크탑 메뉴 (MD 이상에서만 보임) */}
         <div className="hidden md:flex items-center space-x-8">
           <nav className="flex space-x-6 text-sm font-medium text-secondary/80">
-            <a className="hover:text-accent transition-colors" href="#">Methodology</a>
-            <a className="hover:text-accent transition-colors" href="#">About Us</a>
+            {/* 요청하신 대로 Methodology, About Us 삭제됨 */}
             <a className="hover:text-accent transition-colors" href="#">Blog</a>
           </nav>
           
@@ -84,18 +88,67 @@ function Header({ fixed = false }) {
           )}
         </div>
 
-        {/* 모바일 메뉴 버튼 */}
+        {/* 3. 모바일 햄버거 버튼 (MD 미만에서만 보임) */}
         <div className="md:hidden">
-          <button className="text-white hover:text-accent focus:outline-none p-1">
-            {/* [수정됨] 아이콘 크기: text-3xl -> text-2xl */}
-            <span className="material-symbols-outlined text-2xl">menu</span>
+          <button 
+            onClick={toggleMobileMenu}
+            className="text-white hover:text-accent focus:outline-none p-1 transition-colors"
+          >
+            {/* 메뉴가 열려있으면 'close(X)', 닫혀있으면 'menu' 아이콘 표시 */}
+            <span className="material-symbols-outlined text-2xl">
+              {isMobileMenuOpen ? 'close' : 'menu'}
+            </span>
           </button>
         </div>
       </header>
       
-      {/* 프로그레스바 */}
+      {/* 4. 모바일 드롭다운 메뉴 (햄버거 클릭 시 등장) */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-lg z-10 animate-fade-in-down">
+          <div className="flex flex-col py-4 px-6 space-y-4">
+            
+            {/* Blog 링크 */}
+            <a 
+              href="#" 
+              className="text-gray-800 font-medium text-sm hover:text-primary py-2 border-b border-gray-100"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Blog
+            </a>
+
+            {/* 언어 선택 영역 (모바일용) */}
+            {!isResultPage && (
+              <div className="pt-2">
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-3">Select Language</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.values(languages).map((language) => (
+                    <button
+                      key={language.code}
+                      onClick={() => {
+                        changeLang(language.code)
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className={`
+                        flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-all
+                        ${lang === language.code 
+                          ? 'bg-primary/5 border-primary text-primary' 
+                          : 'bg-gray-50 border-transparent text-gray-600 hover:bg-gray-100'}
+                      `}
+                    >
+                      <span>{language.flag}</span>
+                      <span>{language.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 5. 프로그레스바 */}
       {progress !== null && (
-        <div className="h-1 bg-white/20">
+        <div className="h-1 bg-white/20 absolute bottom-0 w-full z-30">
           <div 
             className="h-full bg-secondary transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}

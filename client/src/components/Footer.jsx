@@ -10,7 +10,7 @@ function Footer() {
         <p className="max-w-md mx-auto px-4 text-xs font-light leading-tight md:leading-relaxed">
           PetInsight is dedicated to strengthening the bond between humans and animals through behavioral science and empathy.
         </p>
-        <p className="text-xs font-light">© 2026 PetInsight. All rights reserved.</p>
+        <p className="text-xs font-light">© 2026 YourPetInsight. All rights reserved.</p>
       </div>
     </footer>
   )
