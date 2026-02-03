@@ -571,7 +571,7 @@ function PersonalityTestResult() {
 
   // 링크 복사 함수
   const handleCopyLink = async () => {
-    const shareUrl = `${window.location.origin}/${lang}/dog-test/personality`
+    const shareUrl = `https://www.yourpetinsight.com/${lang}/dog-test/personality`
     
     try {
       await navigator.clipboard.writeText(shareUrl)
@@ -594,7 +594,7 @@ function PersonalityTestResult() {
 
   // 네이티브 공유 함수 (모바일)
   const handleNativeShare = async () => {
-    const shareUrl = `${window.location.origin}/${lang}/dog-test/personality`
+    const shareUrl = `https://www.yourpetinsight.com/${lang}/dog-test/personality`
     const shareData = {
       title: lang === 'jp' 
         ? `${displayPetName}の性格テスト` 
@@ -703,55 +703,28 @@ function PersonalityTestResult() {
       <div className="max-w-5xl mx-auto px-4 py-2 md:px-6 md:py-12">
         {/* Main Result Card */}
         <div className="bg-white rounded-xl md:rounded-[2rem] shadow-sm border border-primary/5 overflow-hidden mb-4 md:mb-12">
-          {/* 펫 이름 */}
-          <div className="p-3 md:p-8 text-center border-b border-dashed border-gray-100 bg-gradient-to-b from-primary/5 to-transparent">
-            <div className="flex items-center justify-center gap-2 md:gap-3 mb-1 md:mb-2">
-              <span className="material-symbols-outlined text-primary text-xl md:text-3xl">pets</span>
-              <h1 className="text-xl md:text-5xl font-display font-bold text-primary tracking-tight">
-                {displayPetName}
-              </h1>
-              <span className="material-symbols-outlined text-primary text-xl md:text-3xl">pets</span>
-            </div>
-            <p className="text-xs md:text-sm text-primary/60 font-medium mb-2 md:mb-4">{uiText.petName.subtitle}</p>
+          {/* Integrated Header (Name + Tabs + Share) */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-100 bg-gray-50/50 p-4 gap-4">
             
-            {/* Share 버튼 */}
-            <div className="flex justify-center gap-2 md:gap-3">
-              <button 
-                onClick={handleCopyLink}
-                className={`flex items-center gap-1 md:gap-2 px-2 py-1 md:px-4 md:py-2 rounded-full text-[10px] md:text-sm font-medium transition-all ${
-                  copied 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-primary/10 text-primary hover:bg-primary/20'
-                }`}
-              >
-                <span className="material-symbols-outlined text-sm md:text-lg">
-                  {copied ? 'check' : 'link'}
-                </span>
-                <span>{copied ? uiText.share.copied : uiText.share.copyLink}</span>
-              </button>
-              
-              {/* 네이티브 공유 버튼 (모바일에서 유용) */}
-              {typeof navigator !== 'undefined' && navigator.share && (
-                <button 
-                  onClick={handleNativeShare}
-                  className="flex items-center gap-1 md:gap-2 px-2 py-1 md:px-4 md:py-2 bg-primary/10 text-primary rounded-full text-[10px] md:text-sm font-medium hover:bg-primary/20 transition-all"
-                >
-                  <span className="material-symbols-outlined text-sm md:text-lg">share</span>
-                  <span>{lang === 'jp' ? '共有' : 'Share'}</span>
-                </button>
-              )}
+            {/* Left: Pet Name */}
+            <div className="flex items-center gap-2 md:gap-3 order-1">
+              <span className="material-symbols-outlined text-primary text-xl md:text-2xl">pets</span>
+              <div>
+                <h1 className="text-xl md:text-2xl font-display font-bold text-primary tracking-tight leading-none">
+                  {displayPetName}
+                </h1>
+                <p className="text-xs text-primary/60 font-medium mt-0.5">{uiText.petName.subtitle}</p>
+              </div>
             </div>
-          </div>
 
-          {/* 메인 탭 버튼 (기본 결과 / 프리미엄 리포트) */}
-          <div className="px-3 md:px-8 py-2 md:py-4 border-b border-gray-100">
-            <div className="flex gap-1 md:gap-2">
+            {/* Center: Tabs (PC: Center / Mobile: Bottom) */}
+            <div className="flex bg-gray-200/50 p-1 rounded-lg gap-1 order-3 md:order-2">
               <button
                 onClick={() => setCurrentTab('basic')}
-                className={`flex-1 px-3 md:px-6 py-2 md:py-3 rounded-xl font-medium transition-all text-xs md:text-base ${
+                className={`px-3 md:px-6 py-2 rounded-lg font-medium transition-all text-xs md:text-sm ${
                   currentTab === 'basic'
-                    ? 'bg-primary text-white shadow-md'
-                    : 'bg-gray-50 text-primary hover:bg-primary/10'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'bg-transparent text-primary/70 hover:text-primary'
                 }`}
               >
                 {uiText.tabs.basic}
@@ -772,78 +745,98 @@ function PersonalityTestResult() {
                     }
                   }
                 }}
-                className={`flex-1 px-3 md:px-6 py-2 md:py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base ${
+                className={`px-3 md:px-6 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-1 text-xs md:text-sm ${
                   currentTab === 'premium' && reportStatus === 'ready'
-                    ? 'bg-primary text-white shadow-md'
-                    : 'bg-gray-50 text-primary hover:bg-primary/10'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'bg-transparent text-primary/70 hover:text-primary'
                 }`}
               >
                 {reportStatus !== 'ready' && (
-                  <span className="material-symbols-outlined text-sm md:text-lg">lock</span>
+                  <span className="material-symbols-outlined text-sm">lock</span>
                 )}
                 {uiText.tabs.premium}
               </button>
+            </div>
+
+            {/* Right: Share Buttons (Icon Only) */}
+            <div className="flex gap-2 order-2 md:order-3 justify-center md:justify-end">
+              <button 
+                onClick={handleCopyLink}
+                className={`w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all ${
+                  copied ? 'bg-green-500 border-green-500 text-white' : ''
+                }`}
+                title={copied ? uiText.share.copied : uiText.share.copyLink}
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {copied ? 'check' : 'link'}
+                </span>
+              </button>
+              
+              {/* 네이티브 공유 버튼 (모바일에서 유용) */}
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <button 
+                  onClick={handleNativeShare}
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all"
+                  title={lang === 'jp' ? '共有' : 'Share'}
+                >
+                  <span className="material-symbols-outlined text-lg">share</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* 메인 이미지 & 유형 뱃지 (기본 탭일 때만 표시) */}
           {currentTab === 'basic' && (
             <>
-          <div className="p-3 md:p-10 flex flex-col items-center">
-            <div className="relative w-24 h-24 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/20 rounded-full flex items-center justify-center mb-3 md:mb-10">
-              {imageSrc && !imageError ? (
-                <img 
-                  src={imageSrc}
-                  alt={alias || mbti_code || 'Pet Archetype'}
-                  className="w-24 h-24 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain z-10"
-                  onError={() => {
-                    // 다음 확장자 시도
-                    const imageId = archetype?.image_id
-                    if (imageId) {
-                      const extensions = ['.png', '.jpg', '.jpeg', '.webp']
-                      const currentPath = imageSrc
-                      const currentExt = extensions.find(ext => currentPath.endsWith(ext))
-                      
-                      if (currentExt) {
-                        const currentIndex = extensions.indexOf(currentExt)
-                        if (currentIndex < extensions.length - 1) {
-                          // 다음 확장자 시도
-                          setImageSrc(`/images/archetypes/${imageId}${extensions[currentIndex + 1]}`)
-                          return
+          <div className="p-6 md:p-10">
+            {/* TOP ROW: Image (Left) + Graph (Right) */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-2">
+              
+              {/* Left: Hero Image (Huge) */}
+              <div className="relative w-72 h-72 md:w-[28rem] md:h-[28rem] flex-shrink-0">
+                <div className="absolute inset-8 bg-secondary/5 rounded-full blur-2xl"></div>
+                {imageSrc && !imageError ? (
+                  <img 
+                    src={imageSrc}
+                    alt={alias || mbti_code || 'Pet Archetype'}
+                    className="relative z-10 w-full h-full object-contain drop-shadow-2xl transform scale-110 origin-center"
+                    onError={() => {
+                      // 다음 확장자 시도
+                      const imageId = archetype?.image_id
+                      if (imageId) {
+                        const extensions = ['.png', '.jpg', '.jpeg', '.webp']
+                        const currentPath = imageSrc
+                        const currentExt = extensions.find(ext => currentPath.endsWith(ext))
+                        
+                        if (currentExt) {
+                          const currentIndex = extensions.indexOf(currentExt)
+                          if (currentIndex < extensions.length - 1) {
+                            // 다음 확장자 시도
+                            setImageSrc(`/images/archetypes/${imageId}${extensions[currentIndex + 1]}`)
+                            return
+                          }
                         }
                       }
-                    }
-                    // 모든 확장자 시도 실패 시 fallback 표시
-                    setImageError(true)
-                  }}
-                  onLoad={() => {
-                    // 이미지 로드 성공 시 에러 상태 초기화
-                    setImageError(false)
-                  }}
-                />
-              ) : null}
-              {/* Fallback: 이미지가 없거나 로드 실패 시 */}
-              {(!imageSrc || imageError) && (
-                <div className="w-24 h-24 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/30 rounded-full flex items-center justify-center z-10">
-                  <span className="material-symbols-outlined text-primary text-5xl md:text-[12rem]">pets</span>
-                </div>
-              )}
-              <div className="absolute inset-0 border border-primary/10 rounded-full scale-110"></div>
-              <div className="absolute inset-0 border border-dashed border-primary/20 rounded-full scale-125"></div>
-            </div>
-            
-            <div className="text-center">
-              <h2 className="text-lg md:text-6xl font-display font-bold text-primary tracking-tight uppercase">
-                {alias || mbti_code}
-              </h2>
-              {summary && (
-                <p className="mt-1 md:mt-4 text-primary/60 text-xs md:text-lg max-w-lg mx-auto">{summary}</p>
-              )}
-            </div>
-          </div>
+                      // 모든 확장자 시도 실패 시 fallback 표시
+                      setImageError(true)
+                    }}
+                    onLoad={() => {
+                      // 이미지 로드 성공 시 에러 상태 초기화
+                      setImageError(false)
+                    }}
+                  />
+                ) : null}
+                
+                {/* Fallback: 이미지가 없거나 로드 실패 시 */}
+                {(!imageSrc || imageError) && (
+                  <div className="relative z-10 w-full h-full bg-secondary/30 rounded-full flex items-center justify-center transform scale-110 origin-center">
+                    <span className="material-symbols-outlined text-primary text-8xl md:text-[14rem]">pets</span>
+                  </div>
+                )}
+              </div>
 
-              {/* Stats 막대 그래프 (일렬 배치) */}
-              <div className="px-5 md:px-10 pb-4 md:pb-12 space-y-1 md:space-y-6">
+              {/* Right: Stats Graph (Compact) */}
+              <div className="w-full md:w-1/2 space-y-2 md:space-y-3 z-20">
                 {STATS_ORDER.map(({ key, color }) => {
                   const value = getStatValue(key)  // 안전한 값 추출
                   const label = getLocalizedText(statsLabels[key]) || key
@@ -859,6 +852,20 @@ function PersonalityTestResult() {
                   )
                 })}
               </div>
+            </div>
+
+            {/* BOTTOM ROW: Text Content */}
+            <div className="text-center relative z-30 -mt-6 md:-mt-10">
+              <h2 className="text-4xl md:text-7xl font-black text-primary uppercase tracking-tighter leading-none mb-2">
+                {alias || mbti_code}
+              </h2>
+              {summary && (
+                <p className="text-sm md:text-lg text-primary/70 max-w-2xl mx-auto leading-relaxed">
+                  {summary}
+                </p>
+              )}
+            </div>
+          </div>
             </>
           )}
         </div>
