@@ -297,15 +297,15 @@ function StatBar({ name, label, value, color }) {
   const strengthPercent = value >= 50 ? value : (100 - value)
   
   return (
-    <div className="space-y-3">
+    <div className="space-y-1 md:space-y-3">
       <div className="flex justify-between items-end">
-        <span className="text-sm font-bold text-primary/60 uppercase tracking-wider">{name}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-primary">{label}</span>
-          <span className={`text-sm font-bold ${color.replace('bg-', 'text-')}`}>{strengthPercent}%</span>
+        <span className="text-[10px] md:text-sm font-bold text-primary/60 uppercase tracking-wider">{name}</span>
+        <div className="flex items-center gap-1 md:gap-2">
+          <span className="text-[10px] md:text-sm font-bold text-primary">{label}</span>
+          <span className={`text-[10px] md:text-sm font-bold ${color.replace('bg-', 'text-')}`}>{strengthPercent}%</span>
         </div>
       </div>
-      <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 md:h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
         <div
           className={`h-full ${color} rounded-full transition-all duration-1000`}
           style={{ width: `${strengthPercent}%` }}
@@ -317,18 +317,18 @@ function StatBar({ name, label, value, color }) {
 
 // Trait 카드 컴포넌트
 function TraitCard({ icon, title, description, variant = 'default' }) {
-  const baseClasses = "p-5 md:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+  const baseClasses = "p-3 md:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
   const variantClasses = variant === 'alt'
     ? "bg-secondary/10 border border-secondary/30"
     : "bg-white border-l-4 border-[#2D5A47]"
 
   return (
     <div className={`${baseClasses} ${variantClasses}`}>
-      <h3 className="text-xl font-display font-bold text-primary mb-4 flex items-center gap-2">
-        <span className="material-symbols-outlined text-[#2D5A47]">{icon}</span>
+      <h3 className="text-sm md:text-xl font-display font-bold text-primary mb-2 md:mb-4 flex items-center gap-1 md:gap-2">
+        <span className="material-symbols-outlined text-[#2D5A47] text-lg md:text-xl">{icon}</span>
         {title}
       </h3>
-      <p className="text-[#2D3436] leading-relaxed text-base md:text-[1.05rem] font-medium opacity-90">
+      <p className="text-[#2D3436] leading-tight md:leading-relaxed text-xs md:text-[1.05rem] font-medium opacity-90">
         {description}
       </p>
     </div>
@@ -337,19 +337,19 @@ function TraitCard({ icon, title, description, variant = 'default' }) {
 
 function LockedPreviewCard({ icon, title, preview, petName, onUnlockClick, unlockButtonText }) {
   return (
-    <div className="relative p-5 md:p-8 rounded-2xl bg-white border-l-4 border-primary/30 shadow-sm overflow-hidden group hover:shadow-md transition-all">
+    <div className="relative p-3 md:p-8 rounded-2xl bg-white border-l-4 border-primary/30 shadow-sm overflow-hidden group hover:shadow-md transition-all">
       {/* 헤더: 아이콘 + 제목 + 자물쇠 */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg md:text-xl font-display font-bold text-primary flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary/70">{icon}</span>
+      <div className="flex items-center justify-between mb-2 md:mb-4">
+        <h3 className="text-sm md:text-xl font-display font-bold text-primary flex items-center gap-1 md:gap-2">
+          <span className="material-symbols-outlined text-primary/70 text-base md:text-xl">{icon}</span>
           {title}
         </h3>
-        <span className="material-symbols-outlined text-primary/40 text-xl">lock</span>
+        <span className="material-symbols-outlined text-primary/40 text-base md:text-xl">lock</span>
       </div>
       
       {/* 블러 처리된 미리보기 텍스트 */}
       <div className="relative">
-        <p className="text-[#2D3436]/60 leading-relaxed text-sm blur-[6px] select-none pointer-events-none">
+        <p className="text-[#2D3436]/60 leading-tight md:leading-relaxed text-xs md:text-sm blur-[6px] select-none pointer-events-none">
           {preview}
         </p>
         
@@ -357,9 +357,9 @@ function LockedPreviewCard({ icon, title, preview, petName, onUnlockClick, unloc
         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-white via-white/80 to-transparent">
           <button
             onClick={onUnlockClick}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary/10 text-primary font-medium rounded-full hover:bg-primary/20 transition-all text-sm"
+            className="flex items-center gap-1 md:gap-2 px-3 md:px-5 py-1.5 md:py-2.5 bg-primary/10 text-primary font-medium rounded-full hover:bg-primary/20 transition-all text-[10px] md:text-sm"
           >
-            <span className="material-symbols-outlined text-lg">lock_open</span>
+            <span className="material-symbols-outlined text-sm md:text-lg">lock_open</span>
             {unlockButtonText}
           </button>
         </div>
@@ -700,31 +700,31 @@ function PersonalityTestResult() {
 
   return (
     <main className={`min-h-screen text-[#2D3436] ${currentTab === 'premium' ? 'bg-[#F8F7F4]' : 'bg-[#F9FBF9]'}`}>
-      <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-12">
+      <div className="max-w-5xl mx-auto px-4 py-2 md:px-6 md:py-12">
         {/* Main Result Card */}
-        <div className="bg-white rounded-[2rem] shadow-sm border border-primary/5 overflow-hidden mb-12">
+        <div className="bg-white rounded-xl md:rounded-[2rem] shadow-sm border border-primary/5 overflow-hidden mb-4 md:mb-12">
           {/* 펫 이름 */}
-          <div className="p-5 md:p-8 text-center border-b border-dashed border-gray-100 bg-gradient-to-b from-primary/5 to-transparent">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
-              <h1 className="text-3xl md:text-5xl font-display font-bold text-primary tracking-tight">
+          <div className="p-3 md:p-8 text-center border-b border-dashed border-gray-100 bg-gradient-to-b from-primary/5 to-transparent">
+            <div className="flex items-center justify-center gap-2 md:gap-3 mb-1 md:mb-2">
+              <span className="material-symbols-outlined text-primary text-xl md:text-3xl">pets</span>
+              <h1 className="text-xl md:text-5xl font-display font-bold text-primary tracking-tight">
                 {displayPetName}
               </h1>
-              <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
+              <span className="material-symbols-outlined text-primary text-xl md:text-3xl">pets</span>
             </div>
-            <p className="text-sm text-primary/60 font-medium mb-4">{uiText.petName.subtitle}</p>
+            <p className="text-xs md:text-sm text-primary/60 font-medium mb-2 md:mb-4">{uiText.petName.subtitle}</p>
             
             {/* Share 버튼 */}
-            <div className="flex justify-center gap-3">
+            <div className="flex justify-center gap-2 md:gap-3">
               <button 
                 onClick={handleCopyLink}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`flex items-center gap-1 md:gap-2 px-2 py-1 md:px-4 md:py-2 rounded-full text-[10px] md:text-sm font-medium transition-all ${
                   copied 
                     ? 'bg-green-500 text-white' 
                     : 'bg-primary/10 text-primary hover:bg-primary/20'
                 }`}
               >
-                <span className="material-symbols-outlined text-lg">
+                <span className="material-symbols-outlined text-sm md:text-lg">
                   {copied ? 'check' : 'link'}
                 </span>
                 <span>{copied ? uiText.share.copied : uiText.share.copyLink}</span>
@@ -734,9 +734,9 @@ function PersonalityTestResult() {
               {typeof navigator !== 'undefined' && navigator.share && (
                 <button 
                   onClick={handleNativeShare}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-all"
+                  className="flex items-center gap-1 md:gap-2 px-2 py-1 md:px-4 md:py-2 bg-primary/10 text-primary rounded-full text-[10px] md:text-sm font-medium hover:bg-primary/20 transition-all"
                 >
-                  <span className="material-symbols-outlined text-lg">share</span>
+                  <span className="material-symbols-outlined text-sm md:text-lg">share</span>
                   <span>{lang === 'jp' ? '共有' : 'Share'}</span>
                 </button>
               )}
@@ -744,11 +744,11 @@ function PersonalityTestResult() {
           </div>
 
           {/* 메인 탭 버튼 (기본 결과 / 프리미엄 리포트) */}
-          <div className="px-6 md:px-8 py-4 border-b border-gray-100">
-            <div className="flex gap-2">
+          <div className="px-3 md:px-8 py-2 md:py-4 border-b border-gray-100">
+            <div className="flex gap-1 md:gap-2">
               <button
                 onClick={() => setCurrentTab('basic')}
-                className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all ${
+                className={`flex-1 px-3 md:px-6 py-2 md:py-3 rounded-xl font-medium transition-all text-xs md:text-base ${
                   currentTab === 'basic'
                     ? 'bg-primary text-white shadow-md'
                     : 'bg-gray-50 text-primary hover:bg-primary/10'
@@ -772,14 +772,14 @@ function PersonalityTestResult() {
                     }
                   }
                 }}
-                className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 px-3 md:px-6 py-2 md:py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base ${
                   currentTab === 'premium' && reportStatus === 'ready'
                     ? 'bg-primary text-white shadow-md'
                     : 'bg-gray-50 text-primary hover:bg-primary/10'
                 }`}
               >
                 {reportStatus !== 'ready' && (
-                  <span className="material-symbols-outlined text-lg">lock</span>
+                  <span className="material-symbols-outlined text-sm md:text-lg">lock</span>
                 )}
                 {uiText.tabs.premium}
               </button>
@@ -789,13 +789,13 @@ function PersonalityTestResult() {
           {/* 메인 이미지 & 유형 뱃지 (기본 탭일 때만 표시) */}
           {currentTab === 'basic' && (
             <>
-          <div className="p-5 md:p-10 flex flex-col items-center">
-            <div className="relative w-48 h-48 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/20 rounded-full flex items-center justify-center mb-6 md:mb-10">
+          <div className="p-3 md:p-10 flex flex-col items-center">
+            <div className="relative w-24 h-24 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/20 rounded-full flex items-center justify-center mb-3 md:mb-10">
               {imageSrc && !imageError ? (
                 <img 
                   src={imageSrc}
                   alt={alias || mbti_code || 'Pet Archetype'}
-                  className="w-48 h-48 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain z-10"
+                  className="w-24 h-24 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain z-10"
                   onError={() => {
                     // 다음 확장자 시도
                     const imageId = archetype?.image_id
@@ -824,8 +824,8 @@ function PersonalityTestResult() {
               ) : null}
               {/* Fallback: 이미지가 없거나 로드 실패 시 */}
               {(!imageSrc || imageError) && (
-                <div className="w-48 h-48 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/30 rounded-full flex items-center justify-center z-10">
-                  <span className="material-symbols-outlined text-primary text-7xl md:text-[12rem]">pets</span>
+                <div className="w-24 h-24 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/30 rounded-full flex items-center justify-center z-10">
+                  <span className="material-symbols-outlined text-primary text-5xl md:text-[12rem]">pets</span>
                 </div>
               )}
               <div className="absolute inset-0 border border-primary/10 rounded-full scale-110"></div>
@@ -833,17 +833,17 @@ function PersonalityTestResult() {
             </div>
             
             <div className="text-center">
-              <h2 className="text-3xl md:text-6xl font-display font-bold text-primary tracking-tight uppercase">
+              <h2 className="text-lg md:text-6xl font-display font-bold text-primary tracking-tight uppercase">
                 {alias || mbti_code}
               </h2>
               {summary && (
-                <p className="mt-4 text-primary/60 text-lg max-w-lg mx-auto">{summary}</p>
+                <p className="mt-1 md:mt-4 text-primary/60 text-xs md:text-lg max-w-lg mx-auto">{summary}</p>
               )}
             </div>
           </div>
 
               {/* Stats 막대 그래프 (일렬 배치) */}
-              <div className="px-5 md:px-10 pb-8 md:pb-12 space-y-6">
+              <div className="px-5 md:px-10 pb-4 md:pb-12 space-y-1 md:space-y-6">
                 {STATS_ORDER.map(({ key, color }) => {
                   const value = getStatValue(key)  // 안전한 값 추출
                   const label = getLocalizedText(statsLabels[key]) || key
@@ -868,12 +868,12 @@ function PersonalityTestResult() {
           <>
             {/* Core Traits */}
             {coreTraits.length > 0 && (
-              <div className="space-y-12 mb-16">
-                <div className="flex items-center gap-4 mb-8">
-                  <h2 className="text-3xl font-display font-bold text-primary">{uiText.sections.coreTraits}</h2>
+              <div className="space-y-6 md:space-y-12 mb-8 md:mb-16">
+                <div className="flex items-center gap-2 md:gap-4 mb-4 md:mb-8">
+                  <h2 className="text-xl md:text-3xl font-display font-bold text-primary">{uiText.sections.coreTraits}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-8">
                   {coreTraits.slice(0, 2).map((trait, index) => (
                     <TraitCard
                       key={index}
@@ -889,12 +889,12 @@ function PersonalityTestResult() {
 
             {/* Daily Life */}
             {dailyLife.length > 0 && (
-              <div className="space-y-12 mb-16">
-                <div className="flex items-center gap-4 my-8">
-                  <h2 className="text-3xl font-display font-bold text-primary">{uiText.sections.dailyLife}</h2>
+              <div className="space-y-6 md:space-y-12 mb-8 md:mb-16">
+                <div className="flex items-center gap-2 md:gap-4 my-4 md:my-8">
+                  <h2 className="text-xl md:text-3xl font-display font-bold text-primary">{uiText.sections.dailyLife}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-8">
                   {dailyLife.slice(0, 2).map((item, index) => (
                     <TraitCard
                       key={index}
@@ -909,18 +909,18 @@ function PersonalityTestResult() {
             )}
 
             {/* Premium Content Preview (잠긴 카드들) */}
-            <div className="space-y-8 mb-16">
+            <div className="space-y-4 md:space-y-8 mb-8 md:mb-16">
               {/* 섹션 헤더 */}
-              <div className="flex items-center gap-4">
-                <h2 className="text-3xl font-display font-bold text-primary">
+              <div className="flex items-center gap-2 md:gap-4">
+                <h2 className="text-xl md:text-3xl font-display font-bold text-primary">
                   {uiText.premium.premiumPreview.sectionTitle}
                 </h2>
                 <div className="flex-grow h-[1px] bg-primary/10"></div>
-                <span className="material-symbols-outlined text-primary/40 text-2xl">workspace_premium</span>
+                <span className="material-symbols-outlined text-primary/40 text-lg md:text-2xl">workspace_premium</span>
               </div>
               
               {/* 잠긴 카드 그리드 (2열) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6">
                 {uiText.premium.premiumPreview.sections.map((section) => (
                   <LockedPreviewCard
                     key={section.key}
@@ -944,24 +944,24 @@ function PersonalityTestResult() {
 
         {/* Premium CTA (기본 탭에서만 표시) */}
         {currentTab === 'basic' && (
-          <div id="premium-cta" className="relative bg-primary rounded-[2.5rem] p-8 md:p-16 overflow-hidden shadow-2xl">
+          <div id="premium-cta" className="relative bg-primary rounded-[2.5rem] p-4 md:p-16 overflow-hidden shadow-2xl">
             {/* 배경 장식 */}
             <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-[#2D5A47]/30 rounded-full blur-3xl"></div>
             
             <div className="relative z-10">
               {/* 아이콘 */}
-              <div className="flex justify-center mb-6">
-                <span className="material-symbols-outlined text-white text-6xl">workspace_premium</span>
+              <div className="flex justify-center mb-3 md:mb-6">
+                <span className="material-symbols-outlined text-white text-3xl md:text-6xl">workspace_premium</span>
               </div>
               
               {/* 타이틀 */}
-              <h4 className="text-3xl md:text-4xl font-display font-bold text-white mb-4 text-center">
+              <h4 className="text-lg md:text-4xl font-display font-bold text-white mb-2 md:mb-4 text-center">
                 {uiText.premium.cta.title}
               </h4>
               
               {/* 설명 */}
-              <p className="text-white/70 mb-10 max-w-lg mx-auto text-lg leading-relaxed text-center">
+              <p className="text-white/70 mb-6 md:mb-10 max-w-lg mx-auto text-xs md:text-lg leading-relaxed text-center">
                 {uiText.premium.cta.description.replace('{name}', displayPetName)}
               </p>
               
@@ -989,7 +989,7 @@ function PersonalityTestResult() {
                         }
                       }}
                       disabled={isGeneratingReport}
-                      className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-4 px-8 w-full md:w-auto rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-sm md:text-xl py-2 md:py-4 px-6 md:px-8 w-full md:w-auto rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {reportStatus === 'ready' && reportPages 
                         ? uiText.premium.cta.viewReport 
