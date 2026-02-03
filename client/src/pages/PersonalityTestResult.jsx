@@ -317,18 +317,18 @@ function StatBar({ name, label, value, color }) {
 
 // Trait 카드 컴포넌트
 function TraitCard({ icon, title, description, variant = 'default' }) {
-  const baseClasses = "p-3 md:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+  const baseClasses = "p-6 md:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
   const variantClasses = variant === 'alt'
     ? "bg-secondary/10 border border-secondary/30"
     : "bg-white border-l-4 border-[#2D5A47]"
 
   return (
     <div className={`${baseClasses} ${variantClasses}`}>
-      <h3 className="text-sm md:text-xl font-display font-bold text-primary mb-2 md:mb-4 flex items-center gap-1 md:gap-2">
-        <span className="material-symbols-outlined text-[#2D5A47] text-lg md:text-xl">{icon}</span>
+      <h3 className="text-lg md:text-xl font-display font-bold text-primary mb-3 md:mb-4 flex items-center gap-2">
+        <span className="material-symbols-outlined text-[#2D5A47] text-2xl md:text-xl">{icon}</span>
         {title}
       </h3>
-      <p className="text-[#2D3436] leading-tight md:leading-relaxed text-xs md:text-[1.05rem] font-medium opacity-90">
+      <p className="text-[#2D3436] leading-7 md:leading-relaxed text-[15px] md:text-[1.05rem] font-medium opacity-90">
         {description}
       </p>
     </div>
@@ -925,7 +925,7 @@ function PersonalityTestResult() {
                   <h2 className="text-xl md:text-3xl font-display font-bold text-primary">{uiText.sections.coreTraits}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                   {coreTraits.slice(0, 2).map((trait, index) => (
                     <TraitCard
                       key={index}
@@ -946,7 +946,7 @@ function PersonalityTestResult() {
                   <h2 className="text-xl md:text-3xl font-display font-bold text-primary">{uiText.sections.dailyLife}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                   {dailyLife.slice(0, 2).map((item, index) => (
                     <TraitCard
                       key={index}
