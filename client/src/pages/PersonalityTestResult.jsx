@@ -317,7 +317,7 @@ function StatBar({ name, label, value, color }) {
 
 // Trait 카드 컴포넌트
 function TraitCard({ icon, title, description, variant = 'default' }) {
-  const baseClasses = "p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+  const baseClasses = "p-5 md:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
   const variantClasses = variant === 'alt'
     ? "bg-secondary/10 border border-secondary/30"
     : "bg-white border-l-4 border-[#2D5A47]"
@@ -328,7 +328,7 @@ function TraitCard({ icon, title, description, variant = 'default' }) {
         <span className="material-symbols-outlined text-[#2D5A47]">{icon}</span>
         {title}
       </h3>
-      <p className="text-[#2D3436] leading-relaxed text-[1.05rem] font-medium opacity-90">
+      <p className="text-[#2D3436] leading-relaxed text-base md:text-[1.05rem] font-medium opacity-90">
         {description}
       </p>
     </div>
@@ -337,7 +337,7 @@ function TraitCard({ icon, title, description, variant = 'default' }) {
 
 function LockedPreviewCard({ icon, title, preview, petName, onUnlockClick, unlockButtonText }) {
   return (
-    <div className="relative p-6 md:p-8 rounded-2xl bg-white border-l-4 border-primary/30 shadow-sm overflow-hidden group hover:shadow-md transition-all">
+    <div className="relative p-5 md:p-8 rounded-2xl bg-white border-l-4 border-primary/30 shadow-sm overflow-hidden group hover:shadow-md transition-all">
       {/* 헤더: 아이콘 + 제목 + 자물쇠 */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg md:text-xl font-display font-bold text-primary flex items-center gap-2">
@@ -700,14 +700,14 @@ function PersonalityTestResult() {
 
   return (
     <main className={`min-h-screen text-[#2D3436] ${currentTab === 'premium' ? 'bg-[#F8F7F4]' : 'bg-[#F9FBF9]'}`}>
-      <div className="max-w-5xl mx-auto px-6 py-12">
+      <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-12">
         {/* Main Result Card */}
         <div className="bg-white rounded-[2rem] shadow-sm border border-primary/5 overflow-hidden mb-12">
           {/* 펫 이름 */}
-          <div className="p-6 md:p-8 text-center border-b border-dashed border-gray-100 bg-gradient-to-b from-primary/5 to-transparent">
+          <div className="p-5 md:p-8 text-center border-b border-dashed border-gray-100 bg-gradient-to-b from-primary/5 to-transparent">
             <div className="flex items-center justify-center gap-3 mb-2">
               <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-primary tracking-tight">
+              <h1 className="text-3xl md:text-5xl font-display font-bold text-primary tracking-tight">
                 {displayPetName}
               </h1>
               <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">pets</span>
@@ -789,13 +789,13 @@ function PersonalityTestResult() {
           {/* 메인 이미지 & 유형 뱃지 (기본 탭일 때만 표시) */}
           {currentTab === 'basic' && (
             <>
-          <div className="p-10 flex flex-col items-center">
-            <div className="relative w-80 h-80 md:w-96 md:h-96 lg:w-[28rem] lg:h-[28rem] bg-secondary/20 rounded-full flex items-center justify-center mb-10">
+          <div className="p-5 md:p-10 flex flex-col items-center">
+            <div className="relative w-48 h-48 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/20 rounded-full flex items-center justify-center mb-6 md:mb-10">
               {imageSrc && !imageError ? (
                 <img 
                   src={imageSrc}
                   alt={alias || mbti_code || 'Pet Archetype'}
-                  className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain z-10"
+                  className="w-48 h-48 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain z-10"
                   onError={() => {
                     // 다음 확장자 시도
                     const imageId = archetype?.image_id
@@ -824,8 +824,8 @@ function PersonalityTestResult() {
               ) : null}
               {/* Fallback: 이미지가 없거나 로드 실패 시 */}
               {(!imageSrc || imageError) && (
-                <div className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/30 rounded-full flex items-center justify-center z-10">
-                  <span className="material-symbols-outlined text-primary text-9xl md:text-[12rem]">pets</span>
+                <div className="w-48 h-48 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-secondary/30 rounded-full flex items-center justify-center z-10">
+                  <span className="material-symbols-outlined text-primary text-7xl md:text-[12rem]">pets</span>
                 </div>
               )}
               <div className="absolute inset-0 border border-primary/10 rounded-full scale-110"></div>
@@ -833,7 +833,7 @@ function PersonalityTestResult() {
             </div>
             
             <div className="text-center">
-              <h2 className="text-5xl md:text-6xl font-display font-bold text-primary tracking-tight uppercase">
+              <h2 className="text-3xl md:text-6xl font-display font-bold text-primary tracking-tight uppercase">
                 {alias || mbti_code}
               </h2>
               {summary && (
@@ -843,7 +843,7 @@ function PersonalityTestResult() {
           </div>
 
               {/* Stats 막대 그래프 (일렬 배치) */}
-              <div className="px-10 pb-12 space-y-6">
+              <div className="px-5 md:px-10 pb-8 md:pb-12 space-y-6">
                 {STATS_ORDER.map(({ key, color }) => {
                   const value = getStatValue(key)  // 안전한 값 추출
                   const label = getLocalizedText(statsLabels[key]) || key
@@ -944,7 +944,7 @@ function PersonalityTestResult() {
 
         {/* Premium CTA (기본 탭에서만 표시) */}
         {currentTab === 'basic' && (
-          <div id="premium-cta" className="relative bg-primary rounded-[2.5rem] p-10 md:p-16 overflow-hidden shadow-2xl">
+          <div id="premium-cta" className="relative bg-primary rounded-[2.5rem] p-8 md:p-16 overflow-hidden shadow-2xl">
             {/* 배경 장식 */}
             <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-[#2D5A47]/30 rounded-full blur-3xl"></div>
@@ -989,7 +989,7 @@ function PersonalityTestResult() {
                         }
                       }}
                       disabled={isGeneratingReport}
-                      className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-5 px-14 rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-xl py-4 px-8 w-full md:w-auto rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {reportStatus === 'ready' && reportPages 
                         ? uiText.premium.cta.viewReport 
@@ -1048,10 +1048,10 @@ function PersonalityTestResult() {
           return (
             <div className="mt-12">
               {/* 통합 컨테이너 - 커다란 고급 양장본 */}
-              <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden border border-primary/5">
+              <div className="bg-white rounded-2xl md:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden border border-primary/5">
                 {/* 1. 헤더 영역 (타이틀) */}
-                <header className="bg-primary/5 p-10 md:p-12 text-center border-b border-primary/10">
-                  <span className="material-symbols-outlined text-primary text-5xl mb-4 block">workspace_premium</span>
+                <header className="bg-primary/5 p-6 md:p-12 text-center border-b border-primary/10">
+                  <span className="material-symbols-outlined text-primary text-4xl md:text-5xl mb-4 block">workspace_premium</span>
                   <h2 className="text-3xl md:text-4xl font-display font-bold text-primary mb-2">
                     {uiText.premium.title}
                   </h2>
@@ -1067,7 +1067,7 @@ function PersonalityTestResult() {
                         <button
                           key={pageKey}
                           onClick={() => setActiveTab(pageKey)}
-                          className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
+                          className={`px-3 py-2 rounded-xl font-medium text-xs md:text-sm transition-all whitespace-nowrap ${
                             isActive
                               ? 'bg-primary text-white shadow-md'
                               : 'bg-gray-50 text-primary hover:bg-primary/10'
@@ -1081,7 +1081,7 @@ function PersonalityTestResult() {
                 </nav>
 
                 {/* 3. 본문 영역 (애니메이션 적용) */}
-                <main className="p-10 md:p-16 min-h-[600px] bg-white">
+                <main className="p-5 md:p-16 min-h-[600px] bg-white">
                   <AnimatePresence mode="wait">
                     {activePageData && (
                       <motion.div
@@ -1110,18 +1110,18 @@ function PersonalityTestResult() {
                             remarkPlugins={[remarkGfm]}
                             components={{
                               h1: ({ children }) => (
-                                <h1 className="text-3xl md:text-4xl font-display font-black text-primary mb-8 pb-4 border-b-4 border-primary/10">
+                                <h1 className="text-2xl md:text-4xl font-display font-black text-primary mb-6 md:mb-8 pb-3 md:pb-4 border-b-4 border-primary/10">
                                   {children}
                                 </h1>
                               ),
                               h2: ({ children }) => (
-                                <h2 className="text-2xl font-display font-bold text-primary/90 mt-10 mb-6 flex items-center">
+                                <h2 className="text-xl md:text-2xl font-display font-bold text-primary/90 mt-8 md:mt-10 mb-4 md:mb-6 flex items-center">
                                   <span className="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
                                   {children}
                                 </h2>
                               ),
                               h3: ({ children }) => (
-                                <h3 className="text-xl font-display font-semibold text-primary/80 mt-8 mb-4">
+                                <h3 className="text-lg md:text-xl font-display font-semibold text-primary/80 mt-6 md:mt-8 mb-3 md:mb-4">
                                   {children}
                                 </h3>
                               ),
