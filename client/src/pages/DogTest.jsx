@@ -9,38 +9,42 @@ const testCategories = [
   {
     id: 'personality',
     title: 'Personality Assessment',
-    description: 'Includes MBTI and Temperament tests.',
+    description: 'Analyze temperament, social style, and energy levels.',
     subDescription: "Discover your dog's unique traits and behaviors.",
-    testCount: 2,
+    // [수정] testCount 대신 duration 추가
+    duration: '5 min',
+    // [추가] 추천 배지 (옵션)
+    badge: 'Popular',
     image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&auto=format&fit=crop',
-    bgColor: 'bg-orange-100',
+    bgColor: 'bg-orange-50',
   },
   {
     id: 'intelligence',
     title: 'Intelligence Check',
     description: 'Features IQ and Problem Solving tests.',
     subDescription: 'Assess cognitive abilities and learning potential.',
-    testCount: 3,
+    duration: '8 min',
     image: 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=800&auto=format&fit=crop',
-    bgColor: 'bg-green-100',
+    bgColor: 'bg-green-50',
   },
   {
     id: 'relationship',
     title: 'Relationship Index',
     description: 'Shows the Attachment Index test.',
     subDescription: 'Understand the bond between you and your pet.',
-    testCount: 1,
+    duration: '3 min',
     image: 'https://images.unsplash.com/photo-1544568100-847a948585b9?w=800&auto=format&fit=crop',
-    bgColor: 'bg-blue-100',
+    bgColor: 'bg-blue-50',
   },
   {
     id: 'health',
     title: 'Health & Wellness',
     description: 'Contains Obesity and Stress checks.',
     subDescription: 'Quick wellness checks for peace of mind.',
-    testCount: 4,
+    duration: '4 min',
+    badge: 'New', // 'New' 배지 추가
     image: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&auto=format&fit=crop',
-    bgColor: 'bg-yellow-100',
+    bgColor: 'bg-yellow-50',
   },
 ]
 
@@ -49,7 +53,6 @@ function DogTest() {
   const { lang, localePath } = useLang()
   const { prefetchQuestions } = useQuestions()
 
-  // 페이지 진입 시 dog_v1 질문 미리 불러오기 (Pre-fetching, 현재 언어 기준)
   useEffect(() => {
     prefetchQuestions('dog_v1', lang)
   }, [prefetchQuestions, lang])
@@ -64,28 +67,25 @@ function DogTest() {
       navigate(localePath('/dog-test/personality'))
     } else {
       console.log(`Category clicked: ${categoryId}`)
-      // TODO: Navigate to other test categories
     }
   }
 
   return (
-    <main className="flex-grow bg-[#F9FBF9] min-h-screen">
-      <div className="px-6 md:px-20 lg:px-40 py-8">
+    <main className="flex-grow bg-[#F9FBF9] min-h-screen pb-20">
+      <div className="px-4 md:px-10 lg:px-20 py-6 md:py-12">
         <div className="max-w-[1024px] mx-auto">
           <Breadcrumb items={breadcrumbItems} />
           
-          <div className="flex flex-wrap justify-between gap-3 px-4 mb-8">
-            <div className="flex min-w-72 flex-col gap-2">
-              <h1 className="text-primary text-3xl md:text-4xl font-display font-extrabold leading-tight tracking-tight">
-                Choose a Test Category
-              </h1>
-              <p className="text-primary/60 text-base font-normal leading-normal">
-                Select a category below to view available assessments for your dog.
-              </p>
-            </div>
+          <div className="flex flex-col gap-3 mb-8 md:mb-12">
+            <h1 className="text-primary text-2xl md:text-4xl font-display font-extrabold leading-tight tracking-tight">
+              Choose a Test Category
+            </h1>
+            <p className="text-primary/60 text-sm md:text-base font-normal leading-relaxed">
+              Select a category below to view available assessments for your dog.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-8">
             {testCategories.map((category) => (
               <TestCategoryCard
                 key={category.id}
