@@ -31,9 +31,7 @@ const QUESTION_VERSION = 'dog_v1'
 const UI_TEXT = {
   en: {
     loading: "Loading Questions...",
-    error: {
-      retry: "Retry"
-    },
+    error: { retry: "Retry" },
     stage1: {
       title: "Personality Assessment",
       subtitle: "Answer each question in order to complete the assessment."
@@ -55,9 +53,7 @@ const UI_TEXT = {
   },
   jp: {
     loading: "質問を読み込み中...",
-    error: {
-      retry: "再試行"
-    },
+    error: { retry: "再試行" },
     stage1: {
       title: "性格評価",
       subtitle: "評価を完了するために、各質問に順番に答えてください。"
@@ -258,39 +254,35 @@ function PersonalityTest() {
 
   return (
     <main className="flex-grow bg-[#F9FBF9] min-h-screen">
-      <div className="px-6 md:px-20 lg:px-40 py-8">
+      <div className="px-4 md:px-20 lg:px-40 py-6 md:py-8">
         <div className="max-w-[800px] mx-auto">
           
-          {/* Breadcrumb */}
           <Breadcrumb items={breadcrumbItems} />
           
-          {/* 진행 상태 텍스트 */}
           <div className="flex justify-end mb-4">
-            <span className="text-primary/60 text-sm font-medium">
+            <span className="text-primary/60 text-xs md:text-sm font-medium">
               {totalAnswered} / {totalQuestions} {lang === 'jp' ? '回答済み' : 'Answered'}
             </span>
           </div>
           
-          {/* Title */}
-          <div className="mb-8">
-            <h1 className="text-primary text-3xl md:text-4xl font-display font-extrabold leading-tight tracking-tight mb-2">
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-primary text-2xl md:text-4xl font-display font-extrabold leading-tight tracking-tight mb-2">
               {stage === 1 ? uiText.stage1.title : uiText.stage2.title}
             </h1>
-            <p className="text-primary/60 text-base font-normal leading-normal">
+            <p className="text-primary/60 text-sm md:text-base font-normal leading-normal">
               {stage === 1 ? uiText.stage1.subtitle : uiText.stage2.subtitle}
             </p>
             {stage === 2 && (
               <div className="mt-4">
-                <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/20 rounded-full">
-                  <span className="material-symbols-outlined text-accent">favorite</span>
-                  <span className="text-accent font-medium text-sm">{uiText.stage2.badge}</span>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-accent/20 rounded-full">
+                  <span className="material-symbols-outlined text-accent text-sm md:text-base">favorite</span>
+                  <span className="text-accent font-medium text-xs md:text-sm">{uiText.stage2.badge}</span>
                 </span>
               </div>
             )}
           </div>
 
-          {/* Questions */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {currentQuestions.map((q, index) => {
               const isDisabled = index > currentActiveIndex
 
@@ -315,14 +307,13 @@ function PersonalityTest() {
             })}
           </div>
 
-          {/* Button */}
-          <div className="pt-10 pb-8 flex justify-end">
+          <div className="pt-8 md:pt-10 pb-8 flex justify-end">
             {stage === 1 ? (
               <button
                 onClick={handleNext}
                 disabled={!allAnswered}
                 className={`
-                  group px-8 py-4 font-display text-lg font-bold rounded-xl transition-all flex items-center gap-2
+                  w-full md:w-auto group px-8 py-4 font-display text-lg font-bold rounded-xl transition-all flex items-center justify-center gap-2
                   ${allAnswered 
                     ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg hover:shadow-xl cursor-pointer' 
                     : 'bg-accent text-primary cursor-not-allowed shadow-lg opacity-60'
@@ -336,9 +327,8 @@ function PersonalityTest() {
               </button>
             ) : (
               <div className="w-full flex flex-col items-center gap-6">
-                {/* Pet Name Input */}
                 <div className="w-full max-w-md">
-                  <label className="block text-primary text-lg font-medium mb-3 text-center">
+                  <label className="block text-primary text-base md:text-lg font-medium mb-3 text-center">
                     {uiText.petName.label}
                   </label>
                   <input
@@ -346,16 +336,15 @@ function PersonalityTest() {
                     value={petName}
                     onChange={(e) => setPetName(e.target.value)}
                     placeholder={uiText.petName.placeholder}
-                    className="w-full px-6 py-4 text-lg rounded-xl border-2 border-primary/20 bg-white text-primary placeholder-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center font-medium"
+                    className="w-full px-6 py-4 text-base md:text-lg rounded-xl border-2 border-primary/20 bg-white text-primary placeholder-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center font-medium"
                   />
                 </div>
 
-                {/* See Results Button */}
                 <button
                   onClick={handleSeeResults}
                   disabled={!canSeeResults || isSubmitting}
                   className={`
-                    group px-16 py-6 font-display text-xl font-bold rounded-2xl transition-all flex items-center gap-3
+                    w-full md:w-auto group px-16 py-6 font-display text-lg md:text-xl font-bold rounded-2xl transition-all flex items-center justify-center gap-3
                     ${canSeeResults && !isSubmitting
                       ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg hover:shadow-xl cursor-pointer' 
                       : 'bg-accent text-primary cursor-not-allowed shadow-lg opacity-60'
