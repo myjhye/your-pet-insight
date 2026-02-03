@@ -15,6 +15,9 @@ function Header({ fixed = false }) {
   const location = useLocation()
   const isResultPage = location.pathname.includes('/result/')
 
+  // Blog 텍스트 변환
+  const blogText = lang === 'jp' ? 'ブログ' : 'Blog'
+
   // 모바일 메뉴 토글 함수
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -41,7 +44,7 @@ function Header({ fixed = false }) {
         <div className="hidden md:flex items-center space-x-8">
           <nav className="flex space-x-6 text-sm font-medium text-secondary/80">
             {/* 요청하신 대로 Methodology, About Us 삭제됨 */}
-            <a className="hover:text-accent transition-colors" href="#">Blog</a>
+            <a className="hover:text-accent transition-colors" href="#">{blogText}</a>
           </nav>
           
           {!isResultPage && (
@@ -113,7 +116,7 @@ function Header({ fixed = false }) {
               className="text-gray-800 font-medium text-sm hover:text-primary py-2 border-b border-gray-100"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Blog
+              {blogText}
             </a>
 
             {/* 언어 선택 영역 (모바일용) */}
