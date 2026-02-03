@@ -1,89 +1,102 @@
+import React, { useState } from 'react'
+
 const petConfig = {
   cat: {
-    label: 'Feline',
-    labelBg: 'bg-teal-50',
-    labelText: 'text-teal-700',
-    duration: '5 min',
-    iconBg: 'bg-teal-50',
-    iconColor: 'text-primary',
-    gradientFrom: 'from-teal-400',
-    gradientTo: 'to-secondary',
-    buttonBg: 'bg-primary',
+    // 배경: 시원한 민트/틸 그라데이션
+    cardBg: 'bg-gradient-to-br from-[#e0f7fa] to-[#b2ebf2]',
+    borderColor: 'border-teal-200/50',
+    hoverBorder: 'group-hover:border-teal-300',
+    
+    buttonBg: 'bg-teal-700',
     buttonHover: 'hover:bg-teal-800',
     buttonText: 'text-white',
-    buttonShadow: 'shadow-teal-900/10',
+    buttonShadow: 'shadow-teal-900/20',
+    
     title: 'Start Cat Test',
-    description: "Analyze your cat's behavior patterns to understand their independence and affection style.",
-    icon: (
-      <path d="M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M8.5,10.5A1.5,1.5 0 1,0 10,12A1.5,1.5 0 0,0 8.5,10.5M15.5,10.5A1.5,1.5 0 1,0 17,12A1.5,1.5 0 0,0 15.5,10.5M12,16C13.5,16 14.8,15.2 15.5,14H8.5C9.2,15.2 10.5,16 12,16Z" />
-    ),
+    titleColor: 'text-teal-950',
+    description: "Analyze your cat's behavior patterns to understand their independence style.",
+    descriptionColor: 'text-teal-800/90',
+    imagePath: '/assets/cat-3d.png'
   },
   dog: {
-    label: 'Canine',
-    labelBg: 'bg-orange-50',
-    labelText: 'text-orange-700',
-    duration: '6 min',
-    iconBg: 'bg-orange-50',
-    iconColor: 'text-accent',
-    gradientFrom: 'from-accent',
-    gradientTo: 'to-orange-400',
-    buttonBg: 'bg-accent',
-    buttonHover: 'hover:bg-[#ffbd99]',
-    buttonText: 'text-primary',
-    buttonShadow: 'shadow-orange-900/10',
+    // 배경: 따뜻한 오렌지/앰버 그라데이션
+    cardBg: 'bg-gradient-to-br from-[#fff8e1] to-[#ffe0b2]',
+    borderColor: 'border-orange-200/50',
+    hoverBorder: 'group-hover:border-orange-300',
+
+    buttonBg: 'bg-orange-600',
+    buttonHover: 'hover:bg-orange-700',
+    buttonText: 'text-white',
+    buttonShadow: 'shadow-orange-900/20',
+    
     title: 'Start Dog Test',
-    description: "Uncover your dog's social drives, energy levels, and unique motivational factors.",
-    icon: (
-      <path d="M19,5.5C19,5.5 16,7.5 16,10C16,12.5 19,14.5 19,14.5V5.5M5,5.5C5,5.5 8,7.5 8,10C8,12.5 5,14.5 5,14.5V5.5M12,2C10.5,2 5,2 5,5.5V14.5C5,17 7,19 9,19H15C17,19 19,17 19,14.5V5.5C19,2 13.5,2 12,2M12,16A2,2 0 1,1 14,14A2,2 0 0,1 12,16M10,9A1,1 0 1,1 11,8A1,1 0 0,1 10,9M14,9A1,1 0 1,1 15,8A1,1 0 0,1 14,9Z" />
-    ),
+    titleColor: 'text-orange-950',
+    description: "Uncover your dog's social drives, energy levels, and motivational factors.",
+    descriptionColor: 'text-orange-900/90',
+    imagePath: '/assets/dog-3d.png'
   },
 }
 
 function PetCard({ type, onClick }) {
   const config = petConfig[type]
+  const [imageError, setImageError] = useState(false)
 
   return (
     <div
       onClick={onClick}
-      className="bg-card-bg rounded-xl md:rounded-2xl p-4 md:p-8 shadow-soft transform transition hover:-translate-y-2 hover:shadow-lg duration-300 flex flex-col items-center relative group overflow-hidden border border-white/10 cursor-pointer"
+      className={`
+        relative overflow-hidden group cursor-pointer
+        ${config.cardBg} border-2 ${config.borderColor} ${config.hoverBorder}
+        rounded-3xl p-5 md:p-6
+        shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.15)]
+        transform transition-all duration-500 ease-out hover:-translate-y-1
+        flex flex-col items-center justify-between
+      `}
     >
-      <div className={`absolute top-0 w-full h-1 bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo}`}></div>
-      
-      <div className="w-full flex justify-between items-start mb-2 md:mb-6">
-        <div className={`${config.labelBg} ${config.labelText} px-2 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-semibold uppercase tracking-wide`}>
-          {config.label}
-        </div>
-        <div className="flex items-center text-gray-400 text-xs md:text-sm">
-          <span className="material-symbols-outlined text-sm md:text-base mr-1">schedule</span>
-          {config.duration}
-        </div>
+      {/* 1. 은은한 흰색 후광 (Spotlight) */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 md:w-96 md:h-96 bg-white/40 blur-3xl rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+      {/* 2. 중앙 캐릭터 이미지 - [수정] 아주 크게 확대 */}
+      <div className="relative z-10 mt-2 mb-2 flex items-center justify-center w-full">
+        {/* 뒤쪽 고정 후광 */}
+        <div className="absolute w-48 h-48 md:w-64 md:h-64 bg-white/30 blur-2xl rounded-full"></div>
+        
+        {!imageError ? (
+          <img
+            src={config.imagePath}
+            alt={config.title}
+            // [핵심 변경] 모바일 w-60(240px) / PC w-80(320px) -> 카드를 거의 가득 채우는 크기
+            className="w-60 h-60 md:w-80 md:h-80 object-contain drop-shadow-[0_15px_35px_rgba(0,0,0,0.2)] transform transition-transform duration-500 ease-out group-hover:scale-[1.03] group-hover:-rotate-2"
+            onError={() => setImageError(true)}
+          />
+        ) : null}
       </div>
 
-      <div className="relative w-20 h-20 md:w-36 md:h-36 mb-2 md:mb-6 flex items-center justify-center">
-        <div className={`absolute inset-0 ${config.iconBg} rounded-full scale-90 group-hover:scale-100 transition-transform duration-500 ease-out`}></div>
-        <svg
-          className={`w-14 h-14 md:w-24 md:h-24 ${config.iconColor} z-10 relative transform group-hover:scale-110 transition-transform duration-300`}
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
-          {config.icon}
-        </svg>
-      </div>
+      {/* 텍스트 콘텐츠 */}
+      <div className="relative z-10 w-full text-center mt-auto">
+        <h2 className={`text-xl md:text-2xl font-display font-bold ${config.titleColor} mb-1 tracking-tight`}>
+          {config.title}
+        </h2>
+        
+        <p className={`${config.descriptionColor} text-xs md:text-sm font-medium mb-4 leading-snug px-2 line-clamp-2`}>
+          {config.description}
+        </p>
 
-      <h2 className="text-lg md:text-2xl font-display font-bold text-text-dark mb-1.5 md:mb-2 text-center px-2">{config.title}</h2>
-      <p className="text-gray-500 text-xs md:text-sm mb-3 md:mb-8 text-center px-2 md:px-4 font-light">
-        {config.description}
-      </p>
-
-      <div className={`w-full ${config.buttonBg} ${config.buttonText} font-semibold py-2.5 md:py-4 px-4 md:px-6 rounded-lg md:rounded-xl ${config.buttonHover} transition-all duration-300 flex items-center justify-center group/btn shadow-lg ${config.buttonShadow} text-sm md:text-base`}>
-        <span>Begin Assessment</span>
-        <span className="material-symbols-outlined ml-2 text-base md:text-lg transform group-hover:translate-x-1 transition-transform">
-          arrow_forward
-        </span>
+        {/* 버튼 */}
+        <div className={`
+          w-full ${config.buttonBg} ${config.buttonText} 
+          font-bold py-3 md:py-3.5 px-6 rounded-2xl
+          ${config.buttonHover} transition-all duration-300 
+          flex items-center justify-center shadow-md ${config.buttonShadow}
+        `}>
+          <span className="text-sm md:text-base">Start Assessment</span>
+          <span className="material-symbols-outlined ml-2 text-lg bg-white/20 rounded-full p-0.5 transition-transform duration-300 group-hover:translate-x-1">
+            arrow_forward
+          </span>
+        </div>
       </div>
     </div>
   )
 }
 
 export default PetCard
-
