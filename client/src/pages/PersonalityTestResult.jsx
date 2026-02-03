@@ -746,8 +746,8 @@ function PersonalityTestResult() {
             </div>
           </div>
 
-          {/* 2. Header: Name & Share (탭 아래) */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-50 p-4 gap-4">
+          {/* 2. Header: Name & Share (데스크탑만 표시) */}
+          <div className="hidden md:flex md:flex-row md:items-center justify-between border-b border-gray-50 p-4 gap-4">
             {/* Left: Pet Name */}
             <div className="flex items-center gap-2 md:gap-3">
               <span className="material-symbols-outlined text-primary text-xl md:text-2xl">pets</span>
@@ -789,54 +789,90 @@ function PersonalityTestResult() {
           {/* 메인 이미지 & 유형 뱃지 (기본 탭일 때만 표시) */}
           {currentTab === 'basic' && (
             <>
-          <div className="p-6 md:p-10">
+          <div className="p-6 md:p-10 relative">
+            {/* 1. Share Buttons (Top Right Overlay - Mobile Only) */}
+            <div className="absolute top-2 right-4 md:hidden z-30 flex gap-2">
+              <button 
+                onClick={handleCopyLink}
+                className={`w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all shadow-md ${
+                  copied ? 'bg-green-500 border-green-500 text-white' : ''
+                }`}
+                title={copied ? uiText.share.copied : uiText.share.copyLink}
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {copied ? 'check' : 'link'}
+                </span>
+              </button>
+              
+              {/* 네이티브 공유 버튼 (모바일에서 유용) */}
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <button 
+                  onClick={handleNativeShare}
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all shadow-md"
+                  title={lang === 'jp' ? '共有' : 'Share'}
+                >
+                  <span className="material-symbols-outlined text-lg">share</span>
+                </button>
+              )}
+            </div>
+
             {/* TOP SECTION: Image & Stats */}
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 mb-0 md:mb-2">
               
-              {/* 1. Image */}
-              <div className="relative w-64 h-64 md:w-[28rem] md:h-[28rem] flex-shrink-0 mb-0 md:mb-0">
-                <div className="absolute inset-8 bg-secondary/5 rounded-full blur-2xl"></div>
-                {imageSrc && !imageError ? (
-                  <img 
-                    src={imageSrc}
-                    alt={alias || mbti_code || 'Pet Archetype'}
-                    className="relative z-10 w-full h-full object-contain drop-shadow-2xl transform scale-110 origin-center"
-                    onError={() => {
-                      // 다음 확장자 시도
-                      const imageId = archetype?.image_id
-                      if (imageId) {
-                        const extensions = ['.png', '.jpg', '.jpeg', '.webp']
-                        const currentPath = imageSrc
-                        const currentExt = extensions.find(ext => currentPath.endsWith(ext))
-                        
-                        if (currentExt) {
-                          const currentIndex = extensions.indexOf(currentExt)
-                          if (currentIndex < extensions.length - 1) {
-                            // 다음 확장자 시도
-                            setImageSrc(`/images/archetypes/${imageId}${extensions[currentIndex + 1]}`)
-                            return
+              {/* 1. Hero Image Area */}
+              <div className="flex flex-col items-center">
+                <div className="relative w-64 h-64 md:w-[28rem] md:h-[28rem] flex-shrink-0 mb-0 md:mb-0">
+                  <div className="absolute inset-8 bg-secondary/5 rounded-full blur-2xl"></div>
+                  {imageSrc && !imageError ? (
+                    <img 
+                      src={imageSrc}
+                      alt={alias || mbti_code || 'Pet Archetype'}
+                      className="relative z-10 w-full h-full object-contain drop-shadow-2xl transform scale-110 origin-center"
+                      onError={() => {
+                        // 다음 확장자 시도
+                        const imageId = archetype?.image_id
+                        if (imageId) {
+                          const extensions = ['.png', '.jpg', '.jpeg', '.webp']
+                          const currentPath = imageSrc
+                          const currentExt = extensions.find(ext => currentPath.endsWith(ext))
+                          
+                          if (currentExt) {
+                            const currentIndex = extensions.indexOf(currentExt)
+                            if (currentIndex < extensions.length - 1) {
+                              // 다음 확장자 시도
+                              setImageSrc(`/images/archetypes/${imageId}${extensions[currentIndex + 1]}`)
+                              return
+                            }
                           }
                         }
-                      }
-                      // 모든 확장자 시도 실패 시 fallback 표시
-                      setImageError(true)
-                    }}
-                    onLoad={() => {
-                      // 이미지 로드 성공 시 에러 상태 초기화
-                      setImageError(false)
-                    }}
-                  />
-                ) : null}
+                        // 모든 확장자 시도 실패 시 fallback 표시
+                        setImageError(true)
+                      }}
+                      onLoad={() => {
+                        // 이미지 로드 성공 시 에러 상태 초기화
+                        setImageError(false)
+                      }}
+                    />
+                  ) : null}
+                  
+                  {/* Fallback: 이미지가 없거나 로드 실패 시 */}
+                  {(!imageSrc || imageError) && (
+                    <div className="relative z-10 w-full h-full bg-secondary/30 rounded-full flex items-center justify-center transform scale-110 origin-center">
+                      <span className="material-symbols-outlined text-primary text-8xl md:text-[14rem]">pets</span>
+                    </div>
+                  )}
+                </div>
                 
-                {/* Fallback: 이미지가 없거나 로드 실패 시 */}
-                {(!imageSrc || imageError) && (
-                  <div className="relative z-10 w-full h-full bg-secondary/30 rounded-full flex items-center justify-center transform scale-110 origin-center">
-                    <span className="material-symbols-outlined text-primary text-8xl md:text-[14rem]">pets</span>
-                  </div>
-                )}
+                {/* 2. Pet Name (이미지 바로 아래 - Mobile Only) */}
+                <div className="text-center -mt-4 mb-6 md:hidden relative z-20">
+                  <h1 className="text-xl font-display font-bold text-primary tracking-tight leading-none">
+                    {displayPetName}
+                  </h1>
+                  <p className="text-xs text-primary/60 font-medium mt-0.5">{uiText.petName.subtitle}</p>
+                </div>
               </div>
 
-              {/* 2. Stats (모바일에서는 이미지 아래로 내려옴) */}
+              {/* 3. Stats (모바일에서는 이미지 아래로 내려옴) */}
               <div className="w-full md:w-1/2 space-y-2 md:space-y-3 mt-4 md:mt-0 z-20">
                 {STATS_ORDER.map(({ key, color }) => {
                   const value = getStatValue(key)  // 안전한 값 추출
