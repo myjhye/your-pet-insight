@@ -11,9 +11,8 @@ const testCategories = [
     title: 'Personality Assessment',
     description: 'Analyze temperament, social style, and energy levels.',
     subDescription: "Discover your dog's unique traits and behaviors.",
-    // [수정] testCount 대신 duration 추가
-    duration: '5 min',
-    // [추가] 추천 배지 (옵션)
+    // [수정] 모든 테스트 시간 3분으로 통일
+    duration: '3 min',
     badge: 'Popular',
     image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&auto=format&fit=crop',
     bgColor: 'bg-orange-50',
@@ -23,7 +22,8 @@ const testCategories = [
     title: 'Intelligence Check',
     description: 'Features IQ and Problem Solving tests.',
     subDescription: 'Assess cognitive abilities and learning potential.',
-    duration: '8 min',
+    // [수정] 8 min -> 3 min
+    duration: '3 min',
     image: 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=800&auto=format&fit=crop',
     bgColor: 'bg-green-50',
   },
@@ -32,6 +32,7 @@ const testCategories = [
     title: 'Relationship Index',
     description: 'Shows the Attachment Index test.',
     subDescription: 'Understand the bond between you and your pet.',
+    // [수정] 기존 3 min 유지
     duration: '3 min',
     image: 'https://images.unsplash.com/photo-1544568100-847a948585b9?w=800&auto=format&fit=crop',
     bgColor: 'bg-blue-50',
@@ -41,8 +42,9 @@ const testCategories = [
     title: 'Health & Wellness',
     description: 'Contains Obesity and Stress checks.',
     subDescription: 'Quick wellness checks for peace of mind.',
-    duration: '4 min',
-    badge: 'New', // 'New' 배지 추가
+    // [수정] 4 min -> 3 min
+    duration: '3 min',
+    badge: 'New',
     image: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&auto=format&fit=crop',
     bgColor: 'bg-yellow-50',
   },
