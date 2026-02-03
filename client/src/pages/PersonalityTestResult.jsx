@@ -800,41 +800,130 @@ function PersonalityTestResult() {
           {/* 메인 이미지 & 유형 뱃지 (기본 탭일 때만 표시) */}
           {currentTab === 'basic' && (
             <>
-          <div className="p-4 md:p-10 relative">
-            {/* 1. Share Buttons (Top Right Overlay - Mobile Only) */}
-            <div className="absolute top-2 right-2 md:hidden z-30 flex gap-1">
-              <button 
-                onClick={handleCopyLink}
-                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all shadow-md ${
-                  copied 
-                    ? 'bg-green-500 border-green-500 text-white' 
-                    : 'bg-white border-gray-200 text-primary hover:bg-gray-50'
-                }`}
-                title={copied ? uiText.share.copied : uiText.share.copyLink}
-              >
-                <span className="material-symbols-outlined text-lg">
-                  {copied ? 'check' : 'link'}
-                </span>
-              </button>
-              
-              {/* 네이티브 공유 버튼 (모바일에서 유용) */}
-              {typeof navigator !== 'undefined' && navigator.share && (
-                <button 
-                  onClick={handleNativeShare}
-                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all shadow-md"
-                  title={lang === 'jp' ? '共有' : 'Share'}
-                >
-                  <span className="material-symbols-outlined text-lg">share</span>
-                </button>
-              )}
+          <div className="p-6 md:p-10 relative flex flex-col items-center">
+            {/* 모바일: 결론 우선 구조 */}
+            <div className="w-full md:hidden flex flex-col items-center">
+              {/* 1. Header Area (Pet Name + Share Buttons) */}
+              <div className="text-center mb-6 w-full relative">
+                {/* Share Buttons (우측 상단) */}
+                <div className="absolute top-0 right-0 flex gap-1 z-30">
+                  <button 
+                    onClick={handleCopyLink}
+                    className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all shadow-md ${
+                      copied 
+                        ? 'bg-green-500 border-green-500 text-white' 
+                        : 'bg-white border-gray-200 text-primary hover:bg-gray-50'
+                    }`}
+                    title={copied ? uiText.share.copied : uiText.share.copyLink}
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      {copied ? 'check' : 'link'}
+                    </span>
+                  </button>
+                  
+                  {/* 네이티브 공유 버튼 (모바일에서 유용) */}
+                  {typeof navigator !== 'undefined' && navigator.share && (
+                    <button 
+                      onClick={handleNativeShare}
+                      className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all shadow-md"
+                      title={lang === 'jp' ? '共有' : 'Share'}
+                    >
+                      <span className="material-symbols-outlined text-lg">share</span>
+                    </button>
+                  )}
+                </div>
+                
+                {/* Pet Name */}
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <span className="material-symbols-outlined text-primary text-2xl">pets</span>
+                  <h1 className="text-3xl font-display font-bold text-primary tracking-tight leading-none">
+                    {displayPetName}
+                  </h1>
+                </div>
+                <p className="text-sm text-primary/60 font-medium">{uiText.petName.subtitle}</p>
+              </div>
+
+              {/* 2. Hero Image Area */}
+              <div className="relative w-80 h-80 mb-6">
+                <div className="absolute inset-8 bg-secondary/5 rounded-full blur-2xl"></div>
+                {imageSrc && !imageError ? (
+                  <img 
+                    src={imageSrc}
+                    alt={alias || mbti_code || 'Pet Archetype'}
+                    className="relative z-10 w-full h-full object-contain drop-shadow-2xl"
+                    onError={() => {
+                      // 다음 확장자 시도
+                      const imageId = archetype?.image_id
+                      if (imageId) {
+                        const extensions = ['.png', '.jpg', '.jpeg', '.webp']
+                        const currentPath = imageSrc
+                        const currentExt = extensions.find(ext => currentPath.endsWith(ext))
+                        
+                        if (currentExt) {
+                          const currentIndex = extensions.indexOf(currentExt)
+                          if (currentIndex < extensions.length - 1) {
+                            // 다음 확장자 시도
+                            setImageSrc(`/images/archetypes/${imageId}${extensions[currentIndex + 1]}`)
+                            return
+                          }
+                        }
+                      }
+                      // 모든 확장자 시도 실패 시 fallback 표시
+                      setImageError(true)
+                    }}
+                    onLoad={() => {
+                      // 이미지 로드 성공 시 에러 상태 초기화
+                      setImageError(false)
+                    }}
+                  />
+                ) : null}
+                
+                {/* Fallback: 이미지가 없거나 로드 실패 시 */}
+                {(!imageSrc || imageError) && (
+                  <div className="relative z-10 w-full h-full bg-secondary/30 rounded-full flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-9xl">pets</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Title Area (이미지 바로 아래) */}
+              <div className="text-center mb-8 px-2 w-full">
+                <h2 className="font-black text-primary uppercase tracking-tighter leading-none whitespace-nowrap text-[clamp(1.2rem,5vw,2.5rem)] mb-2 w-full overflow-visible">
+                  {alias || mbti_code}
+                </h2>
+                {summary && (
+                  <p className="text-sm text-primary/80 leading-relaxed font-medium">
+                    {summary}
+                  </p>
+                )}
+              </div>
+
+              {/* 4. Stats Area (Title 아래) */}
+              <div className="w-full bg-gray-50 rounded-2xl p-5 space-y-3">
+                {STATS_ORDER.map(({ key, color }) => {
+                  const value = getStatValue(key)  // 안전한 값 추출
+                  const label = getLocalizedText(statsLabels[key]) || key
+                  
+                  return (
+                    <StatBar
+                      key={key}
+                      name={key.charAt(0).toUpperCase() + key.slice(1)}
+                      label={label}
+                      value={value}
+                      color={color}
+                    />
+                  )
+                })}
+              </div>
             </div>
 
-            {/* TOP SECTION: Image & Stats */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-8 mb-0 md:mb-2">
-              
-              {/* 1. Hero Image Area */}
-              <div className="flex flex-col items-center">
-                <div className="relative w-64 h-64 md:w-[28rem] md:h-[28rem] flex-shrink-0 mb-0 md:mb-0">
+            {/* 데스크탑: 기존 레이아웃 유지 */}
+            <div className="hidden md:block w-full">
+              {/* TOP SECTION: Image & Stats */}
+              <div className="flex flex-row items-center justify-center gap-8 mb-2">
+                
+                {/* 1. Hero Image Area */}
+                <div className="relative w-[28rem] h-[28rem] flex-shrink-0">
                   <div className="absolute inset-8 bg-secondary/5 rounded-full blur-2xl"></div>
                   {imageSrc && !imageError ? (
                     <img 
@@ -871,53 +960,41 @@ function PersonalityTestResult() {
                   {/* Fallback: 이미지가 없거나 로드 실패 시 */}
                   {(!imageSrc || imageError) && (
                     <div className="relative z-10 w-full h-full bg-secondary/30 rounded-full flex items-center justify-center transform scale-110 origin-center">
-                      <span className="material-symbols-outlined text-primary text-8xl md:text-[14rem]">pets</span>
+                      <span className="material-symbols-outlined text-primary text-[14rem]">pets</span>
                     </div>
                   )}
                 </div>
-                
-                {/* 2. Pet Name (이미지 바로 아래 - Mobile Only) */}
-                <div className="text-center -mt-2 mb-2 md:hidden relative z-20">
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-xl">pets</span>
-                    <h1 className="text-xl font-display font-bold text-primary tracking-tight leading-none">
-                      {displayPetName}
-                    </h1>
-                    <span className="material-symbols-outlined text-primary text-xl">pets</span>
-                  </div>
-                  <p className="text-xs text-primary/60 font-medium mt-0.5">{uiText.petName.subtitle}</p>
+
+                {/* 2. Stats (데스크탑: 우측) */}
+                <div className="w-1/2 space-y-3 z-20">
+                  {STATS_ORDER.map(({ key, color }) => {
+                    const value = getStatValue(key)  // 안전한 값 추출
+                    const label = getLocalizedText(statsLabels[key]) || key
+                    
+                    return (
+                      <StatBar
+                        key={key}
+                        name={key.charAt(0).toUpperCase() + key.slice(1)}
+                        label={label}
+                        value={value}
+                        color={color}
+                      />
+                    )
+                  })}
                 </div>
               </div>
 
-              {/* 3. Stats (모바일에서는 이미지 아래로 내려옴) */}
-              <div className="w-full md:w-1/2 space-y-2 md:space-y-3 mt-2 md:mt-0 z-20 mb-2 md:mb-0">
-                {STATS_ORDER.map(({ key, color }) => {
-                  const value = getStatValue(key)  // 안전한 값 추출
-                  const label = getLocalizedText(statsLabels[key]) || key
-                  
-                  return (
-                    <StatBar
-                      key={key}
-                      name={key.charAt(0).toUpperCase() + key.slice(1)}
-                      label={label}
-                      value={value}
-                      color={color}
-                    />
-                  )
-                })}
+              {/* BOTTOM SECTION: Text (데스크탑) */}
+              <div className="text-center pt-0 -mt-8 relative z-30">
+                <h2 className="font-black text-primary uppercase tracking-tighter leading-none whitespace-nowrap text-6xl mb-3 w-full overflow-visible">
+                  {alias || mbti_code}
+                </h2>
+                {summary && (
+                  <p className="text-lg text-primary/70 max-w-2xl mx-auto leading-relaxed">
+                    {summary}
+                  </p>
+                )}
               </div>
-            </div>
-
-            {/* BOTTOM SECTION: Text (One Line Fix) */}
-            <div className="text-center pt-2 md:pt-0 mt-1 md:-mt-8 relative z-30">
-              <h2 className="font-black text-primary uppercase tracking-tighter leading-none whitespace-nowrap text-[min(7vw,2.5rem)] md:text-6xl mb-1 md:mb-3 w-full overflow-visible">
-                {alias || mbti_code}
-              </h2>
-              {summary && (
-                <p className="text-sm md:text-lg text-primary/70 max-w-2xl mx-auto leading-relaxed">
-                  {summary}
-                </p>
-              )}
             </div>
           </div>
             </>
