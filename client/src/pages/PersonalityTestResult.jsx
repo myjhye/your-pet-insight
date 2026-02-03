@@ -791,9 +791,9 @@ function PersonalityTestResult() {
           {/* 메인 이미지 & 유형 뱃지 (기본 탭일 때만 표시) */}
           {currentTab === 'basic' && (
             <>
-          <div className="p-6 md:p-10 relative">
+          <div className="p-4 md:p-10 relative">
             {/* 1. Share Buttons (Top Right Overlay - Mobile Only) */}
-            <div className="absolute top-2 right-4 md:hidden z-30 flex gap-2">
+            <div className="absolute top-2 right-2 md:hidden z-30 flex gap-1">
               <button 
                 onClick={handleCopyLink}
                 className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all shadow-md ${
@@ -821,7 +821,7 @@ function PersonalityTestResult() {
             </div>
 
             {/* TOP SECTION: Image & Stats */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 mb-0 md:mb-2">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-8 mb-0 md:mb-2">
               
               {/* 1. Hero Image Area */}
               <div className="flex flex-col items-center">
@@ -868,7 +868,7 @@ function PersonalityTestResult() {
                 </div>
                 
                 {/* 2. Pet Name (이미지 바로 아래 - Mobile Only) */}
-                <div className="text-center -mt-4 mb-6 md:hidden relative z-20">
+                <div className="text-center -mt-2 mb-2 md:hidden relative z-20">
                   <div className="flex items-center justify-center gap-2">
                     <span className="material-symbols-outlined text-primary text-xl">pets</span>
                     <h1 className="text-xl font-display font-bold text-primary tracking-tight leading-none">
@@ -881,7 +881,7 @@ function PersonalityTestResult() {
               </div>
 
               {/* 3. Stats (모바일에서는 이미지 아래로 내려옴) */}
-              <div className="w-full md:w-1/2 space-y-2 md:space-y-3 mt-4 md:mt-0 z-20">
+              <div className="w-full md:w-1/2 space-y-1 md:space-y-3 mt-2 md:mt-0 z-20 mb-2 md:mb-0">
                 {STATS_ORDER.map(({ key, color }) => {
                   const value = getStatValue(key)  // 안전한 값 추출
                   const label = getLocalizedText(statsLabels[key]) || key
@@ -900,8 +900,8 @@ function PersonalityTestResult() {
             </div>
 
             {/* BOTTOM SECTION: Text (One Line Fix) */}
-            <div className="text-center pt-6 md:pt-0 mt-2 md:-mt-8 relative z-30">
-              <h2 className="font-black text-primary uppercase tracking-tighter leading-none whitespace-nowrap text-[min(7vw,2.5rem)] md:text-6xl mb-3 w-full overflow-visible">
+            <div className="text-center pt-2 md:pt-0 mt-1 md:-mt-8 relative z-30">
+              <h2 className="font-black text-primary uppercase tracking-tighter leading-none whitespace-nowrap text-[min(7vw,2.5rem)] md:text-6xl mb-1 md:mb-3 w-full overflow-visible">
                 {alias || mbti_code}
               </h2>
               {summary && (
@@ -920,8 +920,8 @@ function PersonalityTestResult() {
           <>
             {/* Core Traits */}
             {coreTraits.length > 0 && (
-              <div className="space-y-6 md:space-y-12 mb-8 md:mb-16">
-                <div className="flex items-center gap-2 md:gap-4 mb-4 md:mb-8">
+              <div className="space-y-4 md:space-y-12 mb-6 md:mb-16">
+                <div className="flex items-center gap-2 md:gap-4 mb-2 md:mb-8">
                   <h2 className="text-xl md:text-3xl font-display font-bold text-primary">{uiText.sections.coreTraits}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
                 </div>
@@ -941,8 +941,8 @@ function PersonalityTestResult() {
 
             {/* Daily Life */}
             {dailyLife.length > 0 && (
-              <div className="space-y-6 md:space-y-12 mb-8 md:mb-16">
-                <div className="flex items-center gap-2 md:gap-4 my-4 md:my-8">
+              <div className="space-y-4 md:space-y-12 mb-6 md:mb-16">
+                <div className="flex items-center gap-2 md:gap-4 my-2 md:my-8">
                   <h2 className="text-xl md:text-3xl font-display font-bold text-primary">{uiText.sections.dailyLife}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
                 </div>
