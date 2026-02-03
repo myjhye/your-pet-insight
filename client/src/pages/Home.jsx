@@ -19,11 +19,11 @@ function Home() {
   }
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 md:py-16 relative overflow-hidden">
+    <main className="flex-grow flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12 md:py-16 relative overflow-hidden">
       <BackgroundEffects />
       <Hero />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full mx-auto relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl w-full mx-auto relative z-10">
         <PetCard type="cat" onClick={handleCatClick} />
         <PetCard type="dog" onClick={handleDogClick} />
       </div>

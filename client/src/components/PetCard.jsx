@@ -45,24 +45,24 @@ function PetCard({ type, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="bg-card-bg rounded-2xl p-8 shadow-soft transform transition hover:-translate-y-2 hover:shadow-lg duration-300 flex flex-col items-center relative group overflow-hidden border border-white/10 cursor-pointer"
+      className="bg-card-bg rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-soft transform transition hover:-translate-y-2 hover:shadow-lg duration-300 flex flex-col items-center relative group overflow-hidden border border-white/10 cursor-pointer"
     >
       <div className={`absolute top-0 w-full h-1 bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo}`}></div>
       
-      <div className="w-full flex justify-between items-start mb-6">
-        <div className={`${config.labelBg} ${config.labelText} px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide`}>
+      <div className="w-full flex justify-between items-start mb-4 sm:mb-6">
+        <div className={`${config.labelBg} ${config.labelText} px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-wide`}>
           {config.label}
         </div>
-        <div className="flex items-center text-gray-400 text-sm">
-          <span className="material-symbols-outlined text-base mr-1">schedule</span>
+        <div className="flex items-center text-gray-400 text-xs sm:text-sm">
+          <span className="material-symbols-outlined text-sm sm:text-base mr-1">schedule</span>
           {config.duration}
         </div>
       </div>
 
-      <div className="relative w-48 h-48 mb-6 flex items-center justify-center">
+      <div className="relative w-36 h-36 sm:w-48 sm:h-48 mb-4 sm:mb-6 flex items-center justify-center">
         <div className={`absolute inset-0 ${config.iconBg} rounded-full scale-90 group-hover:scale-100 transition-transform duration-500 ease-out`}></div>
         <svg
-          className={`w-32 h-32 ${config.iconColor} z-10 relative transform group-hover:scale-110 transition-transform duration-300`}
+          className={`w-24 h-24 sm:w-32 sm:h-32 ${config.iconColor} z-10 relative transform group-hover:scale-110 transition-transform duration-300`}
           fill="currentColor"
           viewBox="0 0 24 24"
         >
@@ -70,14 +70,14 @@ function PetCard({ type, onClick }) {
         </svg>
       </div>
 
-      <h2 className="text-2xl font-display font-bold text-text-dark mb-2">{config.title}</h2>
-      <p className="text-gray-500 text-sm mb-8 text-center px-4 font-light">
+      <h2 className="text-xl sm:text-2xl font-display font-bold text-text-dark mb-2 text-center px-2">{config.title}</h2>
+      <p className="text-gray-500 text-xs sm:text-sm mb-6 sm:mb-8 text-center px-2 sm:px-4 font-light">
         {config.description}
       </p>
 
-      <div className={`w-full ${config.buttonBg} ${config.buttonText} font-semibold py-4 px-6 rounded-xl ${config.buttonHover} transition-all duration-300 flex items-center justify-center group/btn shadow-lg ${config.buttonShadow}`}>
+      <div className={`w-full ${config.buttonBg} ${config.buttonText} font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl ${config.buttonHover} transition-all duration-300 flex items-center justify-center group/btn shadow-lg ${config.buttonShadow} text-sm sm:text-base`}>
         <span>Begin Assessment</span>
-        <span className="material-symbols-outlined ml-2 text-lg transform group-hover:translate-x-1 transition-transform">
+        <span className="material-symbols-outlined ml-2 text-base sm:text-lg transform group-hover:translate-x-1 transition-transform">
           arrow_forward
         </span>
       </div>
