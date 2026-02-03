@@ -703,22 +703,9 @@ function PersonalityTestResult() {
       <div className="max-w-5xl mx-auto px-4 py-2 md:px-6 md:py-12">
         {/* Main Result Card */}
         <div className="bg-white rounded-xl md:rounded-[2rem] shadow-sm border border-primary/5 overflow-hidden mb-4 md:mb-12">
-          {/* Integrated Header (Name + Tabs + Share) */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-100 bg-gray-50/50 p-4 gap-4">
-            
-            {/* Left: Pet Name */}
-            <div className="flex items-center gap-2 md:gap-3 order-1">
-              <span className="material-symbols-outlined text-primary text-xl md:text-2xl">pets</span>
-              <div>
-                <h1 className="text-xl md:text-2xl font-display font-bold text-primary tracking-tight leading-none">
-                  {displayPetName}
-                </h1>
-                <p className="text-xs text-primary/60 font-medium mt-0.5">{uiText.petName.subtitle}</p>
-              </div>
-            </div>
-
-            {/* Center: Tabs (PC: Center / Mobile: Bottom) */}
-            <div className="flex bg-gray-200/50 p-1 rounded-lg gap-1 order-3 md:order-2">
+          {/* 1. Tabs (최상단) */}
+          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+            <div className="flex gap-1">
               <button
                 onClick={() => setCurrentTab('basic')}
                 className={`px-3 md:px-6 py-2 rounded-lg font-medium transition-all text-xs md:text-sm ${
@@ -757,9 +744,23 @@ function PersonalityTestResult() {
                 {uiText.tabs.premium}
               </button>
             </div>
+          </div>
+
+          {/* 2. Header: Name & Share (탭 아래) */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-50 p-4 gap-4">
+            {/* Left: Pet Name */}
+            <div className="flex items-center gap-2 md:gap-3">
+              <span className="material-symbols-outlined text-primary text-xl md:text-2xl">pets</span>
+              <div>
+                <h1 className="text-xl md:text-2xl font-display font-bold text-primary tracking-tight leading-none">
+                  {displayPetName}
+                </h1>
+                <p className="text-xs text-primary/60 font-medium mt-0.5">{uiText.petName.subtitle}</p>
+              </div>
+            </div>
 
             {/* Right: Share Buttons (Icon Only) */}
-            <div className="flex gap-2 order-2 md:order-3 justify-center md:justify-end">
+            <div className="flex gap-2 justify-center md:justify-end">
               <button 
                 onClick={handleCopyLink}
                 className={`w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all ${
@@ -854,9 +855,9 @@ function PersonalityTestResult() {
               </div>
             </div>
 
-            {/* BOTTOM SECTION: Text (Overlap 해결) */}
+            {/* BOTTOM SECTION: Text (One Line Fix) */}
             <div className="text-center pt-6 md:pt-0 mt-2 md:-mt-8 relative z-30">
-              <h2 className="text-4xl md:text-7xl font-black text-primary uppercase tracking-tighter leading-none mb-3">
+              <h2 className="font-black text-primary uppercase tracking-tighter leading-none whitespace-nowrap text-[min(7vw,2.5rem)] md:text-6xl mb-3 w-full overflow-visible">
                 {alias || mbti_code}
               </h2>
               {summary && (
