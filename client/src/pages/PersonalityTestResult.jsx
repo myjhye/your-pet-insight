@@ -1082,82 +1082,76 @@ function PersonalityTestResult() {
 
         {/* Premium CTA (기본 탭에서만 표시) */}
         {currentTab === 'basic' && (
-          <div id="premium-cta" className="relative bg-primary rounded-[2.5rem] p-4 md:p-16 overflow-hidden shadow-2xl">
-            {/* 배경 장식 */}
-            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-[#2D5A47]/30 rounded-full blur-3xl"></div>
-            
-            <div className="relative z-10">
-              {/* 아이콘 */}
-              <div className="flex justify-center mb-3 md:mb-6">
-                <span className="material-symbols-outlined text-white text-3xl md:text-6xl">workspace_premium</span>
-              </div>
+          <div id="premium-cta" className="relative mt-8 mb-12">
+            <div className="relative bg-gradient-to-br from-primary to-[#1B4D3E] rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 text-center overflow-hidden shadow-2xl border border-white/10">
+              {/* Background Effects (Glow) */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#2D5A47]/20 rounded-full blur-3xl pointer-events-none"></div>
               
-              {/* 타이틀 */}
-              <h4 className="text-lg md:text-4xl font-display font-bold text-white mb-2 md:mb-4 text-center">
-                {uiText.premium.cta.title}
-              </h4>
-              
-              {/* 설명 */}
-              <p className="text-white/70 mb-6 md:mb-10 max-w-lg mx-auto text-xs md:text-lg leading-relaxed text-center">
-                {uiText.premium.cta.description.replace('{name}', displayPetName)}
-              </p>
-              
-              {/* 버튼 영역 */}
-              <div className="flex flex-col items-center gap-4">
-                {reportStatus === 'generating' ? (
-                  <>
-                    <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-white/90 text-lg font-medium">{uiText.premium.cta.generating}</p>
-                    <p className="text-white/60 text-sm">{uiText.premium.cta.generatingSub}</p>
-                  </>
-                ) : (
-                  <>
-                    <button 
-                      onClick={() => {
-                        if (reportStatus === 'ready' && reportPages) {
-                          setCurrentTab('premium')
-                          // Premium 탭으로 전환 후 최상단으로 스크롤
-                          setTimeout(() => {
-                            window.scrollTo({ top: 0, behavior: 'smooth' })
-                          }, 100)
-                        } else {
-                          // TODO: 결제 시스템 연동 시 여기에 결제 플로우 추가
-                          handleGenerateReport()
-                        }
-                      }}
-                      disabled={isGeneratingReport}
-                      className="bg-white hover:bg-gray-100 text-primary font-display font-bold text-sm md:text-xl py-2 md:py-4 px-6 md:px-8 w-full md:w-auto rounded-full shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {reportStatus === 'ready' && reportPages 
-                        ? uiText.premium.cta.viewReport 
-                        : reportStatus === 'failed'
-                        ? uiText.premium.cta.retry
-                        : uiText.premium.cta.getReport}
-                    </button>
-                    
-                    {reportStatus === 'ready' && reportPages && (
-                      <div className="flex items-center gap-2 text-white/80">
-                        <span className="material-symbols-outlined text-lg">check_circle</span>
-                        <span className="text-sm font-medium">{uiText.premium.cta.ready}</span>
-                      </div>
-                    )}
-                    
-                    {reportStatus === 'failed' && (
-                      <p className="text-white/70 text-sm">{uiText.premium.cta.failed}</p>
-                    )}
-                  </>
-                )}
-              </div>
-              
-              {/* 결제 시스템 연동 시 추가할 가격 표시 영역 (주석 처리) */}
-              {/* 
-              <div className="mt-8 pt-6 border-t border-white/20">
-                <p className="text-white/60 text-sm text-center">
-                  One-time purchase • Instant access • No subscription
+              <div className="relative z-10 flex flex-col items-center">
+                {/* 1. Glowing Icon Badge */}
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 flex items-center justify-center mb-4 md:mb-6 backdrop-blur-sm border border-white/10 shadow-inner">
+                  <span className="material-symbols-outlined text-white text-3xl md:text-4xl">workspace_premium</span>
+                </div>
+
+                {/* 2. Title & Description */}
+                <h4 className="text-2xl md:text-4xl font-display font-bold text-white mb-3 md:mb-4">
+                  {uiText.premium.cta.title}
+                </h4>
+                <p className="text-white/80 text-sm md:text-lg leading-relaxed max-w-lg mx-auto mb-8 md:mb-10">
+                  {uiText.premium.cta.description.replace('{name}', displayPetName)}
                 </p>
+
+                {/* 3. Main Action Button (Full Width on Mobile) */}
+                <div className="flex flex-col items-center gap-4 w-full">
+                  {reportStatus === 'generating' ? (
+                    <>
+                      <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-white/90 text-lg font-medium">{uiText.premium.cta.generating}</p>
+                      <p className="text-white/60 text-sm">{uiText.premium.cta.generatingSub}</p>
+                    </>
+                  ) : (
+                    <>
+                      <button 
+                        onClick={() => {
+                          if (reportStatus === 'ready' && reportPages) {
+                            setCurrentTab('premium')
+                            // Premium 탭으로 전환 후 최상단으로 스크롤
+                            setTimeout(() => {
+                              window.scrollTo({ top: 0, behavior: 'smooth' })
+                            }, 100)
+                          } else {
+                            // TODO: 결제 시스템 연동 시 여기에 결제 플로우 추가
+                            handleGenerateReport()
+                          }
+                        }}
+                        disabled={isGeneratingReport}
+                        className="w-full md:w-auto bg-white text-primary font-bold text-base md:text-lg py-4 px-8 rounded-xl shadow-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span>
+                          {reportStatus === 'ready' && reportPages 
+                            ? uiText.premium.cta.viewReport 
+                            : reportStatus === 'failed'
+                            ? uiText.premium.cta.retry
+                            : uiText.premium.cta.getReport}
+                        </span>
+                        <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                      </button>
+                      
+                      {reportStatus === 'ready' && reportPages && (
+                        <div className="flex items-center gap-2 text-white/80">
+                          <span className="material-symbols-outlined text-lg">check_circle</span>
+                          <span className="text-sm font-medium">{uiText.premium.cta.ready}</span>
+                        </div>
+                      )}
+                      
+                      {reportStatus === 'failed' && (
+                        <p className="text-white/70 text-sm">{uiText.premium.cta.failed}</p>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
-              */}
             </div>
           </div>
         )}
