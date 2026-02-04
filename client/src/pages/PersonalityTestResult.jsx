@@ -804,9 +804,9 @@ function PersonalityTestResult() {
             {/* 모바일: 결론 우선 구조 */}
             <div className="w-full md:hidden flex flex-col items-center">
               {/* 1. Header Area (Pet Name + Share Buttons) */}
-              <div className="text-center mb-6 w-full relative">
-                {/* Share Buttons (우측 상단) */}
-                <div className="absolute top-0 right-0 flex gap-1 z-30">
+              <div className="flex flex-col w-full mb-6">
+                {/* Row 1: Share Buttons (Right Aligned) */}
+                <div className="flex justify-end gap-2 w-full mb-1 px-1">
                   <button 
                     onClick={handleCopyLink}
                     className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all shadow-md ${
@@ -833,14 +833,16 @@ function PersonalityTestResult() {
                   )}
                 </div>
                 
-                {/* Pet Name */}
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <span className="material-symbols-outlined text-primary text-2xl">pets</span>
-                  <h1 className="text-3xl font-display font-bold text-primary tracking-tight leading-none">
-                    {displayPetName}
-                  </h1>
+                {/* Row 2: Pet Name (Centered & Safe) */}
+                <div className="flex flex-col items-center justify-center px-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="material-symbols-outlined text-primary text-2xl shrink-0">pets</span>
+                    <h1 className="text-3xl font-display font-bold text-primary tracking-tight leading-tight text-center break-words break-keep max-w-full">
+                      {displayPetName}
+                    </h1>
+                  </div>
+                  <p className="text-sm text-primary/60 font-medium">{uiText.petName.subtitle}</p>
                 </div>
-                <p className="text-sm text-primary/60 font-medium">{uiText.petName.subtitle}</p>
               </div>
 
               {/* 2. Hero Image Area */}
