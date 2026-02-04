@@ -31,11 +31,11 @@ function Header({ fixed = false }) {
         {/* 1. 로고 영역 */}
         <div className="flex items-center gap-3">
           <Link to={localePath('/')} className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white flex items-center justify-center p-1.5">
+            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center p-1.5 shadow-sm border border-white/20">
               <img 
                 src="/favicon.png" 
                 alt="Your Pet Insight Logo" 
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain opacity-90"
               />
             </div>
             <span className="font-display font-bold text-lg sm:text-xl md:text-2xl tracking-tight text-white">
