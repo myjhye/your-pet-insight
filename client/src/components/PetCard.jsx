@@ -37,24 +37,28 @@ const textContent = {
     cat: {
       title: 'Cat Personality Test',
       desc: "Decode your cat's unique personality style and behavioral quirks.",
-      btn: 'Start Analysis'
+      btn: 'Start Analysis',
+      badge: "25 Questions • 3 min"
     },
     dog: {
       title: 'Dog Personality Test',
       desc: "Reveal your dog's true personality type and hidden traits.",
-      btn: 'Start Analysis'
+      btn: 'Start Analysis',
+      badge: "25 Questions • 3 min"
     }
   },
   jp: {
     cat: {
       title: '猫の性格診断を始める',
       desc: "行動パターンを分析して、独立心や愛情表現のスタイルを理解します。",
-      btn: '診断を開始'
+      btn: '診断を開始',
+      badge: "25問 • 3分"
     },
     dog: {
       title: '犬の性格診断',
       desc: "AIを活用した診断で、あなたの愛犬の独自の性格タイプ、社交スタイル、隠れた特性を発見します。",
-      btn: '性格を分析'
+      btn: '性格を分析',
+      badge: "25問 • 3分"
     }
   }
 }
@@ -82,6 +86,18 @@ function PetCard({ type, onClick }) {
     >
       {/* 배경 후광 효과 */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 md:w-96 md:h-96 bg-white/40 blur-3xl rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+      {/* 정보 배지 (좌측 상단) */}
+      <div className="absolute top-4 left-4 z-20">
+        <div className={`
+          inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full 
+          bg-white/80 backdrop-blur-sm shadow-sm border border-white/50
+          ${config.titleColor} text-xs font-bold tracking-wide
+        `}>
+          <span className="material-symbols-outlined text-[14px]">timer</span>
+          <span>{text.badge}</span>
+        </div>
+      </div>
 
       {/* 중앙 캐릭터 이미지 영역 */}
       <div className="relative z-10 flex items-center justify-center w-full mt-6 md:mt-8">
