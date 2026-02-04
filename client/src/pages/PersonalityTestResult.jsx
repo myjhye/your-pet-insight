@@ -711,7 +711,7 @@ function PersonalityTestResult() {
     <main className={`min-h-screen text-[#2D3436] ${currentTab === 'premium' ? 'bg-[#F8F7F4]' : 'bg-[#F9FBF9]'}`}>
       <div className="max-w-5xl mx-auto px-4 py-2 md:px-6 md:py-12">
         {/* Main Result Card */}
-        <div className={`bg-white shadow-sm border border-primary/5 overflow-hidden transition-all
+        <div className={`bg-white shadow-sm border border-primary/5 overflow-hidden
           ${currentTab === 'premium' && reportStatus === 'ready' 
             ? 'rounded-t-xl md:rounded-t-[2rem] rounded-b-none border-b-0 mb-0' 
             : 'rounded-xl mb-4 md:mb-12 md:rounded-[2rem]'}`}>
@@ -732,15 +732,13 @@ function PersonalityTestResult() {
                 onClick={() => {
                   if (reportStatus === 'ready') {
                     setCurrentTab('premium')
-                    // Premium 탭으로 전환 후 최상단으로 스크롤
-                    setTimeout(() => {
-                      window.scrollTo({ top: 0, behavior: 'smooth' })
-                    }, 100)
+                    // Premium 탭으로 전환 후 최상단으로 스크롤 (즉시)
+                    window.scrollTo({ top: 0, behavior: 'auto' })
                   } else {
-                    // 결제 유도 섹션으로 스크롤
+                    // 결제 유도 섹션으로 스크롤 (즉시)
                     const premiumSection = document.getElementById('premium-cta')
                     if (premiumSection) {
-                      premiumSection.scrollIntoView({ behavior: 'smooth' })
+                      premiumSection.scrollIntoView({ behavior: 'auto' })
                     }
                   }
                 }}
@@ -1079,7 +1077,7 @@ function PersonalityTestResult() {
                     onUnlockClick={() => {
                       const premiumSection = document.getElementById('premium-cta')
                       if (premiumSection) {
-                        premiumSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        premiumSection.scrollIntoView({ behavior: 'auto', block: 'center' })
                       }
                     }}
                   />
@@ -1125,10 +1123,8 @@ function PersonalityTestResult() {
                         onClick={() => {
                           if (reportStatus === 'ready' && reportPages) {
                             setCurrentTab('premium')
-                            // Premium 탭으로 전환 후 최상단으로 스크롤
-                            setTimeout(() => {
-                              window.scrollTo({ top: 0, behavior: 'smooth' })
-                            }, 100)
+                            // Premium 탭으로 전환 후 최상단으로 스크롤 (즉시)
+                            window.scrollTo({ top: 0, behavior: 'auto' })
                           } else {
                             // TODO: 결제 시스템 연동 시 여기에 결제 플로우 추가
                             handleGenerateReport()
