@@ -21,18 +21,28 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
   const currentPageIndex = availablePages.indexOf(activeTab) + 1
   const totalPages = availablePages.length
 
-  // 탭 클릭 핸들러 (애니메이션 없이 즉시 이동)
+  // 탭 클릭 핸들러
   const handleTabClick = (pageKey, event) => {
+    // 1. 탭 상태 변경
     setActiveTab(pageKey)
     
-    // 1. 탭 버튼을 중앙으로 정렬하되, 'auto'를 사용하여 즉시 이동 (애니메이션 제거)
+    // 2. 탭 버튼 가로 스크롤 정렬 (메뉴바 내에서 중앙으로)
     if (event?.target) {
       event.target.scrollIntoView({ 
-        behavior: 'auto',  // 'smooth'에서 'auto'로 변경 (즉시 이동)
+        behavior: 'auto', 
         block: 'nearest', 
         inline: 'center' 
       })
     }
+
+    // 3. 화면 본문 스크롤을 최상단으로 리셋
+    // setTimeout을 0으로 주어 렌더링 사이클에 맞춰 안전하게 실행
+    setTimeout(() => {
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'auto' // 즉시 이동
+      })
+    }, 0)
   }
 
   return (
