@@ -713,9 +713,8 @@ function PersonalityTestResult() {
         {/* Main Result Card */}
         <div className={`bg-white shadow-sm border border-primary/5 overflow-hidden transition-all
           ${currentTab === 'premium' && reportStatus === 'ready' 
-            ? 'rounded-t-xl rounded-b-none mb-0' 
-            : 'rounded-xl mb-4 md:mb-12'} 
-          md:rounded-[2rem]`}>
+            ? 'rounded-t-xl md:rounded-t-[2rem] rounded-b-none border-b-0 mb-0' 
+            : 'rounded-xl mb-4 md:mb-12 md:rounded-[2rem]'}`}>
           {/* 1. Tabs (최상단) */}
           <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
             <div className="flex gap-1">
@@ -759,7 +758,8 @@ function PersonalityTestResult() {
             </div>
           </div>
 
-          {/* 2. Header: Name & Share (데스크탑만 표시) */}
+          {/* 2. Header: Name & Share (데스크탑만 표시, Basic 탭에서만) */}
+          {currentTab === 'basic' && (
           <div className="hidden md:flex md:flex-row md:items-center justify-between border-b border-gray-50 p-4 gap-4">
             {/* Left: Pet Name */}
             <div className="flex items-center gap-2 md:gap-3">
@@ -800,6 +800,7 @@ function PersonalityTestResult() {
               )}
             </div>
           </div>
+          )}
 
           {/* 메인 이미지 & 유형 뱃지 (기본 탭일 때만 표시) */}
           {currentTab === 'basic' && (
@@ -807,7 +808,8 @@ function PersonalityTestResult() {
           <div className="p-6 md:p-10 relative flex flex-col items-center">
             {/* 모바일: 결론 우선 구조 */}
             <div className="w-full md:hidden flex flex-col items-center">
-              {/* 1. Header Area (Pet Name + Share Buttons) */}
+              {/* 1. Header Area (Pet Name + Share Buttons) - Basic 탭에서만 표시 */}
+              {currentTab === 'basic' && (
               <div className="flex flex-col w-full mb-6">
                 {/* Row 1: Share Buttons (Right Aligned) */}
                 <div className="flex justify-end gap-2 w-full mb-1 px-1">
@@ -848,6 +850,7 @@ function PersonalityTestResult() {
                   <p className="text-sm text-primary/60 font-medium">{uiText.petName.subtitle}</p>
                 </div>
               </div>
+              )}
 
               {/* 2. Hero Image Area */}
               <div className="relative w-80 h-80 mb-6">
@@ -1170,6 +1173,9 @@ function PersonalityTestResult() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             uiText={uiText}
+            onCopyLink={handleCopyLink}
+            onNativeShare={handleNativeShare}
+            isCopied={copied}
           />
         )}
 

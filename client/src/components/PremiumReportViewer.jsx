@@ -1,7 +1,7 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, uiText }) {
+function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, uiText, onCopyLink, onNativeShare, isCopied }) {
   const pageOrder = [
     'table_of_contents',
     'deep_dive_traits',
@@ -35,32 +35,71 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
       })
     }
 
-    // 3. 화면 본문 스크롤을 최상단으로 리셋
+    // 3. 화면 스크롤을 '리포트 시작 위치'에 맞춰 조정
     // setTimeout을 0으로 주어 렌더링 사이클에 맞춰 안전하게 실행
     setTimeout(() => {
-      window.scrollTo({ 
-        top: 0, 
-        behavior: 'auto' // 즉시 이동
-      })
+      const element = document.getElementById('premium-viewer-top')
+      if (element) {
+        // 글로벌 헤더 높이(약 60~80px) + 여유 공간
+        const headerOffset = 100
+        const elementPosition = element.getBoundingClientRect().top
+        const offsetPosition = elementPosition + window.scrollY - headerOffset
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'auto'
+        })
+      }
     }, 0)
   }
 
   return (
-    <div className="w-full bg-white">
+    <div id="premium-viewer-top" className="w-full bg-white border-x border-b border-primary/5 md:border-x-0">
       {/* [상단 헤더 + 네비게이션 통합 영역] 
         - 모바일: 상단 탭 바로 아래에 딱 붙음 (마진 없음)
         - 디자인: 흰색 배경에 하단 경계선으로만 구분 (Clean & Flat)
+        - border-t-0: 상단 컨테이너와 경계선 없이 합체
       */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
-        {/* 1. 리포트 정보 (타이틀) */}
-        <div className="px-5 py-4 border-b border-gray-50">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="material-symbols-outlined text-primary text-lg">verified</span>
-            <span className="text-xs font-bold text-primary/60 uppercase tracking-wider">Premium Report</span>
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100 border-t-0">
+        {/* 1. 리포트 정보 (타이틀 + 공유 버튼) */}
+        <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+          {/* Left: 타이틀 */}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="material-symbols-outlined text-primary text-lg">verified</span>
+              <span className="text-xs font-bold text-primary/60 uppercase tracking-wider">Premium Report</span>
+            </div>
+            <h2 className="text-lg font-bold text-primary leading-tight">
+               {petName} <span className="font-normal text-primary/80">| {uiText.premium.title}</span>
+            </h2>
           </div>
-          <h2 className="text-lg font-bold text-primary leading-tight">
-             {petName} <span className="font-normal text-primary/80">| {uiText.premium.title}</span>
-          </h2>
+
+          {/* Right: 공유 버튼 그룹 */}
+          <div className="flex gap-2">
+            <button 
+              onClick={onCopyLink}
+              className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all ${
+                isCopied 
+                  ? 'bg-green-500 border-green-500 text-white' 
+                  : 'bg-white border-gray-200 text-primary hover:bg-gray-50'
+              }`}
+              title={isCopied ? 'Copied!' : 'Copy Link'}
+            >
+              <span className="material-symbols-outlined text-lg">
+                {isCopied ? 'check' : 'link'}
+              </span>
+            </button>
+            
+            {typeof navigator !== 'undefined' && navigator.share && (
+              <button 
+                onClick={onNativeShare}
+                className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all"
+                title="Share"
+              >
+                <span className="material-symbols-outlined text-lg">share</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 2. 챕터 네비게이션 (가로 스크롤) */}
@@ -88,8 +127,10 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
 
       {/* [본문 영역]
         - 불필요한 패딩 제거, 텍스트 가독성 중심
+        - border-x, border-b: 상단 컨테이너와 연결된 느낌
+        - 모바일: rounded-b-none, 데스크탑: rounded-b-[2rem]
       */}
-      <main className="min-h-[500px] bg-white pb-20">
+      <main className="min-h-[500px] bg-white pb-20 border-x border-b border-primary/5 md:border-x-0 md:rounded-b-[2rem] shadow-sm">
         {activePageData && (
           <div
             key={activeTab}
