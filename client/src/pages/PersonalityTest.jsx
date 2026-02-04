@@ -33,8 +33,8 @@ const UI_TEXT = {
     loading: "Loading Questions...",
     error: { retry: "Retry" },
     stage1: {
-      title: "Personality Assessment",
-      subtitle: "Answer each question in order to complete the assessment."
+      title: "Dog Personality Assessment",
+      subtitle: "Answer 20 questions to discover your dog's true nature."
     },
     stage2: {
       title: "Owner Connection",
@@ -55,8 +55,8 @@ const UI_TEXT = {
     loading: "質問を読み込み中...",
     error: { retry: "再試行" },
     stage1: {
-      title: "性格評価",
-      subtitle: "評価を完了するために、各質問に順番に答えてください。"
+      title: "犬の性格診断",
+      subtitle: "愛犬の本当の性格を知るために、質問に答えてください。"
     },
     stage2: {
       title: "飼い主とのつながり",
@@ -218,7 +218,7 @@ function PersonalityTest() {
 
   const breadcrumbItems = [
     { label: lang === 'jp' ? 'ホーム' : 'Home', href: '/' },
-    { label: lang === 'jp' ? '性格テスト' : 'Personality Test' },
+    { label: lang === 'jp' ? '犬の性格診断' : 'Dog Personality Test' },
   ]
 
   // 로딩 화면 (데이터가 아직 없을 때도 포함)
