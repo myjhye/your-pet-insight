@@ -12,6 +12,7 @@ import random
 import json
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
+import httpx
 
 # .env 파일의 내용을 로드합니다.
 load_dotenv()
@@ -871,324 +872,172 @@ Body text here. **Important words** in bold.
 
 
 def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alias: str, stats: dict, owner_summary: str) -> list:
-    """V3 페이지별 프롬프트 - 직관적인 별명 사용"""
+    """V3 페이지별 프롬프트 - 프론트엔드 pageOrder 및 uiText와 완벽 매칭"""
     
     high_soc = stats.get('sociability', 50) >= 55
     high_sag = stats.get('sagacity', 50) >= 55
     high_emo = stats.get('emotionality', 50) >= 55
     high_obe = stats.get('obedience', 50) >= 55
     
+    # 탭 이름 매핑 (프론트엔드 uiText.premium.pageTitles와 일치)
+    if lang == "jp":
+        titles = {
+            "table_of_contents": "目次",
+            "deep_dive_traits": "性格分析",
+            "cognitive_strengths": "認知的強み",
+            "owner_chemistry": "相性分析",
+            "training_roadmap": "トレーニングガイド",
+            "social_adaptation": "社会適応",
+            "lifestyle_guide": "ライフスタイルガイド",
+            "heartfelt_message": "特別なメッセージ"
+        }
+    else:  # English
+        titles = {
+            "table_of_contents": "Table of Contents",
+            "deep_dive_traits": "Personality Analysis",
+            "cognitive_strengths": "Cognitive Strengths",
+            "owner_chemistry": "Chemistry Analysis",
+            "training_roadmap": "Training Guide",
+            "social_adaptation": "Social Adaptation",
+            "lifestyle_guide": "Lifestyle Guide",
+            "heartfelt_message": "Special Message"
+        }
+    
     if lang == "jp":
         return [
             {
                 "page": "table_of_contents",
-                "prompt": f"""次の形式で正確に作成してください:
+                "prompt": f"""次の形式で正確に作成してください。アプリのナビゲーションと一致させてください:
 
-# 📖 {pet_name}の性格分析レポート
+# 📖 {pet_name}のプレミアムレポート
 
-## 目次
+## {titles['table_of_contents']}
 
-1. **性格の全体像** - 「{archetype_alias}」タイプの特徴
-2. **学習スタイル** - {pet_name}の認知パターン
-3. **飼い主との相性** - 最高のチームになる理由
-4. **トレーニング戦略** - 効果的な教育法
-5. **社会化ガイド** - 他の犬や人との関わり方
-6. **理想の一日** - 完璧なルーティン
-7. **特別なメッセージ** - {pet_name}からあなたへ
+1. **{titles['deep_dive_traits']}** — 「{archetype_alias}」タイプの理解
+2. **{titles['cognitive_strengths']}** — {pet_name}の情報処理方法
+3. **{titles['owner_chemistry']}** — 最高のチームになる理由
+4. **{titles['training_roadmap']}** — 最適な方法
+5. **{titles['social_adaptation']}** — 他の犬や人との出会い
+6. **{titles['lifestyle_guide']}** — 完璧なルーティン
+7. **{titles['heartfelt_message']}** — {pet_name}からあなたへ
 
 ---
 
-> このレポートは「{archetype_alias}」タイプの{pet_name}の独特な性格を理解し、より深い絆を築くのに役立ちます。
+> このレポートは{pet_name}の独特な「{archetype_alias}」性格を深く理解するためのものです。
 
-上記の形式を正確に従って作成してください。"""
+この形式を正確に従ってください。MBTIコードではなく「{archetype_alias}」を使用してください。"""
             },
             {
                 "page": "deep_dive_traits",
-                "prompt": f"""次の形式で正確に作成してください:
+                "prompt": f"""# 🐕 {titles['deep_dive_traits']}
 
-# 🐕 {pet_name}の性格分析
+## 「{archetype_alias}」プロファイル
+{pet_name}の分析に基づく:
+- **社交性 {stats.get('sociability', 50)}%**: {'外向的で大胆' if high_soc else '控えめで観察力がある'}
+- **知性 {stats.get('sagacity', 50)}%**: {'機転が利き鋭い' if high_sag else '直感的で本能的'}
+- **感情性 {stats.get('emotionality', 50)}%**: {'共感的で表現豊か' if high_emo else '安定して冷静'}
+- **従順性 {stats.get('obedience', 50)}%**: {'ルール指向で集中力がある' if high_obe else '独立心が強く自由な精神'}
 
-## なぜ「{archetype_alias}」タイプなのか
+## 💪 3つの主要な強み
+[これらのスコアに基づいて3つの具体的な強みを詳述]
 
-{pet_name}は「**{archetype_alias}**」タイプです。このタイプの特徴:
-
-{pet_name}のスコアに基づいて説明:
-- **社交性 {stats.get('sociability', 50)}%**: {'外向的で人懐っこい' if high_soc else '慎重で選択的'}
-- **知性 {stats.get('sagacity', 50)}%**: {'観察力が鋭い' if high_sag else '直感的'}
-- **感情性 {stats.get('emotionality', 50)}%**: {'感情表現が豊か' if high_emo else '感情的に安定'}
-- **従順性 {stats.get('obedience', 50)}%**: {'ルールを好む' if high_obe else '自由を好む'}
-
-## 💪 {pet_name}の3つの強み
-
-### 強み1: [タイトル]
-具体例を挙げて説明。
-
-### 強み2: [タイトル]
-具体例を挙げて説明。
-
-### 強み3: [タイトル]
-具体例を挙げて説明。
-
-## ⚠️ 注意すべきポイント
-
-[1-2つの課題と解決策]
+## ⚠️ 課題とヒント
+[実践的な解決策を含む1-2つの課題]
 
 ---
-
-> "{pet_name}を一言で表すと: 「{archetype_alias}」らしい..."
-
-上記の形式を正確に従って作成してください。MBTIコードではなく「{archetype_alias}」を使用してください。"""
+> "{pet_name}を一言で: 典型的な「{archetype_alias}」で..." """
             },
             {
                 "page": "cognitive_strengths",
-                "prompt": f"""次の形式で正確に作成してください:
-
-# 🧠 {pet_name}の学習スタイル
+                "prompt": f"""# 🧠 {titles['cognitive_strengths']}
 
 **知性スコア: {stats.get('sagacity', 50)}%**
 
-## 学習パターン
+## 学習スタイル
+{pet_name}は**{'観察→思考→実行' if high_sag else '実行→感じ→学習'}**タイプです。
+[これがどのように彼らを独自の方法で賢くするか説明]
 
-「{archetype_alias}」タイプの{pet_name}は**{'観察→分析→実行' if high_sag else '体験→反応→学習'}**タイプの学習者です。
+## 🧩 問題解決
+[スコアに基づいてパズルおもちゃや新しい環境への反応を詳述]
 
-{'これは、まず観察し、状況を分析してから行動することを意味します。新しいことを教える時は、試す前に明確に実演してください。' if high_sag else 'これは、実践的な経験を通じて最もよく学ぶことを意味します。トレーニングセッションは短く、楽しく、繰り返し行いましょう。'}
-
-## 🧩 問題解決スタイル
-
-### {pet_name}が課題にアプローチする方法:
-- **パズルおもちゃ**: [典型的な反応を説明]
-- **新しい環境**: [行動を説明]
-- **障害物**: [問題を解決する方法を説明]
-
-## 3つの脳を刺激するアクティビティ
-
-### アクティビティ1: [名前]
-[{pet_name}のためにそれをどのように行い、なぜ機能するか]
-
-### アクティビティ2: [名前]
-[{pet_name}のためにそれをどのように行い、なぜ機能するか]
-
-### アクティビティ3: [名前]
-[{pet_name}のためにそれをどのように行い、なぜ機能するか]
-
----
-
-> "精神的に刺激された{pet_name}は幸せな{pet_name}です。"
-
-上記の形式を正確に従って作成してください。"""
+## 3つのメンタルワークアウト
+[3つの具体的な頭脳ゲームを推奨]"""
             },
             {
                 "page": "owner_chemistry",
-                "prompt": f"""次の形式で正確に作成してください:
+                "prompt": f"""# 💕 {titles['owner_chemistry']}
 
-# 💕 あなたと{pet_name}: 完璧なマッチ
-
-**あなたのタイプ:** {owner_summary}
+**飼い主のスタイル:** {owner_summary}
 **{pet_name}のタイプ:** 「{archetype_alias}」
 
-## なぜ相性が良いのか
+## なぜ最高のチームなのか
+[飼い主と犬の間の3つの相乗効果のポイントを詳述]
 
-### 理由1: [タイトル]
-[具体的な説明]
-
-### 理由2: [タイトル]
-[具体的な説明]
-
-### 理由3: [タイトル]
-[具体的な説明]
-
-## 🔧 潜在的な摩擦ポイント
-
-### 課題: [タイトル]
-**問題:** [説明]
-**解決策:** [実践的なアドバイス]
-
-## 毎日の絆を深める習慣
-
-今日から始められる3つの簡単なこと:
-
-1. **[習慣名]** — [簡単な説明]
-2. **[習慣名]** — [簡単な説明]
-3. **[習慣名]** — [簡単な説明]
+## 🔧 バランスを見つける
+[潜在的な摩擦ポイントと解決方法に言及]
 
 ---
-
-> "一緒に、あなたと「{archetype_alias}」タイプの{pet_name}は最高のチームです。"
-
-上記の形式を正確に従って作成してください。"""
+> "一緒に、あなたと{pet_name}は独特な「{archetype_alias}」の絆を作り出します。" """
             },
             {
                 "page": "training_roadmap",
-                "prompt": f"""次の形式で正確に作成してください:
-
-# 🎓 {pet_name}のトレーニング戦略
+                "prompt": f"""# 🎓 {titles['training_roadmap']}
 
 **従順性スコア: {stats.get('obedience', 50)}%**
 
-## 最適なトレーニングアプローチ
+## 最適な戦略
+**{'ルールベース' if high_obe else 'ゲームベース'}**アプローチに焦点を当てます。
+[なぜこれが彼らに効果的なのか説明]
 
-「{archetype_alias}」タイプの{pet_name}は**{'ルールベース' if high_obe else 'ゲームベース'}**アプローチに最もよく反応します。
+## 📅 2週間アクションプラン
+[シンプルな基礎と構築の表またはリストを提供]
 
-{'これは、明確な境界、一貫したコマンド、構造化されたセッションが効果的であることを意味します。' if high_obe else 'これは、トレーニングを遊びのように感じさせることを意味します。短く、楽しく、多様性のあるセッションで彼らを引き付けます。'}
-
-## 📅 2週間トレーニングプラン
-
-### Week 1: 基礎
-
-| 日 | 焦点 | 時間 |
-|-----|------|------|
-| 1-2 | おすわり & 名前認識 | 5-10分 × 3 |
-| 3-4 | 待て（短時間） | 5-10分 × 3 |
-| 5-7 | 呼ばれたら来る | 5-10分 × 3 |
-
-### Week 2: 構築
-
-| 日 | 焦点 | 時間 |
-|-----|------|------|
-| 1-3 | コマンドの組み合わせ | 10分 × 2 |
-| 4-5 | 気を散らすものを追加 | 10分 × 2 |
-| 6-7 | 実世界での練習 | 15分 × 1 |
-
-## 🏆 モチベーションのコツ
-
-- **最適なご褒美:** [{pet_name}の性格に特化]
-- **最適なタイミング:** [最も受容的な時]
-- **避けるべきこと:** [機能しないこと]
-
----
-
-> "「{archetype_alias}」タイプの{pet_name}には一貫性が鍵です。"
-
-上記の形式を正確に従って作成してください。"""
+## 🏆 モチベーションの秘訣
+- **最適なご褒美:** [性格に基づく食べ物/褒め言葉/遊び]
+- **避けるべきこと:** [特定のストレッサー]"""
             },
             {
                 "page": "social_adaptation",
-                "prompt": f"""次の形式で正確に作成してください:
-
-# 🐾 {pet_name}の社会化ガイド
+                "prompt": f"""# 🐾 {titles['social_adaptation']}
 
 **社交性スコア: {stats.get('sociability', 50)}%**
 
-## 他の犬との出会い
-
-「{archetype_alias}」タイプの{pet_name}は**{'友達を作ることに熱心' if high_soc else '友情に選択的'}**です。
-
-### 初対面のコツ:
-- [コツ1]
-- [コツ2]
-- [コツ3]
-
-### ドッグパークで:
-- [アドバイス1]
-- [アドバイス2]
-
-## 新しい人との出会い
-
-### 来客時:
-- [{pet_name}が典型的にどのように反応するか]
-- [あなたがすべきこと]
-
-### 外で見知らぬ人と:
-- [{pet_name}が典型的にどのように反応するか]
-- [あなたがすべきこと]
+## 新しい出会い
+{pet_name}は新しい友達を作ることについて**{'熱心' if high_soc else '選択的'}**です。
+[ドッグパークや見知らぬ人への具体的なヒントを提供]
 
 ## 🏠 変化への適応
-
-**感情性スコア: {stats.get('emotionality', 50)}%**
-
-### 新しい家への引っ越し:
-[{pet_name}の性格に特化した具体的なヒント]
-
-### 分離不安のリスク: {'高い' if high_emo else '低い'}
-{'予防が鍵:' if high_emo else 'それでも知っておくと良い:'}
-- [ヒント1]
-- [ヒント2]
-
----
-
-> "よく社会化された{pet_name}は、どんな状況でも自信があり、幸せです。"
-
-上記の形式を正確に従って作成してください。"""
+**感情性: {stats.get('emotionality', 50)}%**
+[感度に基づく引っ越しや分離へのヒント]"""
             },
             {
                 "page": "lifestyle_guide",
-                "prompt": f"""次の形式で正確に作成してください:
+                "prompt": f"""# ☀️ {titles['lifestyle_guide']}
 
-# ☀️ {pet_name}の完璧な一日
+## 朝 (6:00 - 9:00)
+- **起床:** {'高エネルギー' if high_soc else 'ゆっくりと着実'}
+- **散歩スタイル:** {'活発な探索' if high_soc else 'リラックスした匂い嗅ぎ'}
 
-## 🌅 朝 (6:00 - 9:00)
+## 日中と夕方
+- **在宅設定:** [一人でいる時のヒント]
+- **遊び時間:** [メンタルとフィジカルのバランス]
 
-**起床ルーティン:**
-「{archetype_alias}」タイプの{pet_name}は{'行動の準備ができてベッドから跳び出る' if high_soc else 'ストレッチしてゆっくり目を覚ます時間を取る'}。
-
-**朝散歩:** {'30-45分の活発な探索' if high_soc else '20-30分の静かで匂いに焦点を当てた散歩'}
-- 最適なルートタイプ: [説明]
-- 含めるべきアクティビティ: [リスト]
-
-**朝食:** [タイミングとヒント]
-
-## 🏠 日中 (9:00 - 17:00)
-
-**一人で家にいる時:**
-- 環境設定: [具体的なヒント]
-- おすすめのおもちゃ: [2-3つの特定のタイプをリスト]
-- 背景: [音楽/TV/静寂?]
-
-## 🌆 夕方 (17:00 - 20:00)
-
-**2回目の散歩:** [スタイルと時間]
-
-**精神的刺激:**
-- [アクティビティ1]
-- [アクティビティ2]
-
-**夕食:** [タイミング]
-
-## 🌙 夜 (20:00+)
-
-**リラックスタイムのルーティン:**
-- [ステップ1]
-- [ステップ2]
-
-**睡眠環境:**
-- [ヒント1]
-- [ヒント2]
-
----
-
-> "良いルーティンは{pet_name}を安全で愛されていると感じさせます。"
-
-上記の形式を正確に従って作成してください。"""
+## 夜
+- **リラックス:** [最適な就寝ルーティン]"""
             },
             {
                 "page": "heartfelt_message",
-                "prompt": f"""次の形式で正確に作成してください:
+                "prompt": f"""# 💌 {titles['heartfelt_message']}
 
-# 💌 {pet_name}からあなたへ
-
-*「{archetype_alias}」タイプの{pet_name}の視点から飼い主への手紙*
+*{pet_name}の心から{owner_summary}な人間へ*
 
 ---
-
 親愛なる人間へ、
 
-[{pet_name}の視点から3-4段落を書いてください。含めるべき内容:]
-
-- 「{archetype_alias}」タイプの犬であることの感じ方
-- {owner_summary}な飼い主を持つことへの感謝
-- すべてを意味する小さな瞬間
-- 一緒に過ごす未来への希望
-
-[温かく、でも過度にセンチメンタルにならないように。約150-200字。]
+[「{archetype_alias}」としての{pet_name}の視点から書かれた3-4段落の温かいメッセージ]
 
 ---
-
-> "あなたは私の飼い主だけではありません。あなたは私の全世界です。"
-
-愛としっぽの振りを込めて、
-**{pet_name}** 🐾
-
-上記の形式を正確に従って作成してください。"""
+> "あなたは私の世界の中心です。" """
             }
         ]
     
@@ -1196,313 +1045,137 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alia
         return [
             {
                 "page": "table_of_contents",
-                "prompt": f"""Write EXACTLY in this format:
+                "prompt": f"""Write EXACTLY in this format to match the app navigation:
 
-# 📖 {pet_name}'s Personality Report
+# 📖 {pet_name}'s Premium Report
 
-## Table of Contents
+## {titles['table_of_contents']}
 
-1. **Personality Overview** — Understanding the "{archetype_alias}" type
-2. **Learning Style** — How {pet_name} processes information
-3. **Owner Compatibility** — Why you make a great team
-4. **Training Strategy** — Methods that work best
-5. **Socialization Guide** — Meeting dogs and people
-6. **Ideal Day** — The perfect routine
-7. **Special Message** — From {pet_name} to you
+1. **{titles['deep_dive_traits']}** — Understanding the "{archetype_alias}" type
+2. **{titles['cognitive_strengths']}** — How {pet_name} processes information
+3. **{titles['owner_chemistry']}** — Why you make a great team
+4. **{titles['training_roadmap']}** — Methods that work best
+5. **{titles['social_adaptation']}** — Meeting dogs and people
+6. **{titles['lifestyle_guide']}** — The perfect routine
+7. **{titles['heartfelt_message']}** — From {pet_name} to you
 
 ---
 
-> This report will help you understand your "{archetype_alias}" type {pet_name}'s unique personality and build a deeper bond.
+> This report provides a deep dive into {pet_name}'s unique "{archetype_alias}" personality.
 
-Follow this exact format. Use "{archetype_alias}" instead of "{mbti_code}"."""
+Follow this exact format. Use "{archetype_alias}" instead of the MBTI code."""
             },
             {
                 "page": "deep_dive_traits",
-                "prompt": f"""Write EXACTLY in this format:
+                "prompt": f"""# 🐕 {titles['deep_dive_traits']}
 
-# 🐕 {pet_name}'s Personality Analysis
+## The "{archetype_alias}" Profile
+Based on {pet_name}'s analysis:
+- **Sociability {stats.get('sociability', 50)}%**: {'Outgoing and bold' if high_soc else 'Reserved and observant'}
+- **Sagacity {stats.get('sagacity', 50)}%**: {'Quick-witted and sharp' if high_sag else 'Intuitive and instinctive'}
+- **Emotionality {stats.get('emotionality', 50)}%**: {'Empathetic and expressive' if high_emo else 'Steady and calm'}
+- **Obedience {stats.get('obedience', 50)}%**: {'Rule-oriented and focused' if high_obe else 'Independent and free-spirited'}
 
-## Why "{archetype_alias}" Type?
+## 💪 3 Key Strengths
+[Detail 3 specific strengths based on these scores]
 
-{pet_name} is a **"{archetype_alias}"** type. Here's what that means:
-
-Based on {pet_name}'s scores:
-- **Sociability {stats.get('sociability', 50)}%**: {'Outgoing and friendly' if high_soc else 'Cautious and selective'}
-- **Sagacity {stats.get('sagacity', 50)}%**: {'Sharp observer' if high_sag else 'Intuitive learner'}
-- **Emotionality {stats.get('emotionality', 50)}%**: {'Expressively emotional' if high_emo else 'Emotionally stable'}
-- **Obedience {stats.get('obedience', 50)}%**: {'Loves structure' if high_obe else 'Values freedom'}
-
-## 💪 {pet_name}'s 3 Key Strengths
-
-### Strength 1: [Title]
-Explain with a specific real-life example.
-
-### Strength 2: [Title]
-Explain with a specific real-life example.
-
-### Strength 3: [Title]
-Explain with a specific real-life example.
-
-## ⚠️ Things to Watch For
-
+## ⚠️ Challenges & Tips
 [1-2 challenges with practical solutions]
 
 ---
-
-> "{pet_name} in one sentence: A true '{archetype_alias}' who..."
-
-Follow this exact format. Use "{archetype_alias}" instead of "{mbti_code}"."""
+> "{pet_name} in one sentence: A classic '{archetype_alias}' who..." """
             },
             {
                 "page": "cognitive_strengths",
-                "prompt": f"""Write EXACTLY in this format:
-
-# 🧠 How {pet_name} Learns
+                "prompt": f"""# 🧠 {titles['cognitive_strengths']}
 
 **Sagacity Score: {stats.get('sagacity', 50)}%**
 
-## Learning Pattern
+## Learning Style
+{pet_name} is a **{'Watch → Think → Do' if high_sag else 'Do → Feel → Learn'}** type.
+[Explain how this makes them smart in their own way]
 
-As a "{archetype_alias}" type, {pet_name} is a **{'Watch → Think → Do' if high_sag else 'Do → Feel → Learn'}** learner.
+## 🧩 Problem Solving
+[Detail how they react to puzzle toys or new environments based on their scores]
 
-{'This means they prefer to observe first, analyze the situation, then act. When teaching something new, demonstrate it clearly before asking them to try.' if high_sag else 'This means they learn best through hands-on experience. Keep training sessions short, fun, and repetitive.'}
-
-## 🧩 Problem-Solving Style
-
-### How {pet_name} approaches challenges:
-- **Puzzle toys**: [describe their typical reaction]
-- **New environments**: [describe their behavior]
-- **Obstacles**: [describe how they solve problems]
-
-## 3 Brain-Boosting Activities
-
-### Activity 1: [Name]
-[How to do it and why it works for {pet_name}]
-
-### Activity 2: [Name]
-[How to do it and why it works for {pet_name}]
-
-### Activity 3: [Name]
-[How to do it and why it works for {pet_name}]
-
----
-
-> "A mentally stimulated {pet_name} is a happy {pet_name}."
-
-Follow this exact format."""
+## 3 Mental Workouts
+[Recommend 3 specific mind games]"""
             },
             {
                 "page": "owner_chemistry",
-                "prompt": f"""Write EXACTLY in this format:
+                "prompt": f"""# 💕 {titles['owner_chemistry']}
 
-# 💕 You & {pet_name}: Perfect Match
-
-**Your Type:** {owner_summary}
+**Owner Style:** {owner_summary}
 **{pet_name}'s Type:** "{archetype_alias}"
 
-## Why You're Great Together
+## Why You're a Great Team
+[Detail 3 points of synergy between the owner and dog]
 
-### Reason 1: [Title]
-[Specific explanation]
-
-### Reason 2: [Title]
-[Specific explanation]
-
-### Reason 3: [Title]
-[Specific explanation]
-
-## 🔧 Potential Friction Points
-
-### Challenge: [Title]
-**The issue:** [Describe]
-**The solution:** [Practical advice]
-
-## Daily Bonding Habits
-
-Here are 3 simple things you can start today:
-
-1. **[Habit name]** — [Brief description]
-2. **[Habit name]** — [Brief description]
-3. **[Habit name]** — [Brief description]
+## 🔧 Finding Balance
+[Mention potential friction points and how to resolve them]
 
 ---
-
-> "Together, you and your '{archetype_alias}' {pet_name} are the perfect team."
-
-Follow this exact format."""
+> "Together, you and {pet_name} create a unique '{archetype_alias}' bond." """
             },
             {
                 "page": "training_roadmap",
-                "prompt": f"""Write EXACTLY in this format:
-
-# 🎓 Training Strategy for {pet_name}
+                "prompt": f"""# 🎓 {titles['training_roadmap']}
 
 **Obedience Score: {stats.get('obedience', 50)}%**
 
-## Best Training Approach
+## The Best Strategy
+Focus on a **{'rule-based' if high_obe else 'game-based'}** approach.
+[Explain why this works for them]
 
-As a "{archetype_alias}" type, {pet_name} responds best to a **{'rule-based' if high_obe else 'game-based'}** approach.
+## 📅 2-Week Action Plan
+[Provide a simple foundation and building-up table or list]
 
-{'This means clear boundaries, consistent commands, and structured sessions work well. They appreciate knowing exactly what is expected.' if high_obe else 'This means making training feel like play. Short, fun sessions with lots of variety keep them engaged.'}
-
-## 📅 2-Week Training Plan
-
-### Week 1: Foundation
-
-| Day | Focus | Duration |
-|-----|-------|----------|
-| 1-2 | Sit & Name recognition | 5-10 min × 3 |
-| 3-4 | Stay (short) | 5-10 min × 3 |
-| 5-7 | Come when called | 5-10 min × 3 |
-
-### Week 2: Building Up
-
-| Day | Focus | Duration |
-|-----|-------|----------|
-| 1-3 | Combine commands | 10 min × 2 |
-| 4-5 | Add distractions | 10 min × 2 |
-| 6-7 | Real-world practice | 15 min × 1 |
-
-## 🏆 Motivation Tips
-
-- **Best rewards:** [specific to {pet_name}'s personality]
-- **Optimal timing:** [when they're most receptive]
-- **Avoid:** [what doesn't work]
-
----
-
-> "Consistency is key with your '{archetype_alias}' {pet_name}."
-
-Follow this exact format."""
+## 🏆 Motivation Secrets
+- **Best Rewards:** [Food/Praise/Play based on personality]
+- **What to Avoid:** [Specific stressors]"""
             },
             {
                 "page": "social_adaptation",
-                "prompt": f"""Write EXACTLY in this format:
-
-# 🐾 Socialization Guide for {pet_name}
+                "prompt": f"""# 🐾 {titles['social_adaptation']}
 
 **Sociability Score: {stats.get('sociability', 50)}%**
 
-## Meeting Other Dogs
-
-As a "{archetype_alias}" type, {pet_name} is **{'eager to make friends' if high_soc else 'selective about friendships'}**.
-
-### First Meeting Tips:
-- [Tip 1]
-- [Tip 2]
-- [Tip 3]
-
-### At the Dog Park:
-- [Advice 1]
-- [Advice 2]
-
-## Meeting New People
-
-### When Guests Visit:
-- [How {pet_name} typically reacts]
-- [What you should do]
-
-### With Strangers Outside:
-- [How {pet_name} typically reacts]
-- [What you should do]
+## New Encounters
+{pet_name} is **{'enthusiastic' if high_soc else 'selective'}** about making new friends.
+[Provide specific tips for dog parks and strangers]
 
 ## 🏠 Adapting to Change
-
-**Emotionality Score: {stats.get('emotionality', 50)}%**
-
-### Moving to a New Home:
-[Specific tips for {pet_name}'s personality]
-
-### Separation Anxiety Risk: {'Higher' if high_emo else 'Lower'}
-{'Prevention is key:' if high_emo else 'Still good to know:'}
-- [Tip 1]
-- [Tip 2]
-
----
-
-> "A well-socialized {pet_name} is confident and happy in any situation."
-
-Follow this exact format."""
+**Emotionality: {stats.get('emotionality', 50)}%**
+[Tips for moving house or separation based on their sensitivity]"""
             },
             {
                 "page": "lifestyle_guide",
-                "prompt": f"""Write EXACTLY in this format:
+                "prompt": f"""# ☀️ {titles['lifestyle_guide']}
 
-# ☀️ {pet_name}'s Perfect Day
+## Morning (6:00 - 9:00)
+- **Wake-up:** {'High energy' if high_soc else 'Slow and steady'}
+- **Walk style:** {'Active exploration' if high_soc else 'Relaxed sniffing'}
 
-## 🌅 Morning (6:00 - 9:00)
+## Daytime & Evening
+- **Home setup:** [Tips for when they are alone]
+- **Playtime:** [Mental vs Physical balance]
 
-**Wake-up routine:**
-As a "{archetype_alias}" type, {pet_name} {'bounces out of bed ready for action' if high_soc else 'takes a moment to stretch and slowly wake up'}.
-
-**Morning walk:** {'30-45 minutes of active exploration' if high_soc else '20-30 minutes of calm, sniff-focused walking'}
-- Best route type: [description]
-- Activities to include: [list]
-
-**Breakfast:** [timing and tips]
-
-## 🏠 Daytime (9:00 - 17:00)
-
-**When home alone:**
-- Environment setup: [specific tips]
-- Recommended toys: [list 2-3 specific types]
-- Background: [music/TV/silence?]
-
-## 🌆 Evening (17:00 - 20:00)
-
-**Second walk:** [style and duration]
-
-**Mental stimulation:**
-- [Activity 1]
-- [Activity 2]
-
-**Dinner:** [timing]
-
-## 🌙 Night (20:00+)
-
-**Wind-down routine:**
-- [Step 1]
-- [Step 2]
-
-**Sleep environment:**
-- [Tip 1]
-- [Tip 2]
-
----
-
-> "A good routine makes {pet_name} feel secure and loved."
-
-Follow this exact format."""
+## Night
+- **Wind-down:** [Best bedtime routine]"""
             },
             {
                 "page": "heartfelt_message",
-                "prompt": f"""Write EXACTLY in this format:
+                "prompt": f"""# 💌 {titles['heartfelt_message']}
 
-# 💌 A Message from {pet_name}
-
-*Written from {pet_name}'s perspective — a "{archetype_alias}" type — to their owner*
+*A message from {pet_name}'s heart to their {owner_summary} human*
 
 ---
-
 Dear Human,
 
-[Write 3-4 paragraphs from {pet_name}'s point of view, including:]
-
-- What it feels like to be a "{archetype_alias}" type dog
-- Gratitude for having a {owner_summary} owner
-- Small moments that mean everything
-- Hope for the future together
-
-[Keep it warm but not overly sentimental. About 150-200 words.]
+[3-4 warm paragraphs written from {pet_name}'s POV as a "{archetype_alias}"]
 
 ---
-
-> "You are not just my owner. You are my whole world. And I am so grateful that world is you."
-
-With love and tail wags,
-**{pet_name}** 🐾
-
-Follow this exact format."""
+> "You are the center of my world." """
             }
         ]
 
@@ -1574,7 +1247,6 @@ async def generate_report(result_id: str, lang: str = "en"):
 
         # 5. 페이지 생성 함수
         async def generate_page(page_info: dict) -> dict:
-            """표준 chat.completions.create 사용"""
             max_retries = 3
             retry_delay = 1.5
             
@@ -1582,24 +1254,71 @@ async def generate_report(result_id: str, lang: str = "en"):
                 try:
                     print(f"🔄 [{page_info['page']}] Attempt {attempt + 1}/{max_retries}...")
                     
-                    # ✅ 표준 OpenAI API 호출
-                    response = await openai_client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
+                    api_key = os.getenv("OPENAI_API_KEY")
+                    headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {api_key}"
+                    }
+                    
+                    payload = {
+                        "model": "gpt-5-mini",
+                        "input": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": page_info["prompt"]}
                         ],
-                        max_tokens=1000,
-                        temperature=0.7
-                    )
+                        "text": {
+                            "format": {"type": "text"},
+                            "verbosity": "medium"
+                        },
+                        "reasoning": {
+                            "effort": "medium"
+                        },
+                        "store": True
+                    }
                     
-                    # ✅ 표준 응답 추출
-                    content = response.choices[0].message.content
+                    async with httpx.AsyncClient(timeout=120.0) as client:
+                        response = await client.post(
+                            "https://api.openai.com/v1/responses",
+                            headers=headers,
+                            json=payload
+                        )
+                        response.raise_for_status()
+                        result = response.json()
                     
+                    # ✅ 수정된 응답 추출 로직 (List 에러 방지 버전)
+                    content_raw = ""
+
+                    # 1. output 배열에서 추출
+                    if "output" in result and isinstance(result["output"], list) and len(result["output"]) > 0:
+                        for item in result["output"]:
+                            # content 필드 확인
+                            if "content" in item:
+                                val = item["content"]
+                                # 만약 content가 리스트라면 (v1/responses 특성) 텍스트만 합침
+                                if isinstance(val, list):
+                                    content_raw = "".join([part.get("text", "") if isinstance(part, dict) else str(part) for part in val])
+                                else:
+                                    content_raw = str(val)
+                                break
+
+                    # 2. Fallback: text -> content 확인
+                    if not content_raw and "text" in result and "content" in result["text"]:
+                        val = result["text"]["content"]
+                        if isinstance(val, list):
+                            content_raw = "".join([part.get("text", "") if isinstance(part, dict) else str(part) for part in val])
+                        else:
+                            content_raw = str(val)
+
+                    # 최종적으로 문자열임을 보장
+                    content = str(content_raw)
+
                     print(f"✅ [{page_info['page']}] Success: {len(content)} chars")
-                    
+
+                    # 내용 검증 및 strip() 호출 (이제 에러가 나지 않습니다)
                     if not content or len(content.strip()) < 50:
-                        raise ValueError(f"Response too short: {len(content)} chars")
+                        # 디버깅을 위해 결과 구조 출력
+                        print(f"⚠️ [{page_info['page']}] Invalid Content Structure: {result}")
+                        raise ValueError(f"Response too short or empty: {len(content)} chars")
                     
                     return {
                         "page": page_info["page"],
