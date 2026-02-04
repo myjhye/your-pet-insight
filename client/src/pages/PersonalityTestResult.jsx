@@ -442,13 +442,14 @@ function PersonalityTestResult() {
     }
   }, [resultData])
   
-  // 리포트 상태 확인
+  // 리포트 상태 확인 및 activeTab 초기값 설정
   useEffect(() => {
     if (resultData) {
       setReportStatus(resultData.report_status || 'not_generated')
       setReportPages(resultData.report_pages || null)
       
       // 리포트가 ready이고 첫 페이지가 있으면 기본 탭 설정
+      // PremiumReportViewer와 동일한 순서 정의
       if (resultData.report_status === 'ready' && resultData.report_pages) {
         const pageOrder = [
           'table_of_contents',
@@ -460,6 +461,7 @@ function PersonalityTestResult() {
           'lifestyle_guide',
           'heartfelt_message'
         ]
+        // 실제 데이터가 있는 첫 번째 페이지를 활성화
         const firstAvailablePage = pageOrder.find(pageKey => resultData.report_pages[pageKey])
         if (firstAvailablePage) {
           setActiveTab(firstAvailablePage)
