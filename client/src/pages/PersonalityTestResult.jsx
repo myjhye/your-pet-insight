@@ -709,7 +709,11 @@ function PersonalityTestResult() {
     <main className={`min-h-screen text-[#2D3436] ${currentTab === 'premium' ? 'bg-[#F8F7F4]' : 'bg-[#F9FBF9]'}`}>
       <div className="max-w-5xl mx-auto px-4 py-2 md:px-6 md:py-12">
         {/* Main Result Card */}
-        <div className="bg-white rounded-xl md:rounded-[2rem] shadow-sm border border-primary/5 overflow-hidden mb-4 md:mb-12">
+        <div className={`bg-white shadow-sm border border-primary/5 overflow-hidden transition-all
+          ${currentTab === 'premium' && reportStatus === 'ready' 
+            ? 'rounded-t-xl rounded-b-none mb-0' 
+            : 'rounded-xl mb-4 md:mb-12'} 
+          md:rounded-[2rem]`}>
           {/* 1. Tabs (최상단) */}
           <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
             <div className="flex gap-1">
@@ -1156,7 +1160,7 @@ function PersonalityTestResult() {
           </div>
         )}
         
-        {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) */}
+        {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) - 여백 없이 바로 연결 */}
         {currentTab === 'premium' && reportStatus === 'ready' && reportPages && (
           <PremiumReportViewer
             petName={displayPetName}

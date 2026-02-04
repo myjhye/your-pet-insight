@@ -1,4 +1,3 @@
-import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -22,13 +21,14 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
   const currentPageIndex = availablePages.indexOf(activeTab) + 1
   const totalPages = availablePages.length
 
-  // 스마트 네비게이션: 탭 클릭 시 해당 버튼이 중앙으로 스크롤
+  // 탭 클릭 핸들러 (애니메이션 없이 즉시 이동)
   const handleTabClick = (pageKey, event) => {
     setActiveTab(pageKey)
-    // 탭 버튼이 스크롤 영역의 중앙에 오도록 스크롤
+    
+    // 1. 탭 버튼을 중앙으로 정렬하되, 'auto'를 사용하여 즉시 이동 (애니메이션 제거)
     if (event?.target) {
       event.target.scrollIntoView({ 
-        behavior: 'smooth', 
+        behavior: 'auto',  // 'smooth'에서 'auto'로 변경 (즉시 이동)
         block: 'nearest', 
         inline: 'center' 
       })
@@ -36,31 +36,36 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
   }
 
   return (
-    <div className="mt-2 md:mt-12 w-full">
-      {/* 통합 컨테이너 - 모바일: Flat 디자인, 데스크탑: 양장본 스타일 */}
-      <div className="bg-white md:rounded-[2.5rem] md:shadow-[0_20px_50px_rgba(0,0,0,0.05)] md:overflow-hidden md:border border-primary/5">
-        {/* 1. 헤더 영역 (타이틀) - 모바일: 패딩 축소, 데스크탑: 기존 유지 */}
-        <header className="bg-primary/5 pt-6 pb-2 px-4 md:p-12 text-center md:border-b border-primary/10">
-          <span className="material-symbols-outlined text-primary text-3xl md:text-5xl mb-2 block">workspace_premium</span>
-          <h2 className="text-2xl md:text-4xl font-display font-bold text-primary mb-1">
-            {uiText.premium.title}
+    <div className="w-full bg-white">
+      {/* [상단 헤더 + 네비게이션 통합 영역] 
+        - 모바일: 상단 탭 바로 아래에 딱 붙음 (마진 없음)
+        - 디자인: 흰색 배경에 하단 경계선으로만 구분 (Clean & Flat)
+      */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        {/* 1. 리포트 정보 (타이틀) */}
+        <div className="px-5 py-4 border-b border-gray-50">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="material-symbols-outlined text-primary text-lg">verified</span>
+            <span className="text-xs font-bold text-primary/60 uppercase tracking-wider">Premium Report</span>
+          </div>
+          <h2 className="text-lg font-bold text-primary leading-tight">
+             {petName} <span className="font-normal text-primary/80">| {uiText.premium.title}</span>
           </h2>
-          <p className="text-primary/60 text-sm md:text-lg">{uiText.premium.subtitle.replace('{name}', petName)}</p>
-        </header>
+        </div>
 
-        {/* 2. 네비게이션 (탭 메뉴) - Sticky Header with Solid Background */}
-        <nav className="border-b border-primary/10 bg-white sticky top-0 z-50">
-          <div className="flex gap-2 p-3 md:p-4 overflow-x-auto scrollbar-hide">
+        {/* 2. 챕터 네비게이션 (가로 스크롤) */}
+        <nav className="w-full">
+          <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
             {availablePages.map((pageKey) => {
               const isActive = activeTab === pageKey
               return (
                 <button
                   key={pageKey}
                   onClick={(e) => handleTabClick(pageKey, e)}
-                  className={`px-3 py-2 rounded-xl font-medium text-xs md:text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                  className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap flex-shrink-0 border ${
                     isActive
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-gray-50 text-primary hover:bg-primary/10'
+                      ? 'bg-[#2D5A47] text-white border-[#2D5A47] shadow-sm'
+                      : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
                   }`}
                 >
                   {pageTitles[pageKey] || pageKey.replace(/_/g, ' ')}
@@ -69,89 +74,79 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
             })}
           </div>
         </nav>
-
-        {/* 3. 본문 영역 - 모바일: Reader Mode (최소 패딩), 데스크탑: 기존 스타일 */}
-        <main className="p-4 md:p-16 min-h-[600px] bg-white">
-          <AnimatePresence mode="wait">
-            {activePageData && (
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-              >
-                {/* 페이지 헤더 - 모바일: 간소화 */}
-                <div className="flex items-center justify-between mb-6 md:mb-8 pb-4 md:pb-6 border-b border-primary/10">
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">auto_stories</span>
-                    <div>
-                      <h3 className="text-xl md:text-2xl font-display font-bold text-primary">
-                        {activePageTitle}
-                      </h3>
-                      <p className="text-xs md:text-sm text-primary/60 mt-1">Page {currentPageIndex} / {totalPages}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* ReactMarkdown으로 마크다운 렌더링 - 모바일 Reader Mode 최적화 */}
-                <div className="report-content px-2 md:px-0">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ children }) => (
-                        <h1 className="text-2xl md:text-4xl font-display font-black text-primary mb-4 md:mb-8 pb-2 md:pb-4 border-b-4 border-primary/10">
-                          {children}
-                        </h1>
-                      ),
-                      h2: ({ children }) => (
-                        <h2 className="text-xl md:text-2xl font-display font-bold text-primary/90 mt-6 md:mt-10 mb-3 md:mb-6 flex items-center">
-                          <span className="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
-                          {children}
-                        </h2>
-                      ),
-                      h3: ({ children }) => (
-                        <h3 className="text-lg md:text-xl font-display font-semibold text-primary/80 mt-5 md:mt-8 mb-2 md:mb-4">
-                          {children}
-                        </h3>
-                      ),
-                      p: ({ children }) => (
-                        <p className="text-[#2D3436] leading-relaxed mb-4 md:mb-6 text-[17px] md:text-base">
-                          {children}
-                        </p>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-bold text-primary">{children}</strong>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="my-4 md:my-6 ml-5 md:ml-6 space-y-2 md:space-y-3 list-disc list-outside marker:text-secondary">
-                          {children}
-                        </ul>
-                      ),
-                      li: ({ children }) => (
-                        <li className="text-[#2D3436] leading-relaxed pl-2 text-[17px] md:text-base">
-                          {children}
-                        </li>
-                      ),
-                      blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-secondary bg-secondary/5 p-4 md:p-6 my-6 md:my-8 rounded-r-xl italic text-base md:text-lg text-[#2D3436]">
-                          {children}
-                        </blockquote>
-                      ),
-                      hr: () => <hr className="my-8 md:my-10 border-t-2 border-primary/10" />,
-                    }}
-                  >
-                    {activePageData.content}
-                  </ReactMarkdown>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </main>
       </div>
+
+      {/* [본문 영역]
+        - 불필요한 패딩 제거, 텍스트 가독성 중심
+      */}
+      <main className="min-h-[500px] bg-white pb-20">
+        {activePageData && (
+          <div
+            key={activeTab}
+            className="px-5 py-8 md:px-12 md:py-12 max-w-4xl mx-auto"
+          >
+              {/* 챕터 제목 */}
+              <div className="mb-8">
+                <h3 className="text-2xl font-display font-bold text-primary mb-2">
+                  {activePageTitle}
+                </h3>
+                <div className="h-1 w-12 bg-[#E5E7EB] rounded-full"></div>
+              </div>
+
+              {/* 마크다운 콘텐츠 */}
+              <div className="report-content">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ children }) => (
+                      <h1 className="text-xl font-bold text-primary mt-8 mb-4 flex items-center gap-2">
+                        {children}
+                      </h1>
+                    ),
+                    h2: ({ children }) => (
+                      <h2 className="text-lg font-bold text-primary/90 mt-8 mb-3 pl-3 border-l-4 border-secondary">
+                        {children}
+                      </h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="text-base font-bold text-primary/80 mt-6 mb-2">
+                        {children}
+                      </h3>
+                    ),
+                    p: ({ children }) => (
+                      <p className="text-gray-700 leading-7 mb-5 text-[16px] font-normal">
+                        {children}
+                      </p>
+                    ),
+                    strong: ({ children }) => (
+                      <strong className="font-bold text-[#2D5A47]">{children}</strong>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="my-5 space-y-3 pl-1">
+                        {children}
+                      </ul>
+                    ),
+                    li: ({ children }) => (
+                      <li className="text-gray-700 leading-7 text-[16px] flex items-start gap-2">
+                        <span className="mt-2 w-1.5 h-1.5 bg-secondary rounded-full flex-shrink-0"></span>
+                        <span>{children}</span>
+                      </li>
+                    ),
+                    blockquote: ({ children }) => (
+                      <blockquote className="bg-gray-50 border border-gray-100 p-5 my-6 rounded-xl text-gray-600 italic">
+                        {children}
+                      </blockquote>
+                    ),
+                  }}
+                >
+                  {activePageData.content}
+                </ReactMarkdown>
+              </div>
+          </div>
+        )}
+      </main>
     </div>
   )
 }
 
 export default PremiumReportViewer
-
