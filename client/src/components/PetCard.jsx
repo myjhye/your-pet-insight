@@ -35,14 +35,14 @@ const styleConfig = {
 const textContent = {
   en: {
     cat: {
-      title: 'Start Cat Test',
-      desc: "Analyze your cat's behavior patterns to understand their independence style.",
-      btn: 'Start Assessment'
+      title: 'Cat Personality Test',
+      desc: "Decode your cat's unique personality style and behavioral quirks.",
+      btn: 'Start Analysis'
     },
     dog: {
       title: 'Dog Personality Test',
-      desc: "Discover your dog's unique character type, social style, and hidden traits with our AI-powered assessment.",
-      btn: 'Analyze Personality'
+      desc: "Reveal your dog's true personality type and hidden traits.",
+      btn: 'Start Analysis'
     }
   },
   jp: {
