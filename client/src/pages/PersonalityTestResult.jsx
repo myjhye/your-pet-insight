@@ -3,9 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
 import axios from 'axios'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import { motion, AnimatePresence } from 'framer-motion'
+import PremiumReportViewer from '../components/PremiumReportViewer'
 
 // API Base URL (환경 변수 또는 기본값)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -1158,138 +1156,16 @@ function PersonalityTestResult() {
           </div>
         )}
         
-        {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) - 통합 양장본 구조 */}
-        {currentTab === 'premium' && reportStatus === 'ready' && reportPages && (() => {
-          const pageOrder = [
-            'table_of_contents',
-            'deep_dive_traits',
-            'cognitive_strengths',
-            'owner_chemistry',
-            'training_roadmap',
-            'social_adaptation',
-            'lifestyle_guide',
-            'heartfelt_message'
-          ]
-          
-          const pageTitles = uiText.premium.pageTitles
-          
-          const availablePages = pageOrder.filter(pageKey => reportPages[pageKey])
-          const activePageData = reportPages[activeTab]
-          const activePageTitle = pageTitles[activeTab] || activeTab.replace(/_/g, ' ')
-          const currentPageIndex = availablePages.indexOf(activeTab) + 1
-          const totalPages = availablePages.length
-          
-          return (
-            <div className="mt-12">
-              {/* 통합 컨테이너 - 커다란 고급 양장본 */}
-              <div className="bg-white rounded-2xl md:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden border border-primary/5">
-                {/* 1. 헤더 영역 (타이틀) */}
-                <header className="bg-primary/5 p-6 md:p-12 text-center border-b border-primary/10">
-                  <span className="material-symbols-outlined text-primary text-4xl md:text-5xl mb-4 block">workspace_premium</span>
-                  <h2 className="text-3xl md:text-4xl font-display font-bold text-primary mb-2">
-                    {uiText.premium.title}
-                  </h2>
-                  <p className="text-primary/60 text-lg">{uiText.premium.subtitle.replace('{name}', displayPetName)}</p>
-                </header>
-
-                {/* 2. 네비게이션 (탭 메뉴) */}
-                <nav className="border-y border-primary/10 bg-white sticky top-0 z-20">
-                  <div className="flex flex-wrap gap-2 p-4 overflow-x-auto">
-                    {availablePages.map((pageKey) => {
-                      const isActive = activeTab === pageKey
-                      return (
-                        <button
-                          key={pageKey}
-                          onClick={() => setActiveTab(pageKey)}
-                          className={`px-3 py-2 rounded-xl font-medium text-xs md:text-sm transition-all whitespace-nowrap ${
-                            isActive
-                              ? 'bg-primary text-white shadow-md'
-                              : 'bg-gray-50 text-primary hover:bg-primary/10'
-                          }`}
-                        >
-                          {pageTitles[pageKey] || pageKey.replace(/_/g, ' ')}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </nav>
-
-                {/* 3. 본문 영역 (애니메이션 적용) */}
-                <main className="p-5 md:p-16 min-h-[600px] bg-white">
-                  <AnimatePresence mode="wait">
-                    {activePageData && (
-                      <motion.div
-                        key={activeTab}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                      >
-                        {/* 페이지 헤더 */}
-                        <div className="flex items-center justify-between mb-8 pb-6 border-b border-primary/10">
-                          <div className="flex items-center gap-4">
-                            <span className="material-symbols-outlined text-primary text-3xl">auto_stories</span>
-                            <div>
-                              <h3 className="text-2xl font-display font-bold text-primary">
-                                {activePageTitle}
-                              </h3>
-                              <p className="text-sm text-primary/60 mt-1">Page {currentPageIndex} / {totalPages}</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* ReactMarkdown으로 마크다운 렌더링 - 에디토리얼 타이포그래피 */}
-                        <div className="report-content">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                              h1: ({ children }) => (
-                                <h1 className="text-2xl md:text-4xl font-display font-black text-primary mb-6 md:mb-8 pb-3 md:pb-4 border-b-4 border-primary/10">
-                                  {children}
-                                </h1>
-                              ),
-                              h2: ({ children }) => (
-                                <h2 className="text-xl md:text-2xl font-display font-bold text-primary/90 mt-8 md:mt-10 mb-4 md:mb-6 flex items-center">
-                                  <span className="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
-                                  {children}
-                                </h2>
-                              ),
-                              h3: ({ children }) => (
-                                <h3 className="text-lg md:text-xl font-display font-semibold text-primary/80 mt-6 md:mt-8 mb-3 md:mb-4">
-                                  {children}
-                                </h3>
-                              ),
-                              p: ({ children }) => (
-                                <p className="text-[#2D3436] leading-relaxed mb-6 text-base">{children}</p>
-                              ),
-                              strong: ({ children }) => (
-                                <strong className="font-bold text-primary">{children}</strong>
-                              ),
-                              ul: ({ children }) => (
-                                <ul className="my-6 ml-6 space-y-3 list-disc list-outside marker:text-secondary">{children}</ul>
-                              ),
-                              li: ({ children }) => (
-                                <li className="text-[#2D3436] leading-relaxed pl-2">{children}</li>
-                              ),
-                              blockquote: ({ children }) => (
-                                <blockquote className="border-l-4 border-secondary bg-secondary/5 p-6 my-8 rounded-r-xl italic text-lg text-[#2D3436]">
-                                  {children}
-                                </blockquote>
-                              ),
-                              hr: () => <hr className="my-10 border-t-2 border-primary/10" />,
-                            }}
-                          >
-                            {activePageData.content}
-                          </ReactMarkdown>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </main>
-              </div>
-            </div>
-          )
-        })()}
+        {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) */}
+        {currentTab === 'premium' && reportStatus === 'ready' && reportPages && (
+          <PremiumReportViewer
+            petName={displayPetName}
+            reportPages={reportPages}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            uiText={uiText}
+          />
+        )}
 
       </div>
     </main>
