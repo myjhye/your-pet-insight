@@ -7,7 +7,6 @@ import { QuestionsProvider } from './contexts/QuestionsContext'
 import { ResultsProvider } from './contexts/ResultsContext'
 import { ProgressProvider } from './contexts/ProgressContext'
 import Home from './pages/Home'
-import DogTest from './pages/DogTest'
 import PersonalityTest from './pages/PersonalityTest'
 import PersonalityTestResult from './pages/PersonalityTestResult'
 import NotFound from './pages/NotFound'
@@ -32,7 +31,6 @@ function LangRoutes() {
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<Layout><Home /></Layout>} />
-              <Route path="/dog-test" element={<Layout><DogTest /></Layout>} />
               <Route path="/dog-test/personality" element={<Layout><PersonalityTest /></Layout>} />
               <Route path="/dog-test/personality/result/:resultId" element={<Layout><PersonalityTestResult /></Layout>} />
               {/* 404 라우트 - 반드시 가장 마지막에! */}

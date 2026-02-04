@@ -218,7 +218,6 @@ function PersonalityTest() {
 
   const breadcrumbItems = [
     { label: lang === 'jp' ? 'ホーム' : 'Home', href: '/' },
-    { label: lang === 'jp' ? '犬テスト' : 'Dog Tests', href: '/dog-test' },
     { label: lang === 'jp' ? '性格テスト' : 'Personality Test' },
   ]
 

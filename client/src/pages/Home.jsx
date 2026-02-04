@@ -16,7 +16,7 @@ function Home() {
   }
 
   const handleDogClick = () => {
-    navigate(localePath('/dog-test'))
+    navigate(localePath('/dog-test/personality'))
   }
 
   return (

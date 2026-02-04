@@ -40,9 +40,9 @@ const textContent = {
       btn: 'Start Assessment'
     },
     dog: {
-      title: 'Start Dog Test',
-      desc: "Uncover your dog's social drives, energy levels, and motivational factors.",
-      btn: 'Start Assessment'
+      title: 'Dog Personality Test',
+      desc: "Discover your dog's unique character type, social style, and hidden traits with our AI-powered assessment.",
+      btn: 'Analyze Personality'
     }
   },
   jp: {
@@ -52,9 +52,9 @@ const textContent = {
       btn: '診断を開始'
     },
     dog: {
-      title: '犬の性格診断を始める',
-      desc: "社会性、エネルギーレベル、独自の動機付け要因を解明します。",
-      btn: '診断を開始'
+      title: '犬の性格診断',
+      desc: "AIを活用した診断で、あなたの愛犬の独自の性格タイプ、社交スタイル、隠れた特性を発見します。",
+      btn: '性格を分析'
     }
   }
 }
