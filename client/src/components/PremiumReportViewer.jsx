@@ -36,20 +36,20 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
   }
 
   return (
-    <div className="mt-12">
-      {/* 통합 컨테이너 - 모바일: 몰입형, 데스크탑: 양장본 스타일 */}
-      <div className="bg-white rounded-2xl md:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden border border-primary/5">
-        {/* 1. 헤더 영역 (타이틀) - 모바일: 최소화, 데스크탑: 기존 유지 */}
-        <header className="bg-primary/5 p-4 md:p-12 text-center border-b border-primary/10">
-          <span className="material-symbols-outlined text-primary text-3xl md:text-5xl mb-2 md:mb-4 block">workspace_premium</span>
-          <h2 className="text-2xl md:text-4xl font-display font-bold text-primary mb-1 md:mb-2">
+    <div className="mt-2 md:mt-12 w-full">
+      {/* 통합 컨테이너 - 모바일: Flat 디자인, 데스크탑: 양장본 스타일 */}
+      <div className="bg-white md:rounded-[2.5rem] md:shadow-[0_20px_50px_rgba(0,0,0,0.05)] md:overflow-hidden md:border border-primary/5">
+        {/* 1. 헤더 영역 (타이틀) - 모바일: 패딩 축소, 데스크탑: 기존 유지 */}
+        <header className="bg-primary/5 pt-6 pb-2 px-4 md:p-12 text-center md:border-b border-primary/10">
+          <span className="material-symbols-outlined text-primary text-3xl md:text-5xl mb-2 block">workspace_premium</span>
+          <h2 className="text-2xl md:text-4xl font-display font-bold text-primary mb-1">
             {uiText.premium.title}
           </h2>
           <p className="text-primary/60 text-sm md:text-lg">{uiText.premium.subtitle.replace('{name}', petName)}</p>
         </header>
 
-        {/* 2. 네비게이션 (탭 메뉴) - Sticky Header with Backdrop Blur */}
-        <nav className="border-y border-primary/10 bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        {/* 2. 네비게이션 (탭 메뉴) - Sticky Header with Solid Background */}
+        <nav className="border-b border-primary/10 bg-white sticky top-0 z-50">
           <div className="flex gap-2 p-3 md:p-4 overflow-x-auto scrollbar-hide">
             {availablePages.map((pageKey) => {
               const isActive = activeTab === pageKey
