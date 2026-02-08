@@ -913,6 +913,14 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alia
 
 ## {titles['table_of_contents']}
 
+【厳格な制約 - 必ず守ってください】
+1. 形式: シンプルな箇条書きリストを使用してください
+2. 内容: 「セクションタイトル」と短い「紹介文」（最大10語）のみを書いてください。各セクションが*何を*扱うかを説明するだけです
+3. **スポイラー防止ルール**: このセクションでは、具体的な分析結果、スコア、またはアドバイスを絶対に明かさないでください
+   - ❌ 悪い例: "認知的強み: {pet_name}は知性80%の天才です。" (詳細すぎる)
+   - ✅ 良い例: "認知的強み: {pet_name}が情報を処理し、問題を解決する方法を発見する。" (紹介文のみ)
+
+【リストするセクション】
 1. **{titles['deep_dive_traits']}** — 「{archetype_alias}」タイプの理解
 2. **{titles['cognitive_strengths']}** — {pet_name}の情報処理方法
 3. **{titles['owner_chemistry']}** — 最高のチームになる理由
@@ -1051,6 +1059,14 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alia
 
 ## {titles['table_of_contents']}
 
+[Strict Constraints - YOU MUST FOLLOW]
+1. Format: Use a simple bullet list
+2. Content: Write ONLY the 'Section Title' and a short 'Teaser Sentence' (max 10 words) describing *what* the section covers
+3. **ANTI-SPOILER RULE**: DO NOT reveal the specific analysis results, scores, or advice in this section
+   - ❌ BAD: "Cognitive Strengths: {pet_name} is a genius with 80% sagacity." (Too detailed)
+   - ✅ GOOD: "Cognitive Strengths: Discover how {pet_name} processes information and solves problems." (Teaser only)
+
+[Sections to List]
 1. **{titles['deep_dive_traits']}** — Understanding the "{archetype_alias}" type
 2. **{titles['cognitive_strengths']}** — How {pet_name} processes information
 3. **{titles['owner_chemistry']}** — Why you make a great team
