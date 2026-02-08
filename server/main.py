@@ -874,6 +874,23 @@ Body text here. **Important words** in bold.
 def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alias: str, stats: dict, owner_summary: str) -> list:
     """V3 페이지별 프롬프트 - 프론트엔드 pageOrder 및 uiText와 완벽 매칭"""
     
+    # Basic Result와 동일한 강도 계산 로직 (항상 50~100% 사이로 표시)
+    def get_strength_percent(value):
+        """원본 값을 강도 퍼센트로 변환 (Basic Result StatBar와 동일)"""
+        return value if value >= 50 else (100 - value)
+    
+    # 원본 값
+    soc_raw = stats.get('sociability', 50)
+    sag_raw = stats.get('sagacity', 50)
+    emo_raw = stats.get('emotionality', 50)
+    obe_raw = stats.get('obedience', 50)
+    
+    # 강도 값 (Basic Result와 동일하게 표시)
+    soc_strength = get_strength_percent(soc_raw)
+    sag_strength = get_strength_percent(sag_raw)
+    emo_strength = get_strength_percent(emo_raw)
+    obe_strength = get_strength_percent(obe_raw)
+    
     high_soc = stats.get('sociability', 50) >= 55
     high_sag = stats.get('sagacity', 50) >= 55
     high_emo = stats.get('emotionality', 50) >= 55
@@ -941,10 +958,14 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alia
 
 ## 「{archetype_alias}」プロファイル
 {pet_name}の分析に基づく:
-- **社交性 {stats.get('sociability', 50)}%**: {'外向的で大胆' if high_soc else '控えめで観察力がある'}
-- **知性 {stats.get('sagacity', 50)}%**: {'機転が利き鋭い' if high_sag else '直感的で本能的'}
-- **感情性 {stats.get('emotionality', 50)}%**: {'共感的で表現豊か' if high_emo else '安定して冷静'}
-- **従順性 {stats.get('obedience', 50)}%**: {'ルール指向で集中力がある' if high_obe else '独立心が強く自由な精神'}
+
+[重要: これらはユーザーが基本結果画面で見た正確なスコアです]
+- **社交性 {soc_strength}%**: {'外向的で大胆' if high_soc else '控えめで観察力がある'}
+- **知性 {sag_strength}%**: {'機転が利き鋭い' if high_sag else '直感的で本能的'}
+- **感情性 {emo_strength}%**: {'共感的で表現豊か' if high_emo else '安定して冷静'}
+- **従順性 {obe_strength}%**: {'ルール指向で集中力がある' if high_obe else '独立心が強く自由な精神'}
+
+> **AIへの注意**: これらのパーセンテージ（{soc_strength}%、{sag_strength}%、{emo_strength}%、{obe_strength}%）は、基本結果に表示された値と同じです。分析でスコアを参照する際は、これらの正確な数値を使用してください。
 
 ## 💪 3つの主要な強み
 [これらのスコアに基づいて3つの具体的な強みを詳述]
@@ -959,7 +980,7 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alia
                 "page": "cognitive_strengths",
                 "prompt": f"""# 🧠 {titles['cognitive_strengths']}
 
-**知性スコア: {stats.get('sagacity', 50)}%**
+**知性スコア: {sag_strength}%** (これは基本結果に表示されたスコアと同じです)
 
 ## 学習スタイル
 {pet_name}は**{'観察→思考→実行' if high_sag else '実行→感じ→学習'}**タイプです。
@@ -991,7 +1012,7 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alia
                 "page": "training_roadmap",
                 "prompt": f"""# 🎓 {titles['training_roadmap']}
 
-**従順性スコア: {stats.get('obedience', 50)}%**
+**従順性スコア: {obe_strength}%** (これは基本結果に表示されたスコアと同じです)
 
 ## 最適な戦略
 **{'ルールベース' if high_obe else 'ゲームベース'}**アプローチに焦点を当てます。
@@ -1008,14 +1029,14 @@ def get_page_prompts_v3(lang: str, pet_name: str, mbti_code: str, archetype_alia
                 "page": "social_adaptation",
                 "prompt": f"""# 🐾 {titles['social_adaptation']}
 
-**社交性スコア: {stats.get('sociability', 50)}%**
+**社交性スコア: {soc_strength}%** (これは基本結果に表示されたスコアと同じです)
 
 ## 新しい出会い
 {pet_name}は新しい友達を作ることについて**{'熱心' if high_soc else '選択的'}**です。
 [ドッグパークや見知らぬ人への具体的なヒントを提供]
 
 ## 🏠 変化への適応
-**感情性: {stats.get('emotionality', 50)}%**
+**感情性: {emo_strength}%** (これは基本結果に表示されたスコアと同じです)
 [感度に基づく引っ越しや分離へのヒント]"""
             },
             {
@@ -1087,10 +1108,14 @@ Follow this exact format. Use "{archetype_alias}" instead of the MBTI code."""
 
 ## The "{archetype_alias}" Profile
 Based on {pet_name}'s analysis:
-- **Sociability {stats.get('sociability', 50)}%**: {'Outgoing and bold' if high_soc else 'Reserved and observant'}
-- **Sagacity {stats.get('sagacity', 50)}%**: {'Quick-witted and sharp' if high_sag else 'Intuitive and instinctive'}
-- **Emotionality {stats.get('emotionality', 50)}%**: {'Empathetic and expressive' if high_emo else 'Steady and calm'}
-- **Obedience {stats.get('obedience', 50)}%**: {'Rule-oriented and focused' if high_obe else 'Independent and free-spirited'}
+
+[IMPORTANT: These are the EXACT scores the user saw in the Basic Results screen]
+- **Sociability {soc_strength}%**: {'Outgoing and bold' if high_soc else 'Reserved and observant'}
+- **Sagacity {sag_strength}%**: {'Quick-witted and sharp' if high_sag else 'Intuitive and instinctive'}
+- **Emotionality {emo_strength}%**: {'Empathetic and expressive' if high_emo else 'Steady and calm'}
+- **Obedience {obe_strength}%**: {'Rule-oriented and focused' if high_obe else 'Independent and free-spirited'}
+
+> **Note for AI**: These percentages ({soc_strength}%, {sag_strength}%, {emo_strength}%, {obe_strength}%) are the same values displayed in the Basic Results. Use these exact numbers when referencing scores in your analysis.
 
 ## 💪 3 Key Strengths
 [Detail 3 specific strengths based on these scores]
@@ -1105,7 +1130,7 @@ Based on {pet_name}'s analysis:
                 "page": "cognitive_strengths",
                 "prompt": f"""# 🧠 {titles['cognitive_strengths']}
 
-**Sagacity Score: {stats.get('sagacity', 50)}%**
+**Sagacity Score: {sag_strength}%** (This is the same score shown in Basic Results)
 
 ## Learning Style
 {pet_name} is a **{'Watch → Think → Do' if high_sag else 'Do → Feel → Learn'}** type.
@@ -1137,7 +1162,7 @@ Based on {pet_name}'s analysis:
                 "page": "training_roadmap",
                 "prompt": f"""# 🎓 {titles['training_roadmap']}
 
-**Obedience Score: {stats.get('obedience', 50)}%**
+**Obedience Score: {obe_strength}%** (This is the same score shown in Basic Results)
 
 ## The Best Strategy
 Focus on a **{'rule-based' if high_obe else 'game-based'}** approach.
@@ -1154,14 +1179,14 @@ Focus on a **{'rule-based' if high_obe else 'game-based'}** approach.
                 "page": "social_adaptation",
                 "prompt": f"""# 🐾 {titles['social_adaptation']}
 
-**Sociability Score: {stats.get('sociability', 50)}%**
+**Sociability Score: {soc_strength}%** (This is the same score shown in Basic Results)
 
 ## New Encounters
 {pet_name} is **{'enthusiastic' if high_soc else 'selective'}** about making new friends.
 [Provide specific tips for dog parks and strangers]
 
 ## 🏠 Adapting to Change
-**Emotionality: {stats.get('emotionality', 50)}%**
+**Emotionality: {emo_strength}%** (This is the same score shown in Basic Results)
 [Tips for moving house or separation based on their sensitivity]"""
             },
             {
