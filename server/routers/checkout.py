@@ -3,10 +3,10 @@ import os
 import httpx
 
 # Router 생성
-router = APIRouter(prefix="/api", tags=["checkout"])
+router = APIRouter(prefix="/api/polar", tags=["checkout"])
 
 
-@router.post("/checkout")
+@router.post("/create-checkout")
 async def create_polar_checkout(result_id: str, lang: str = "en"):
     """
     Polar Checkout Session을 생성하고 결제 URL을 반환합니다.
