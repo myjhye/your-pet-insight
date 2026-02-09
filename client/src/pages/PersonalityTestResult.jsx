@@ -450,8 +450,17 @@ function PersonalityTestResult() {
   // 리포트 상태 확인 및 activeTab 초기값 설정
   useEffect(() => {
     if (resultData) {
-      setReportStatus(resultData.report_status || 'not_generated')
-      setReportPages(resultData.report_pages || null)
+      // 결제 처리 중이면 resultData로 덮어쓰지 않음
+      if (paymentProcessed && reportStatus === 'generating') {
+        // generating 상태 유지, report_pages만 업데이트 (ready가 되면)
+        if (resultData.report_status === 'ready') {
+          setReportStatus('ready')
+          setReportPages(resultData.report_pages || null)
+        }
+      } else {
+        setReportStatus(resultData.report_status || 'not_generated')
+        setReportPages(resultData.report_pages || null)
+      }
       
       // 리포트가 ready이고 첫 페이지가 있으면 기본 탭 설정
       // PremiumReportViewer와 동일한 순서 정의
@@ -473,7 +482,7 @@ function PersonalityTestResult() {
         }
       }
     }
-  }, [resultData])
+  }, [resultData, paymentProcessed, reportStatus])
   
   // 숫자와 % 강조 처리 (렌더링 후)
   useEffect(() => {
