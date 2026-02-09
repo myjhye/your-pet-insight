@@ -450,20 +450,22 @@ function PersonalityTestResult() {
   // 리포트 상태 확인 및 activeTab 초기값 설정
   useEffect(() => {
     if (resultData) {
-      // 결제 처리 중이면 resultData로 덮어쓰지 않음
-      if (paymentProcessed && reportStatus === 'generating') {
-        // generating 상태 유지, report_pages만 업데이트 (ready가 되면)
+      // 결제 후 생성 과정 전체에서 덮어쓰기 방지
+      if (paymentProcessed && (reportStatus === 'generating' || reportGenerationStarted)) {
         if (resultData.report_status === 'ready') {
           setReportStatus('ready')
           setReportPages(resultData.report_pages || null)
+          setIsGeneratingReport(false)
+          setCurrentTab('premium')
+          window.scrollTo({ top: 0, behavior: 'auto' })
         }
-      } else {
-        setReportStatus(resultData.report_status || 'not_generated')
-        setReportPages(resultData.report_pages || null)
+        // generating 중이거나 이미 ready로 전환된 경우 덮어쓰지 않음
+        return
       }
       
-      // 리포트가 ready이고 첫 페이지가 있으면 기본 탭 설정
-      // PremiumReportViewer와 동일한 순서 정의
+      setReportStatus(resultData.report_status || 'not_generated')
+      setReportPages(resultData.report_pages || null)
+      
       if (resultData.report_status === 'ready' && resultData.report_pages) {
         const pageOrder = [
           'table_of_contents',
@@ -475,14 +477,11 @@ function PersonalityTestResult() {
           'lifestyle_guide',
           'heartfelt_message'
         ]
-        // 실제 데이터가 있는 첫 번째 페이지를 활성화
         const firstAvailablePage = pageOrder.find(pageKey => resultData.report_pages[pageKey])
-        if (firstAvailablePage) {
-          setActiveTab(firstAvailablePage)
-        }
+        if (firstAvailablePage) setActiveTab(firstAvailablePage)
       }
     }
-  }, [resultData, paymentProcessed, reportStatus])
+  }, [resultData, paymentProcessed, reportStatus, reportGenerationStarted])
   
   // 숫자와 % 강조 처리 (렌더링 후)
   useEffect(() => {
@@ -688,11 +687,31 @@ function PersonalityTestResult() {
                 const updatedData = resultResponse.data
                 
                 if (updatedData.report_status === 'ready') {
+                  clearInterval(checkStatus)
+                  
+                  // Context 캐시 갱신 (이게 핵심!)
+                  await fetchResult(resultId)
+                  
                   setReportStatus('ready')
-                  setReportPages(updatedData.report_pages)
+                  setReportPages(updatedData.report_pages || null)
                   setIsGeneratingReport(false)
                   setCurrentTab('premium')
-                  clearInterval(checkStatus)
+                  
+                  // 첫 페이지 설정
+                  const pageOrder = [
+                    'table_of_contents',
+                    'deep_dive_traits',
+                    'cognitive_strengths',
+                    'owner_chemistry',
+                    'training_roadmap',
+                    'social_adaptation',
+                    'lifestyle_guide',
+                    'heartfelt_message'
+                  ]
+                  const firstPage = pageOrder.find(k => updatedData.report_pages?.[k])
+                  if (firstPage) setActiveTab(firstPage)
+                  
+                  window.scrollTo({ top: 0, behavior: 'auto' })
                 } else if (updatedData.report_status === 'failed') {
                   setReportStatus('failed')
                   setIsGeneratingReport(false)
