@@ -527,6 +527,22 @@ function PersonalityTestResult() {
   }, [activeTab, currentTab, reportStatus, reportPages])
   
   // Polar 결제 시작 함수
+  // 최하단 결제 버튼으로 스크롤하는 함수
+  const scrollToPremiumCTA = () => {
+    const ctaElement = document.getElementById('premium-cta')
+    if (ctaElement) {
+      // 헤더 높이를 고려한 오프셋
+      const headerOffset = 80
+      const elementPosition = ctaElement.getBoundingClientRect().top
+      const offsetPosition = elementPosition + window.scrollY - headerOffset
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      })
+    }
+  }
+
   const handleStartPayment = async () => {
     if (!resultId) return
     
@@ -784,8 +800,8 @@ function PersonalityTestResult() {
                     // Premium 탭으로 전환 후 최상단으로 스크롤 (즉시)
                     window.scrollTo({ top: 0, behavior: 'auto' })
                   } else {
-                    // 결제 시작
-                    handleStartPayment()
+                    // 최하단 결제 버튼으로 스크롤
+                    scrollToPremiumCTA()
                   }
                 }}
                 className={`px-3 md:px-6 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-1 text-xs md:text-sm ${
@@ -1120,7 +1136,7 @@ function PersonalityTestResult() {
                     preview={section.preview}
                     petName={displayPetName}
                     unlockButtonText={uiText.premium.premiumPreview.unlockButton}
-                    onUnlockClick={handleStartPayment}
+                    onUnlockClick={scrollToPremiumCTA}
                   />
                 ))}
               </div>
