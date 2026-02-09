@@ -545,14 +545,20 @@ function PersonalityTestResult() {
   // 최하단 결제 버튼으로 스크롤하는 함수
   const scrollToPremiumCTA = () => {
     const ctaElement = document.getElementById('premium-cta')
+    
     if (ctaElement) {
-      // 헤더 높이를 고려한 오프셋
-      const headerOffset = 80
-      const elementPosition = ctaElement.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.scrollY - headerOffset
+      // 컴포넌트의 중심 위치 계산
+      const rect = ctaElement.getBoundingClientRect()
+      const elementTop = rect.top + window.scrollY
+      const elementHeight = rect.height
+      const elementCenter = elementTop + (elementHeight / 2)
+      
+      // 화면 중심에 맞추기 위해 뷰포트 높이의 절반을 빼기
+      const viewportHeight = window.innerHeight
+      const targetScrollPosition = elementCenter - (viewportHeight / 2)
 
       window.scrollTo({
-        top: offsetPosition,
+        top: Math.max(0, targetScrollPosition), // 음수 방지
         behavior: 'smooth'
       })
     }

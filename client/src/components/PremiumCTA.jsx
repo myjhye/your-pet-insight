@@ -204,6 +204,7 @@ function PremiumCTA({
               {/* Button - 항상 풀 너비(모바일), 데스크탑은 auto, 최소 높이 52px */}
               {reportStatus !== 'generating' && (
                 <button
+                  id="premium-cta-button"
                   onClick={handleClick}
                   disabled={isGeneratingReport || isStartingPayment}
                   className={`group relative w-full md:w-auto font-bold text-base md:text-lg min-h-[52px] py-3.5 md:py-4 px-8 md:px-10 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.97] disabled:cursor-not-allowed overflow-hidden ${
