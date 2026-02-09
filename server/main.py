@@ -8,13 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 # 설정 모듈 import (Firebase 초기화를 위해)
 import config
 
-# 라우터 import
-from questions import router as questions_router
-from results import router as results_router
-from calculate import router as calculate_router
-from report_generation import router as report_router
-from setup import router as setup_router
-from checkout import router as checkout_router
+# 라우터 import (routers 폴더에서)
+from routers.questions import router as questions_router
+from routers.results import router as results_router
+from routers.calculate import router as calculate_router
+from routers.report_generation import router as report_router
+from routers.setup import router as setup_router
+from routers.checkout import router as checkout_router
+from routers.refund import router as refund_router
 
 # FastAPI 앱 생성
 app = FastAPI()
@@ -34,6 +35,7 @@ app.include_router(calculate_router)
 app.include_router(report_router)
 app.include_router(setup_router)
 app.include_router(checkout_router)
+app.include_router(refund_router)
 
 
 @app.get("/")

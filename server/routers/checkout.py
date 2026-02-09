@@ -3,10 +3,10 @@ import os
 import httpx
 
 # Router 생성
-router = APIRouter(prefix="/api/polar", tags=["checkout"])
+router = APIRouter(prefix="/api", tags=["checkout"])
 
 
-@router.post("/create-checkout")
+@router.post("/checkout")
 async def create_polar_checkout(result_id: str, lang: str = "en"):
     """
     Polar Checkout Session을 생성하고 결제 URL을 반환합니다.
@@ -17,13 +17,13 @@ async def create_polar_checkout(result_id: str, lang: str = "en"):
         if not polar_api_key:
             raise HTTPException(status_code=500, detail="Polar API key not configured")
         
-        # Product ID (환경 변수 또는 기본값)
-        product_id = os.getenv("POLAR_PRODUCT_ID", "33971cec-204c-464b-8085-3823695fab01")
+        # Product ID (환경 변수)
+        product_id = os.getenv("POLAR_PRODUCT_ID")
+        if not product_id:
+            raise HTTPException(status_code=500, detail="POLAR_PRODUCT_ID not configured")
         
-        # Polar API 엔드포인트 (Sandbox 또는 Production)
-        polar_api_url = os.getenv("POLAR_API_URL", "https://api.polar.sh/v1")
-        if os.getenv("POLAR_ENV") == "sandbox":
-            polar_api_url = "https://sandbox-api.polar.sh/v1"
+        # 샌드박스 환경 설정 (하드코딩)
+        polar_api_url = "https://sandbox-api.polar.sh/v1"
         
         # Success URL과 Cancel URL 설정
         base_url = os.getenv("FRONTEND_URL", "https://www.yourpetinsight.com")

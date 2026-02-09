@@ -10,6 +10,9 @@ router = APIRouter(prefix="/api", tags=["setup"])
 async def setup_data():
     """데이터 셋업 API - 질문 업로드"""
     try:
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
         from upload_questions import upload_questions
         upload_questions()
         return {"status": "success", "message": "질문 데이터 업로드 완료!"}
@@ -23,6 +26,9 @@ async def setup_data():
 async def setup_archetypes():
     """Archetype 셋업 API - 16개 유형 업로드"""
     try:
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
         from upload_archetypes import upload_archetypes
         upload_archetypes()
         return {"status": "success", "message": "16개 유형 데이터 업로드 완료!"}
