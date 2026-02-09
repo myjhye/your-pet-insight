@@ -391,6 +391,7 @@ function PersonalityTestResult() {
   const [reportPages, setReportPages] = useState(null)
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
   const [isStartingPayment, setIsStartingPayment] = useState(false) // 결제 시작 로딩 상태
+  const [paymentProcessed, setPaymentProcessed] = useState(false) // 결제 성공 여부를 추적하는 상태 (중복 실행 방지)
   
   // Share 기능 상태
   const [copied, setCopied] = useState(false)
@@ -630,37 +631,96 @@ function PersonalityTestResult() {
     }
   }
 
-  // 결제 완료 후 처리 (URL 파라미터 확인)
+  // 결제 완료 후 처리 (URL 파라미터 확인) - 최초 1회만 실행
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const paymentStatus = urlParams.get('payment')
     
-    if (paymentStatus === 'success' && resultId) {
-      // 리포트가 아직 생성되지 않은 경우에만 처리
-      if (reportStatus !== 'ready' && reportStatus !== 'generating') {
-        // 1. 먼저 로딩 상태 설정 (전체 화면 로딩 오버레이 즉시 표시)
-        setReportStatus('generating')
-        setIsGeneratingReport(true)
-        
-        // 2. Premium 탭 자동 선택
-        setCurrentTab('premium')
-        
-        // 3. 최상단으로 스크롤
-        window.scrollTo({ top: 0, behavior: 'auto' })
-        
-        // 4. 리포트 생성 시작
-        handleGenerateReport()
-      } else if (reportStatus === 'ready') {
-        // 리포트가 이미 준비된 경우에는 탭만 변경
-        setCurrentTab('premium')
-        window.scrollTo({ top: 0, behavior: 'auto' })
-      }
+    // 결제 성공 + 아직 처리 안 됨 + resultId 있음
+    if (paymentStatus === 'success' && !paymentProcessed && resultId) {
+      // 즉시 처리 완료 표시 (중복 실행 방지)
+      setPaymentProcessed(true)
       
-      // URL에서 payment 파라미터 제거 (깔끔한 URL 유지)
+      // URL에서 payment 파라미터 즉시 제거
       const newUrl = window.location.pathname
       window.history.replaceState({}, '', newUrl)
+      
+      // 즉시 로딩 상태로 전환 (화면에 바로 표시)
+      setReportStatus('generating')
+      setIsGeneratingReport(true)
+      
+      // Premium 탭 자동 선택
+      setCurrentTab('premium')
+      
+      // 최상단으로 스크롤
+      window.scrollTo({ top: 0, behavior: 'auto' })
     }
-  }, [resultId, reportStatus]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [resultId, paymentProcessed])
+
+  // 로딩 상태가 설정된 후 리포트 생성 시작
+  useEffect(() => {
+    // generating 상태이고, 결제 처리된 경우에만 시작
+    if (reportStatus === 'generating' && paymentProcessed && resultId && isGeneratingReport) {
+      // 리포트가 이미 ready인 경우 체크
+      if (resultData?.report_status === 'ready') {
+        setReportStatus('ready')
+        setReportPages(resultData.report_pages)
+        setIsGeneratingReport(false)
+        setCurrentTab('premium')
+        return
+      }
+      
+      // 리포트 생성 API 호출
+      const generateReport = async () => {
+        try {
+          const response = await axios.post(`${API_BASE_URL}/api/test/generate-report/${resultId}?lang=${lang}`)
+          
+          if (response.data.status === 'success') {
+            // 폴링으로 리포트 상태 확인 (최대 60초)
+            let attempts = 0
+            const maxAttempts = 60
+            
+            const checkStatus = setInterval(async () => {
+              attempts++
+              try {
+                const resultResponse = await axios.get(`${API_BASE_URL}/api/results/${resultId}`)
+                const updatedData = resultResponse.data
+                
+                if (updatedData.report_status === 'ready') {
+                  setReportStatus('ready')
+                  setReportPages(updatedData.report_pages)
+                  setIsGeneratingReport(false)
+                  setCurrentTab('premium')
+                  clearInterval(checkStatus)
+                } else if (updatedData.report_status === 'failed') {
+                  setReportStatus('failed')
+                  setIsGeneratingReport(false)
+                  clearInterval(checkStatus)
+                } else if (attempts >= maxAttempts) {
+                  setReportStatus('failed')
+                  setIsGeneratingReport(false)
+                  clearInterval(checkStatus)
+                }
+              } catch (err) {
+                console.error('리포트 상태 확인 실패:', err)
+                if (attempts >= maxAttempts) {
+                  setReportStatus('failed')
+                  setIsGeneratingReport(false)
+                  clearInterval(checkStatus)
+                }
+              }
+            }, 1000)
+          }
+        } catch (error) {
+          console.error('리포트 생성 실패:', error)
+          setReportStatus('failed')
+          setIsGeneratingReport(false)
+        }
+      }
+      
+      generateReport()
+    }
+  }, [reportStatus, paymentProcessed, resultId, isGeneratingReport, resultData, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 링크 복사 함수
   const handleCopyLink = async () => {
