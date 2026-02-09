@@ -4,6 +4,7 @@ import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
 import axios from 'axios'
 import PremiumReportViewer from '../components/PremiumReportViewer'
+import PremiumCTA from '../components/PremiumCTA'
 
 // API Base URL (환경 변수 또는 기본값)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -1270,89 +1271,19 @@ function PersonalityTestResult() {
 
         {/* Premium CTA (기본 탭에서만 표시) */}
         {currentTab === 'basic' && (
-          <div id="premium-cta" className="relative mt-8 mb-12">
-            <div className="relative bg-gradient-to-br from-primary to-[#1B4D3E] rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 text-center overflow-hidden shadow-2xl border border-white/10">
-              {/* Background Effects (Glow) */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-              <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#2D5A47]/20 rounded-full blur-3xl pointer-events-none"></div>
-              
-              <div className="relative z-10 flex flex-col items-center">
-                {/* 1. Glowing Icon Badge */}
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 flex items-center justify-center mb-4 md:mb-6 backdrop-blur-sm border border-white/10 shadow-inner">
-                  <span className="material-symbols-outlined text-white text-3xl md:text-4xl">workspace_premium</span>
-                </div>
-
-                {/* 2. Title & Description */}
-                <h4 className="text-2xl md:text-4xl font-display font-bold text-white mb-3 md:mb-4">
-                  {uiText.premium.cta.title}
-                </h4>
-                <p className="text-white/80 text-sm md:text-lg leading-relaxed max-w-lg mx-auto mb-8 md:mb-10">
-                  {uiText.premium.cta.description.replace('{name}', displayPetName)}
-                </p>
-
-                {/* 3. Main Action Button (Full Width on Mobile) */}
-                <div className="flex flex-col items-center gap-4 w-full">
-                  {/* Price Display */}
-                  {reportStatus !== 'ready' && reportStatus !== 'generating' && (
-                    <div className="flex items-center gap-2 text-white/90 mb-2">
-                      <span className="text-3xl md:text-4xl font-bold">{uiText.premium.cta.price}</span>
-                      <span className="text-sm md:text-base opacity-80">USD</span>
-                    </div>
-                  )}
-                  
-                  {reportStatus !== 'generating' && (
-                    <button 
-                        onClick={async () => {
-                          if (reportStatus === 'ready' && reportPages) {
-                            setCurrentTab('premium')
-                            // Premium 탭으로 전환 후 최상단으로 스크롤 (즉시)
-                            window.scrollTo({ top: 0, behavior: 'auto' })
-                          } else {
-                            // Polar 결제 플로우
-                            handleStartPayment()
-                          }
-                        }}
-                        disabled={isGeneratingReport || isStartingPayment}
-                        className={`w-full md:w-auto font-bold text-base md:text-lg py-4 px-8 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:cursor-not-allowed ${
-                          isStartingPayment 
-                            ? 'bg-white/60 text-primary/60' 
-                            : 'bg-white text-primary hover:bg-gray-50'
-                        }`}
-                      >
-                        {isStartingPayment ? (
-                          <>
-                            <div className="w-5 h-5 border-2 border-primary/60 border-t-transparent rounded-full animate-spin"></div>
-                            <span>{uiText.premium.cta.getReport}</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>
-                              {reportStatus === 'ready' && reportPages 
-                                ? uiText.premium.cta.viewReport 
-                                : reportStatus === 'failed'
-                                ? uiText.premium.cta.retry
-                                : uiText.premium.cta.getReport}
-                            </span>
-                            <span className="material-symbols-outlined text-xl">arrow_forward</span>
-                          </>
-                        )}
-                      </button>
-                  )}
-                  
-                  {reportStatus === 'ready' && reportPages && (
-                    <div className="flex items-center gap-2 text-white/80">
-                      <span className="material-symbols-outlined text-lg">check_circle</span>
-                      <span className="text-sm font-medium">{uiText.premium.cta.ready}</span>
-                    </div>
-                  )}
-                  
-                  {reportStatus === 'failed' && (
-                    <p className="text-white/70 text-sm">{uiText.premium.cta.failed}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <PremiumCTA
+            lang={lang}
+            petName={displayPetName}
+            reportStatus={reportStatus}
+            reportPages={reportPages}
+            isGeneratingReport={isGeneratingReport}
+            isStartingPayment={isStartingPayment}
+            onGetReport={handleStartPayment}
+            onViewReport={() => {
+              setCurrentTab('premium')
+              window.scrollTo({ top: 0, behavior: 'auto' })
+            }}
+          />
         )}
         
         {/* 프리미엄 리포트 전용 뷰어 (프리미엄 탭일 때만 표시) - 여백 없이 바로 연결 */}
