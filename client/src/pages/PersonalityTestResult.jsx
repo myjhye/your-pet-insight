@@ -390,6 +390,7 @@ function PersonalityTestResult() {
   const [reportStatus, setReportStatus] = useState(null) // not_generated, generating, ready, failed
   const [reportPages, setReportPages] = useState(null)
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const [isStartingPayment, setIsStartingPayment] = useState(false) // 결제 시작 로딩 상태
   
   // Share 기능 상태
   const [copied, setCopied] = useState(false)
@@ -546,6 +547,8 @@ function PersonalityTestResult() {
   const handleStartPayment = async () => {
     if (!resultId) return
     
+    setIsStartingPayment(true)
+    
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/polar/create-checkout`,
@@ -566,6 +569,7 @@ function PersonalityTestResult() {
       }
     } catch (error) {
       console.error('결제 세션 생성 실패:', error)
+      setIsStartingPayment(false)
       alert(lang === 'jp' 
         ? '결제 세션 생성에 실패했습니다. 다시 시도해주세요.' 
         : 'Failed to create checkout session. Please try again.')
@@ -632,9 +636,24 @@ function PersonalityTestResult() {
     const paymentStatus = urlParams.get('payment')
     
     if (paymentStatus === 'success' && resultId) {
-      // 결제 성공 시 리포트 생성 시작
+      // 리포트가 아직 생성되지 않은 경우에만 처리
       if (reportStatus !== 'ready' && reportStatus !== 'generating') {
+        // 1. 먼저 로딩 상태 설정 (전체 화면 로딩 오버레이 즉시 표시)
+        setReportStatus('generating')
+        setIsGeneratingReport(true)
+        
+        // 2. Premium 탭 자동 선택
+        setCurrentTab('premium')
+        
+        // 3. 최상단으로 스크롤
+        window.scrollTo({ top: 0, behavior: 'auto' })
+        
+        // 4. 리포트 생성 시작
         handleGenerateReport()
+      } else if (reportStatus === 'ready') {
+        // 리포트가 이미 준비된 경우에는 탭만 변경
+        setCurrentTab('premium')
+        window.scrollTo({ top: 0, behavior: 'auto' })
       }
       
       // URL에서 payment 파라미터 제거 (깔끔한 URL 유지)
@@ -773,8 +792,26 @@ function PersonalityTestResult() {
   }
 
   return (
-    <main className={`min-h-screen text-[#2D3436] ${currentTab === 'premium' ? 'bg-[#F8F7F4]' : 'bg-[#F9FBF9]'}`}>
-      <div className="max-w-5xl mx-auto px-4 py-2 md:px-6 md:py-12">
+    <>
+      {/* 전체 화면 리포트 생성 로딩 오버레이 */}
+      {reportStatus === 'generating' && (
+        <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center gap-6">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-center">
+              <p className="text-primary text-xl md:text-2xl font-bold mb-2">
+                {uiText.premium.cta.generating}
+              </p>
+              <p className="text-primary/60 text-sm md:text-base">
+                {uiText.premium.cta.generatingSub}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <main className={`min-h-screen text-[#2D3436] ${currentTab === 'premium' ? 'bg-[#F8F7F4]' : 'bg-[#F9FBF9]'}`}>
+        <div className="max-w-5xl mx-auto px-4 py-2 md:px-6 md:py-12">
         {/* Main Result Card */}
         <div className={`bg-white shadow-sm border border-primary/5 overflow-hidden
           ${currentTab === 'premium' && reportStatus === 'ready' 
@@ -1168,23 +1205,16 @@ function PersonalityTestResult() {
 
                 {/* 3. Main Action Button (Full Width on Mobile) */}
                 <div className="flex flex-col items-center gap-4 w-full">
-                  {reportStatus === 'generating' ? (
-                    <>
-                      <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-white/90 text-lg font-medium">{uiText.premium.cta.generating}</p>
-                      <p className="text-white/60 text-sm">{uiText.premium.cta.generatingSub}</p>
-                    </>
-                  ) : (
-                    <>
-                      {/* Price Display */}
-                      {reportStatus !== 'ready' && (
-                        <div className="flex items-center gap-2 text-white/90 mb-2">
-                          <span className="text-3xl md:text-4xl font-bold">{uiText.premium.cta.price}</span>
-                          <span className="text-sm md:text-base opacity-80">USD</span>
-                        </div>
-                      )}
-                      
-                      <button 
+                  {/* Price Display */}
+                  {reportStatus !== 'ready' && reportStatus !== 'generating' && (
+                    <div className="flex items-center gap-2 text-white/90 mb-2">
+                      <span className="text-3xl md:text-4xl font-bold">{uiText.premium.cta.price}</span>
+                      <span className="text-sm md:text-base opacity-80">USD</span>
+                    </div>
+                  )}
+                  
+                  {reportStatus !== 'generating' && (
+                    <button 
                         onClick={async () => {
                           if (reportStatus === 'ready' && reportPages) {
                             setCurrentTab('premium')
@@ -1195,30 +1225,42 @@ function PersonalityTestResult() {
                             handleStartPayment()
                           }
                         }}
-                        disabled={isGeneratingReport}
-                        className="w-full md:w-auto bg-white text-primary font-bold text-base md:text-lg py-4 px-8 rounded-xl shadow-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isGeneratingReport || isStartingPayment}
+                        className={`w-full md:w-auto font-bold text-base md:text-lg py-4 px-8 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:cursor-not-allowed ${
+                          isStartingPayment 
+                            ? 'bg-white/60 text-primary/60' 
+                            : 'bg-white text-primary hover:bg-gray-50'
+                        }`}
                       >
-                        <span>
-                          {reportStatus === 'ready' && reportPages 
-                            ? uiText.premium.cta.viewReport 
-                            : reportStatus === 'failed'
-                            ? uiText.premium.cta.retry
-                            : uiText.premium.cta.getReport}
-                        </span>
-                        <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                        {isStartingPayment ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-primary/60 border-t-transparent rounded-full animate-spin"></div>
+                            <span>{uiText.premium.cta.getReport}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>
+                              {reportStatus === 'ready' && reportPages 
+                                ? uiText.premium.cta.viewReport 
+                                : reportStatus === 'failed'
+                                ? uiText.premium.cta.retry
+                                : uiText.premium.cta.getReport}
+                            </span>
+                            <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                          </>
+                        )}
                       </button>
-                      
-                      {reportStatus === 'ready' && reportPages && (
-                        <div className="flex items-center gap-2 text-white/80">
-                          <span className="material-symbols-outlined text-lg">check_circle</span>
-                          <span className="text-sm font-medium">{uiText.premium.cta.ready}</span>
-                        </div>
-                      )}
-                      
-                      {reportStatus === 'failed' && (
-                        <p className="text-white/70 text-sm">{uiText.premium.cta.failed}</p>
-                      )}
-                    </>
+                  )}
+                  
+                  {reportStatus === 'ready' && reportPages && (
+                    <div className="flex items-center gap-2 text-white/80">
+                      <span className="material-symbols-outlined text-lg">check_circle</span>
+                      <span className="text-sm font-medium">{uiText.premium.cta.ready}</span>
+                    </div>
+                  )}
+                  
+                  {reportStatus === 'failed' && (
+                    <p className="text-white/70 text-sm">{uiText.premium.cta.failed}</p>
                   )}
                 </div>
               </div>
@@ -1239,9 +1281,10 @@ function PersonalityTestResult() {
             isCopied={copied}
           />
         )}
-
-      </div>
-    </main>
+        
+        </div>
+      </main>
+    </>
   )
 }
 
