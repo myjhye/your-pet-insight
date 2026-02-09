@@ -17,13 +17,12 @@ async def create_polar_checkout(result_id: str, lang: str = "en"):
         if not polar_api_key:
             raise HTTPException(status_code=500, detail="Polar API key not configured")
         
-        # Product ID (환경 변수)
-        product_id = os.getenv("POLAR_PRODUCT_ID")
-        if not product_id:
-            raise HTTPException(status_code=500, detail="POLAR_PRODUCT_ID not configured")
+        # Product ID (환경 변수 또는 기본값)
+        # 프로덕션 Product ID: 33971cec-204c-464b-8085-3823695fab01
+        product_id = os.getenv("POLAR_PRODUCT_ID", "33971cec-204c-464b-8085-3823695fab01")
         
-        # 샌드박스 환경 설정 (하드코딩)
-        polar_api_url = "https://sandbox-api.polar.sh/v1"
+        # 프로덕션 환경 설정
+        polar_api_url = "https://api.polar.sh/v1"
         
         # Success URL과 Cancel URL 설정
         base_url = os.getenv("FRONTEND_URL", "https://www.yourpetinsight.com")

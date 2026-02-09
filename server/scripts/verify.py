@@ -34,7 +34,7 @@ async def verify_payment(checkout_id: str):
             raise HTTPException(status_code=500, detail="Polar API key not configured")
         
         # 샌드박스 환경 설정 (하드코딩)
-        polar_api_url = "https://sandbox-api.polar.sh/v1"
+        polar_api_url = "https://api.polar.sh/v1"
         
         headers = {
             "Authorization": f"Bearer {polar_api_key}",

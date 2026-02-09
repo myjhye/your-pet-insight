@@ -45,8 +45,8 @@ async def create_refund(refund_request: RefundRequest):
         if not polar_api_key:
             raise HTTPException(status_code=500, detail="Polar API key not configured")
         
-        # 샌드박스 환경 설정 (하드코딩)
-        polar_api_url = "https://sandbox-api.polar.sh/v1"
+        # 프로덕션 환경 설정
+        polar_api_url = "https://api.polar.sh/v1"
         
         headers = {
             "Authorization": f"Bearer {polar_api_key}",
