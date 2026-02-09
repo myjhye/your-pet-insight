@@ -20,13 +20,13 @@ export function ResultsProvider({ children }) {
   loadingRef.current = loadingIds
 
   // 결과 불러오기 함수 (캐시 확인 후 필요시 fetch)
-  const fetchResult = useCallback(async (resultId) => {
+  const fetchResult = useCallback(async (resultId, forceRefresh = false) => {
     if (!resultId) {
       return null
     }
 
-    // 이미 캐시에 있으면 즉시 반환 (로딩 상태도 false로 설정)
-    if (cacheRef.current[resultId]) {
+    // 이미 캐시에 있고 강제 갱신이 아니면 즉시 반환
+    if (!forceRefresh && cacheRef.current[resultId]) {
       setLoadingIds(prev => {
         if (prev[resultId] === false) {
           return prev
@@ -36,8 +36,8 @@ export function ResultsProvider({ children }) {
       return cacheRef.current[resultId]
     }
 
-    // 이미 로딩 중이면 대기
-    if (loadingRef.current[resultId]) {
+    // 이미 로딩 중이면 대기 (강제 갱신이 아닐 때만)
+    if (!forceRefresh && loadingRef.current[resultId]) {
       return null
     }
 
@@ -49,7 +49,7 @@ export function ResultsProvider({ children }) {
       const res = await axios.get(`${API_BASE_URL}/api/results/${resultId}`)
       const data = res.data
       
-      // 캐시에 저장
+      // 캐시에 저장 (갱신)
       setResultsCache(prev => ({ ...prev, [resultId]: data }))
       setLoadingIds(prev => ({ ...prev, [resultId]: false }))
       

@@ -406,13 +406,16 @@ function PersonalityTestResult() {
   // 리포트 내부 탭 상태 관리
   const [activeTab, setActiveTab] = useState('table_of_contents')
 
-  // Context에서 결과 가져오기 (캐시 활용)
+  // Context에서 결과 가져오기 - 캐시에 report_status가 없으면 강제 갱신
   useEffect(() => {
     if (resultId) {
-      fetchResult(resultId)
+      // 캐시에 report_status가 없으면 강제 갱신 (구매 여부 확인)
+      const cached = getResult(resultId)
+      const needsRefresh = !cached || cached.report_status === undefined
+      fetchResult(resultId, needsRefresh)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resultId]) // fetchResult는 안정적인 함수이므로 의존성에서 제외
+  }, [resultId]) // fetchResult, getResult는 안정적인 함수이므로 의존성에서 제외
 
   // Context에서 데이터 읽기
   const resultData = getResult(resultId)
@@ -689,8 +692,8 @@ function PersonalityTestResult() {
                 if (updatedData.report_status === 'ready') {
                   clearInterval(checkStatus)
                   
-                  // Context 캐시 갱신 (이게 핵심!)
-                  await fetchResult(resultId)
+                  // ★ 강제 갱신으로 캐시 업데이트
+                  await fetchResult(resultId, true)
                   
                   setReportStatus('ready')
                   setReportPages(updatedData.report_pages || null)
