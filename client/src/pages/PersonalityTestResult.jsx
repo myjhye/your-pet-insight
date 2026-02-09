@@ -59,6 +59,7 @@ const UI_TEXT = {
         title: "Unlock Your Premium Report",
         description: "Get {name}'s complete personality analysis with personalized training strategies, daily routines, and compatibility insights.",
         getReport: "Get Premium Report",
+        price: "$5.99",
         generating: "Generating your report...",
         generatingSub: "This may take up to 30 seconds",
         viewReport: "View Premium Report",
@@ -157,6 +158,7 @@ const UI_TEXT = {
         title: "プレミアムレポートをアンロック",
         description: "{name}の完全な性格分析、パーソナライズされたトレーニング戦略、毎日のルーティン、相性の洞察を入手してください。",
         getReport: "プレミアムレポートを取得",
+        price: "$5.99",
         generating: "レポートを生成中...",
         generatingSub: "最大30秒かかる場合があります",
         viewReport: "プレミアムレポートを表示",
@@ -524,6 +526,36 @@ function PersonalityTestResult() {
     }
   }, [activeTab, currentTab, reportStatus, reportPages])
   
+  // Polar 결제 시작 함수
+  const handleStartPayment = async () => {
+    if (!resultId) return
+    
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/polar/create-checkout`,
+        null,
+        {
+          params: {
+            result_id: resultId,
+            lang: lang
+          }
+        }
+      )
+      
+      if (response.data.status === 'success' && response.data.checkout_url) {
+        // Polar Checkout 페이지로 리다이렉트
+        window.location.href = response.data.checkout_url
+      } else {
+        throw new Error('Failed to create checkout session')
+      }
+    } catch (error) {
+      console.error('결제 세션 생성 실패:', error)
+      alert(lang === 'jp' 
+        ? '결제 세션 생성에 실패했습니다. 다시 시도해주세요.' 
+        : 'Failed to create checkout session. Please try again.')
+    }
+  }
+  
   // 리포트 생성 함수
   const handleGenerateReport = async () => {
     if (!resultId) return
@@ -577,6 +609,23 @@ function PersonalityTestResult() {
       setIsGeneratingReport(false)
     }
   }
+
+  // 결제 완료 후 처리 (URL 파라미터 확인)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const paymentStatus = urlParams.get('payment')
+    
+    if (paymentStatus === 'success' && resultId) {
+      // 결제 성공 시 리포트 생성 시작
+      if (reportStatus !== 'ready' && reportStatus !== 'generating') {
+        handleGenerateReport()
+      }
+      
+      // URL에서 payment 파라미터 제거 (깔끔한 URL 유지)
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [resultId, reportStatus]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 링크 복사 함수
   const handleCopyLink = async () => {
@@ -735,11 +784,8 @@ function PersonalityTestResult() {
                     // Premium 탭으로 전환 후 최상단으로 스크롤 (즉시)
                     window.scrollTo({ top: 0, behavior: 'auto' })
                   } else {
-                    // 결제 유도 섹션으로 스크롤 (즉시)
-                    const premiumSection = document.getElementById('premium-cta')
-                    if (premiumSection) {
-                      premiumSection.scrollIntoView({ behavior: 'auto' })
-                    }
+                    // 결제 시작
+                    handleStartPayment()
                   }
                 }}
                 className={`px-3 md:px-6 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-1 text-xs md:text-sm ${
@@ -842,11 +888,11 @@ function PersonalityTestResult() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="material-symbols-outlined text-primary text-2xl shrink-0">pets</span>
                     <h1 className="text-3xl font-display font-bold text-primary tracking-tight leading-tight text-center break-words break-keep max-w-full">
-                      {displayPetName}
-                    </h1>
-                  </div>
-                  <p className="text-sm text-primary/60 font-medium">{uiText.petName.subtitle}</p>
+                    {displayPetName}
+                  </h1>
                 </div>
+                <p className="text-sm text-primary/60 font-medium">{uiText.petName.subtitle}</p>
+              </div>
               </div>
               )}
 
@@ -1074,12 +1120,7 @@ function PersonalityTestResult() {
                     preview={section.preview}
                     petName={displayPetName}
                     unlockButtonText={uiText.premium.premiumPreview.unlockButton}
-                    onUnlockClick={() => {
-                      const premiumSection = document.getElementById('premium-cta')
-                      if (premiumSection) {
-                        premiumSection.scrollIntoView({ behavior: 'auto', block: 'center' })
-                      }
-                    }}
+                    onUnlockClick={handleStartPayment}
                   />
                 ))}
               </div>
@@ -1119,15 +1160,23 @@ function PersonalityTestResult() {
                     </>
                   ) : (
                     <>
+                      {/* Price Display */}
+                      {reportStatus !== 'ready' && (
+                        <div className="flex items-center gap-2 text-white/90 mb-2">
+                          <span className="text-3xl md:text-4xl font-bold">{uiText.premium.cta.price}</span>
+                          <span className="text-sm md:text-base opacity-80">USD</span>
+                        </div>
+                      )}
+                      
                       <button 
-                        onClick={() => {
+                        onClick={async () => {
                           if (reportStatus === 'ready' && reportPages) {
                             setCurrentTab('premium')
                             // Premium 탭으로 전환 후 최상단으로 스크롤 (즉시)
                             window.scrollTo({ top: 0, behavior: 'auto' })
                           } else {
-                            // TODO: 결제 시스템 연동 시 여기에 결제 플로우 추가
-                            handleGenerateReport()
+                            // Polar 결제 플로우
+                            handleStartPayment()
                           }
                         }}
                         disabled={isGeneratingReport}
