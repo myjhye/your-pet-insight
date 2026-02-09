@@ -392,6 +392,7 @@ function PersonalityTestResult() {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
   const [isStartingPayment, setIsStartingPayment] = useState(false) // 결제 시작 로딩 상태
   const [paymentProcessed, setPaymentProcessed] = useState(false) // 결제 성공 여부를 추적하는 상태 (중복 실행 방지)
+  const [reportGenerationStarted, setReportGenerationStarted] = useState(false) // 리포트 생성 시작 여부 (중복 실행 방지)
   
   // Share 기능 상태
   const [copied, setCopied] = useState(false)
@@ -649,9 +650,6 @@ function PersonalityTestResult() {
       setReportStatus('generating')
       setIsGeneratingReport(true)
       
-      // Premium 탭 자동 선택
-      setCurrentTab('premium')
-      
       // 최상단으로 스크롤
       window.scrollTo({ top: 0, behavior: 'auto' })
     }
@@ -659,16 +657,10 @@ function PersonalityTestResult() {
 
   // 로딩 상태가 설정된 후 리포트 생성 시작
   useEffect(() => {
-    // generating 상태이고, 결제 처리된 경우에만 시작
-    if (reportStatus === 'generating' && paymentProcessed && resultId && isGeneratingReport) {
-      // 리포트가 이미 ready인 경우 체크
-      if (resultData?.report_status === 'ready') {
-        setReportStatus('ready')
-        setReportPages(resultData.report_pages)
-        setIsGeneratingReport(false)
-        setCurrentTab('premium')
-        return
-      }
+    // generating 상태이고, 결제 처리된 경우 + 아직 생성 시작 안 한 경우
+    if (reportStatus === 'generating' && paymentProcessed && resultId && !reportGenerationStarted) {
+      // 중복 실행 방지
+      setReportGenerationStarted(true)
       
       // 리포트 생성 API 호출
       const generateReport = async () => {
@@ -676,9 +668,9 @@ function PersonalityTestResult() {
           const response = await axios.post(`${API_BASE_URL}/api/test/generate-report/${resultId}?lang=${lang}`)
           
           if (response.data.status === 'success') {
-            // 폴링으로 리포트 상태 확인 (최대 60초)
+            // 폴링으로 리포트 상태 확인 (최대 90초)
             let attempts = 0
-            const maxAttempts = 60
+            const maxAttempts = 90
             
             const checkStatus = setInterval(async () => {
               attempts++
@@ -695,10 +687,12 @@ function PersonalityTestResult() {
                 } else if (updatedData.report_status === 'failed') {
                   setReportStatus('failed')
                   setIsGeneratingReport(false)
+                  setCurrentTab('basic')
                   clearInterval(checkStatus)
                 } else if (attempts >= maxAttempts) {
                   setReportStatus('failed')
                   setIsGeneratingReport(false)
+                  setCurrentTab('basic')
                   clearInterval(checkStatus)
                 }
               } catch (err) {
@@ -706,6 +700,7 @@ function PersonalityTestResult() {
                 if (attempts >= maxAttempts) {
                   setReportStatus('failed')
                   setIsGeneratingReport(false)
+                  setCurrentTab('basic')
                   clearInterval(checkStatus)
                 }
               }
@@ -715,12 +710,13 @@ function PersonalityTestResult() {
           console.error('리포트 생성 실패:', error)
           setReportStatus('failed')
           setIsGeneratingReport(false)
+          setCurrentTab('basic')
         }
       }
       
       generateReport()
     }
-  }, [reportStatus, paymentProcessed, resultId, isGeneratingReport, resultData, lang]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reportStatus, paymentProcessed, resultId, reportGenerationStarted, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 링크 복사 함수
   const handleCopyLink = async () => {
