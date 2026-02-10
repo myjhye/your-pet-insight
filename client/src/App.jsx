@@ -36,9 +36,9 @@ function LangRoutes() {
               <Route path="/" element={<Layout><Home /></Layout>} />
               <Route path="/dog-test/personality" element={<Layout><PersonalityTest /></Layout>} />
               <Route path="/dog-test/personality/result/:resultId" element={<Layout><PersonalityTestResult /></Layout>} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/refund" element={<RefundPolicy />} />
+              <Route path="/terms" element={<Layout><TermsOfService /></Layout>} />
+              <Route path="/privacy" element={<Layout><PrivacyPolicy /></Layout>} />
+              <Route path="/refund" element={<Layout><RefundPolicy /></Layout>} />
               {/* 404 라우트 - 반드시 가장 마지막에! */}
               <Route path="*" element={<Layout><NotFound /></Layout>} />
             </Routes>

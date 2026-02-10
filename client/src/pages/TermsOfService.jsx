@@ -1,6 +1,43 @@
 import { Link } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
 
+// **볼드** 텍스트를 처리하는 함수 (링크 자동 변환 방지)
+function renderBoldText(text) {
+  const parts = []
+  const boldPattern = /\*\*(.+?)\*\*/g
+  let lastIndex = 0
+  let match
+
+  while ((match = boldPattern.exec(text)) !== null) {
+    // 볼드 앞 텍스트
+    if (match.index > lastIndex) {
+      parts.push({ type: 'text', content: text.substring(lastIndex, match.index) })
+    }
+    // 볼드 텍스트
+    parts.push({ type: 'bold', content: match[1] })
+    lastIndex = match.index + match[0].length
+  }
+  // 나머지 텍스트
+  if (lastIndex < text.length) {
+    parts.push({ type: 'text', content: text.substring(lastIndex) })
+  }
+
+  if (parts.length === 0) {
+    return <span>{text}</span>
+  }
+
+  return (
+    <span>
+      {parts.map((part, idx) => {
+        if (part.type === 'bold') {
+          return <strong key={idx} className="font-bold">{part.content}</strong>
+        }
+        return <span key={idx}>{part.content}</span>
+      })}
+    </span>
+  )
+}
+
 const CONTENT = {
   en: {
     title: "Terms of Service",
@@ -34,7 +71,7 @@ const CONTENT = {
         paragraphs: [
           "Our Premium Report is a one-time purchase ($5.99) and is not a subscription service. Each purchase provides access to a detailed AI-generated personality analysis report.",
           "Payments are processed through Polar, a third-party payment processor. By making a purchase, you agree to Polar's terms and conditions.",
-          "For information about refunds, please refer to our Refund Policy (/refund)."
+          "For information about refunds, please refer to our Refund Policy."
         ]
       },
       {
@@ -45,7 +82,7 @@ const CONTENT = {
           "To preserve your results:",
           "• Use the image save functionality available on the results screen to download or screenshot your results",
           "• If you purchase a Premium Report, a copy will be sent to the email address you provide during checkout",
-          "For detailed information about data handling, please refer to our Privacy Policy (/privacy)."
+          "For detailed information about data handling, please refer to our Privacy Policy."
         ]
       },
       {
@@ -115,7 +152,7 @@ const CONTENT = {
         paragraphs: [
           "当社のプレミアムレポートは、1回限りの購入（$5.99）であり、サブスクリプションサービスではありません。各購入により、詳細なAI生成性格分析レポートへのアクセスが提供されます。",
           "支払いは、第三者決済処理業者であるPolarを通じて処理されます。購入することにより、Polarの利用規約に同意したものとみなされます。",
-          "返金に関する情報については、当社の返金ポリシー（/refund）を参照してください。"
+          "返金に関する情報については、当社の返金ポリシーを参照してください。"
         ]
       },
       {
@@ -126,7 +163,7 @@ const CONTENT = {
           "結果を保存するには：",
           "• 結果画面で利用可能な画像保存機能を使用して、結果をダウンロードまたはスクリーンショットする",
           "• プレミアムレポートを購入した場合、チェックアウト時に提供したメールアドレスにコピーが送信されます",
-          "データ処理の詳細については、当社のプライバシーポリシー（/privacy）を参照してください。"
+          "データ処理の詳細については、当社のプライバシーポリシーを参照してください。"
         ]
       },
       {
@@ -173,15 +210,6 @@ function TermsOfService() {
   return (
     <main className="min-h-screen bg-[#F9FBF9]">
       <div className="max-w-3xl mx-auto px-4 py-12 md:py-20">
-        {/* 상단 네비게이션 */}
-        <Link
-          to={`/${lang}/dog-test/personality`}
-          className="inline-flex items-center gap-1 text-primary/60 hover:text-primary text-sm mb-8 transition-colors"
-        >
-          <span className="material-symbols-outlined text-lg">arrow_back</span>
-          {lang === 'jp' ? 'ホームに戻る' : 'Back to Home'}
-        </Link>
-
         {/* 제목 */}
         <h1 className="text-3xl md:text-4xl font-display font-bold text-primary mb-2">
           {content.title}
@@ -198,57 +226,15 @@ function TermsOfService() {
                 {section.heading}
               </h2>
               {section.paragraphs.map((p, j) => {
-                // 링크 처리 (예: "/refund", "/privacy")
-                const linkPattern = /\(([^)]+)\)/g
-                const parts = []
-                let lastIndex = 0
-                let match
-                
-                while ((match = linkPattern.exec(p)) !== null) {
-                  // 링크 앞 텍스트
-                  if (match.index > lastIndex) {
-                    parts.push({ type: 'text', content: p.substring(lastIndex, match.index) })
-                  }
-                  // 링크
-                  const linkPath = match[1]
-                  const linkText = linkPath === '/refund' 
-                    ? (lang === 'jp' ? '返金ポリシー' : 'Refund Policy')
-                    : linkPath === '/privacy'
-                    ? (lang === 'jp' ? 'プライバシーポリシー' : 'Privacy Policy')
-                    : linkPath
-                  parts.push({ type: 'link', path: linkPath, text: linkText })
-                  lastIndex = match.index + match[0].length
+                // 빈 문자열 처리
+                if (!p || p.trim() === '') {
+                  return null
                 }
-                // 나머지 텍스트
-                if (lastIndex < p.length) {
-                  parts.push({ type: 'text', content: p.substring(lastIndex) })
-                }
-                
-                if (parts.length === 0) {
-                  // 링크가 없는 경우
-                  return (
-                    <p key={j} className="text-[#2D3436]/80 leading-relaxed mb-4 text-[15px]">
-                      {p}
-                    </p>
-                  )
-                }
-                
+
+                // 볼드 처리만 수행 (링크는 하단 섹션에서 제공)
                 return (
                   <p key={j} className="text-[#2D3436]/80 leading-relaxed mb-4 text-[15px]">
-                    {parts.map((part, idx) => {
-                      if (part.type === 'link') {
-                        return (
-                          <Link
-                            key={idx}
-                            to={`/${lang}${part.path}`}
-                            className="text-primary hover:underline font-medium"
-                          >
-                            {part.text}
-                          </Link>
-                        )
-                      }
-                      return <span key={idx}>{part.content}</span>
-                    })}
+                    {renderBoldText(p)}
                   </p>
                 )
               })}
