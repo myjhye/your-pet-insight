@@ -566,23 +566,37 @@ function PersonalityTestResult() {
 
   const handleStartPayment = async () => {
     if (!resultId) return
-    
+
     setIsStartingPayment(true)
-    
+
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/polar/create-checkout`,
         null,
-        {
-          params: {
-            result_id: resultId,
-            lang: lang
-          }
-        }
+        { params: { result_id: resultId, lang: lang } }
       )
-      
+
+      // ★ 이미 결제 완료된 경우 (Self-Healing으로 발견된 경우 포함)
+      if (response.data.status === 'already_paid') {
+        setIsStartingPayment(false)
+        // 캐시 강제 갱신 후 상태 반영
+        const freshData = await fetchResult(resultId, true)
+        if (freshData?.report_status === 'ready') {
+          setReportStatus('ready')
+          setReportPages(freshData.report_pages || null)
+          setCurrentTab('premium')
+          window.scrollTo({ top: 0, behavior: 'auto' })
+        } else {
+          // 결제는 됐는데 리포트가 없는 경우 → 생성 시작
+          setPaymentProcessed(true)
+          setReportStatus('generating')
+          setIsGeneratingReport(true)
+          window.scrollTo({ top: 0, behavior: 'auto' })
+        }
+        return
+      }
+
       if (response.data.status === 'success' && response.data.checkout_url) {
-        // Polar Checkout 페이지로 리다이렉트
         window.location.href = response.data.checkout_url
       } else {
         throw new Error('Failed to create checkout session')
@@ -590,8 +604,8 @@ function PersonalityTestResult() {
     } catch (error) {
       console.error('결제 세션 생성 실패:', error)
       setIsStartingPayment(false)
-      alert(lang === 'jp' 
-        ? '결제 세션 생성에 실패했습니다. 다시 시도해주세요.' 
+      alert(lang === 'jp'
+        ? '決済セッションの生成に失敗しました。もう一度お試しください。'
         : 'Failed to create checkout session. Please try again.')
     }
   }
@@ -673,54 +687,75 @@ function PersonalityTestResult() {
     }
   }, [resultId, paymentProcessed])
 
-  // 로딩 상태가 설정된 후 리포트 생성 시작
+  // 로딩 상태가 설정된 후: verify → generate 순서로 실행
   useEffect(() => {
-    // generating 상태이고, 결제 처리된 경우 + 아직 생성 시작 안 한 경우
     if (reportStatus === 'generating' && paymentProcessed && resultId && !reportGenerationStarted) {
-      // 중복 실행 방지
       setReportGenerationStarted(true)
-      
-      // 리포트 생성 API 호출
-      const generateReport = async () => {
+
+      const verifyAndGenerate = async () => {
         try {
-          const response = await axios.post(`${API_BASE_URL}/api/test/generate-report/${resultId}?lang=${lang}`)
-          
+          // ★ Step 1: 결제 검증
+          const verifyResponse = await axios.get(
+            `${API_BASE_URL}/api/verify-payment/${resultId}`
+          )
+
+          if (!verifyResponse.data.is_verified) {
+            // 결제 검증 실패
+            console.error('결제 검증 실패:', verifyResponse.data.message)
+            setReportStatus('failed')
+            setIsGeneratingReport(false)
+            setCurrentTab('basic')
+            alert(lang === 'jp'
+              ? '決済の確認に失敗しました。サポートにお問い合わせください。'
+              : 'Payment verification failed. Please contact support.')
+            return
+          }
+
+          // ★ Step 2: 결제 검증 성공 → 리포트 생성
+          const response = await axios.post(
+            `${API_BASE_URL}/api/test/generate-report/${resultId}?lang=${lang}`
+          )
+
           if (response.data.status === 'success') {
+            // 이미 ready인 경우 (중복 요청 방지에 의한 즉시 반환)
+            if (response.data.report_status === 'ready') {
+              await fetchResult(resultId, true)
+              setReportStatus('ready')
+              setIsGeneratingReport(false)
+              setCurrentTab('premium')
+              window.scrollTo({ top: 0, behavior: 'auto' })
+              return
+            }
+
             // 폴링으로 리포트 상태 확인 (최대 90초)
             let attempts = 0
             const maxAttempts = 90
-            
+
             const checkStatus = setInterval(async () => {
               attempts++
               try {
-                const resultResponse = await axios.get(`${API_BASE_URL}/api/results/${resultId}`)
+                const resultResponse = await axios.get(
+                  `${API_BASE_URL}/api/results/${resultId}`
+                )
                 const updatedData = resultResponse.data
-                
+
                 if (updatedData.report_status === 'ready') {
                   clearInterval(checkStatus)
-                  
-                  // ★ 강제 갱신으로 캐시 업데이트
                   await fetchResult(resultId, true)
-                  
+
                   setReportStatus('ready')
                   setReportPages(updatedData.report_pages || null)
                   setIsGeneratingReport(false)
                   setCurrentTab('premium')
-                  
-                  // 첫 페이지 설정
+
                   const pageOrder = [
-                    'table_of_contents',
-                    'deep_dive_traits',
-                    'cognitive_strengths',
-                    'owner_chemistry',
-                    'training_roadmap',
-                    'social_adaptation',
-                    'lifestyle_guide',
-                    'heartfelt_message'
+                    'table_of_contents', 'deep_dive_traits', 'cognitive_strengths',
+                    'owner_chemistry', 'training_roadmap', 'social_adaptation',
+                    'lifestyle_guide', 'heartfelt_message'
                   ]
                   const firstPage = pageOrder.find(k => updatedData.report_pages?.[k])
                   if (firstPage) setActiveTab(firstPage)
-                  
+
                   window.scrollTo({ top: 0, behavior: 'auto' })
                 } else if (updatedData.report_status === 'failed') {
                   setReportStatus('failed')
@@ -746,13 +781,21 @@ function PersonalityTestResult() {
           }
         } catch (error) {
           console.error('리포트 생성 실패:', error)
+
+          // ★ 403 에러 = 결제 미검증
+          if (error.response?.status === 403) {
+            alert(lang === 'jp'
+              ? '決済が確認できませんでした。サポートにお問い合わせください。'
+              : 'Payment could not be verified. Please contact support.')
+          }
+
           setReportStatus('failed')
           setIsGeneratingReport(false)
           setCurrentTab('basic')
         }
       }
-      
-      generateReport()
+
+      verifyAndGenerate()
     }
   }, [reportStatus, paymentProcessed, resultId, reportGenerationStarted, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 

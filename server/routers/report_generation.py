@@ -424,21 +424,51 @@ Dear Human,
 @router.post("/generate-report/{result_id}")
 async def generate_report(result_id: str, lang: str = "en"):
     """
-    V2 리포트 생성 - 개선된 프롬프트 + 명확한 Markdown 출력
+    프리미엄 리포트 생성 - 체크 순서: ready → payment → generating
     """
     try:
         # 언어 검증
         if lang not in ["en", "jp"]:
             raise HTTPException(status_code=400, detail="Language must be 'en' or 'jp' only.")
-        
+
         # 1. Firestore에서 결과 데이터 조회
         doc_ref = db.collection("test_results").document(result_id)
         doc = doc_ref.get()
-        
+
         if not doc.exists:
             raise HTTPException(status_code=404, detail="Result not found.")
-        
+
         result_data = doc.to_dict()
+
+        # ★ 2. [중복 방지 - 최우선] 이미 리포트가 ready면 재생성하지 않음
+        #    기존 유저(payment_verified 필드 없음)도 여기서 걸려서 정상 반환됨
+        if result_data.get("report_status") == "ready" and result_data.get("report_pages"):
+            return {
+                "status": "success",
+                "result_id": result_id,
+                "report_status": "ready",
+                "pages": list(result_data.get("report_pages", {}).keys()),
+                "message": "Report already generated"
+            }
+
+        # ★ 3. [보안] 결제 검증 체크 - 리포트가 없는 경우에만 체크
+        #    신규 무결제 요청만 여기서 차단됨
+        if not result_data.get("payment_verified"):
+            raise HTTPException(
+                status_code=403,
+                detail="Payment not verified. Please complete payment first."
+            )
+
+        # ★ 4. [중복 방지] 현재 생성 중이면 중복 요청 방지
+        if result_data.get("report_status") == "generating":
+            return {
+                "status": "success",
+                "result_id": result_id,
+                "report_status": "generating",
+                "message": "Report is currently being generated"
+            }
+
+        # === 여기서부터 기존 generate_report 코드 그대로 유지 ===
         pet_name = result_data.get("pet_name", "Pet")
         mbti_code = result_data.get("mbti_code", "ESFP")
         stats = result_data.get("stats", {})
