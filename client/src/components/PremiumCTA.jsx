@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 // Archetype 이미지 순환용 (16개 MBTI 유형)
 const ARCHETYPE_IMAGES = [
@@ -301,6 +302,21 @@ function PremiumCTA({
                   <span>{text.guarantee}</span>
                 </div>
               )}
+
+              {/* Policy links */}
+              <div className="flex justify-center gap-3 text-[10px] text-white/30 mt-2 md:mt-3">
+                <Link to={`/${lang}/terms`} className="hover:text-white/50 underline transition-colors">
+                  {lang === 'jp' ? '利用規約' : 'Terms'}
+                </Link>
+                <span>·</span>
+                <Link to={`/${lang}/privacy`} className="hover:text-white/50 underline transition-colors">
+                  {lang === 'jp' ? 'プライバシー' : 'Privacy'}
+                </Link>
+                <span>·</span>
+                <Link to={`/${lang}/refund`} className="hover:text-white/50 underline transition-colors">
+                  {lang === 'jp' ? '返金ポリシー' : 'Refund'}
+                </Link>
+              </div>
             </div>
           </div>
         </div>
