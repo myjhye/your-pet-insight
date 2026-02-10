@@ -6,6 +6,7 @@ result_id로 Firestore에서 checkout_id를 찾고, Polar API로 결제 상태�
 from fastapi import APIRouter, HTTPException
 import os
 import httpx
+import asyncio
 from config import db
 
 router = APIRouter(prefix="/api", tags=["verify"])
@@ -51,7 +52,7 @@ async def verify_payment(result_id: str):
                 "message": "No checkout session found for this result"
             }
 
-        # 3. Polar API로 결제 상태 확인
+        # 3. Polar API로 결제 상태 확인 (재시도 포함)
         polar_api_key = os.getenv("POLAR_ACCESS_TOKEN")
         if not polar_api_key:
             raise HTTPException(status_code=500, detail="Polar API key not configured")
@@ -62,15 +63,30 @@ async def verify_payment(result_id: str):
             "Content-Type": "application/json"
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(
-                f"{polar_api_url}/checkouts/{checkout_id}",
-                headers=headers
-            )
-            response.raise_for_status()
-            checkout_data = response.json()
+        # ★ Polar 상태 반영 딜레이 대응: 최대 3회 재시도 (2초 간격)
+        checkout_status = "unknown"
+        checkout_data = {}
+        max_retries = 3
 
-        checkout_status = checkout_data.get("status", "unknown")
+        for attempt in range(max_retries):
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(
+                    f"{polar_api_url}/checkouts/{checkout_id}",
+                    headers=headers
+                )
+                response.raise_for_status()
+                checkout_data = response.json()
+
+            checkout_status = checkout_data.get("status", "unknown")
+
+            if checkout_status == "succeeded":
+                break  # 성공 확인됨, 루프 종료
+
+            if checkout_status == "open" and attempt < max_retries - 1:
+                # 아직 open → Polar가 상태 반영 중. 잠시 대기 후 재시도
+                await asyncio.sleep(2)
+            else:
+                break  # open이 아닌 다른 실패 상태거나, 재시도 소진
 
         # 4. 결제 성공 여부 판단
         if checkout_status == "succeeded":
