@@ -8,6 +8,7 @@ import os
 import httpx
 import asyncio
 from config import db
+from routers.refund import auto_refund_if_needed
 
 router = APIRouter(prefix="/api", tags=["verify"])
 
@@ -69,24 +70,37 @@ async def verify_payment(result_id: str):
         max_retries = 3
 
         for attempt in range(max_retries):
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(
-                    f"{polar_api_url}/checkouts/{checkout_id}",
-                    headers=headers
-                )
-                response.raise_for_status()
-                checkout_data = response.json()
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.get(
+                        f"{polar_api_url}/checkouts/{checkout_id}",
+                        headers=headers
+                    )
+                    response.raise_for_status()
+                    checkout_data = response.json()
 
-            checkout_status = checkout_data.get("status", "unknown")
+                checkout_status = checkout_data.get("status", "unknown")
 
-            if checkout_status == "succeeded":
-                break  # 성공 확인됨, 루프 종료
+                if checkout_status == "succeeded":
+                    break  # 성공 확인됨
 
-            if checkout_status == "open" and attempt < max_retries - 1:
-                # 아직 open → Polar가 상태 반영 중. 잠시 대기 후 재시도
-                await asyncio.sleep(2)
-            else:
-                break  # open이 아닌 다른 실패 상태거나, 재시도 소진
+                if checkout_status == "open" and attempt < max_retries - 1:
+                    print(f"⏳ [VERIFY] {result_id}: Polar status still 'open', retry {attempt + 1}/{max_retries}...")
+                    await asyncio.sleep(2)
+                else:
+                    break  # open이 아닌 다른 상태이거나, 재시도 소진
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    return {
+                        "status": "failed",
+                        "is_verified": False,
+                        "result_id": result_id,
+                        "message": "Checkout session not found"
+                    }
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2)
+                else:
+                    raise
 
         # 4. 결제 성공 여부 판단
         if checkout_status == "succeeded":
@@ -117,12 +131,21 @@ async def verify_payment(result_id: str):
                 "message": "Payment verified successfully"
             }
         else:
+            # ★ 재시도 후에도 실패 → 자동 환불 시도
+            # Polar에서 실제로 돈이 빠져나갔을 수 있으므로 환불 시도
+            refund_result = await auto_refund_if_needed(
+                result_id,
+                f"Verify failed after {max_retries} retries. Checkout status: {checkout_status}"
+            )
+
             return {
                 "status": "failed",
                 "is_verified": False,
                 "result_id": result_id,
                 "checkout_status": checkout_status,
-                "message": f"Payment not completed. Checkout status: {checkout_status}"
+                "refund_initiated": refund_result.get("refunded", False),
+                "message": f"Payment verification failed. Checkout status: {checkout_status}. "
+                           f"{'Automatic refund initiated.' if refund_result.get('refunded') else 'Please contact support for a refund.'}"
             }
 
     except HTTPException:

@@ -5,6 +5,7 @@ import asyncio
 import random
 import httpx
 from config import db
+from routers.refund import auto_refund_if_needed
 
 router = APIRouter(prefix="/api/test", tags=["report"])
 
@@ -1232,15 +1233,52 @@ async def generate_report(result_id: str, lang: str = "en"):
             *[generate_with_limit(page) for page in page_prompts]
         )
         
-        # 9. 결과 정리
+        # 9. 결과 정리 및 실패 판정
         report_pages = {}
+        success_count = 0
+        error_count = 0
+        
         for result in page_results:
             report_pages[result["page"]] = {
                 "content": result["content"],
                 "status": result["status"]
             }
+            if result["status"] == "success":
+                success_count += 1
+            else:
+                error_count += 1
         
-        # 10. Firestore 저장
+        # ★ 전체 실패 판정: 성공한 페이지가 절반 미만이면 실패로 처리
+        total_pages = len(page_prompts)
+        is_total_failure = success_count < (total_pages / 2)
+        
+        if is_total_failure:
+            # 리포트 생성 실패 → 자동 환불
+            doc_ref.update({
+                "report_status": "failed",
+                "report_pages": report_pages,  # 부분 결과라도 저장 (디버깅용)
+                "failed_at": datetime.utcnow(),
+            })
+            
+            refund_result = await auto_refund_if_needed(
+                result_id,
+                f"Report generation failed: {success_count}/{total_pages} pages succeeded"
+            )
+            
+            print(f"❌ Report FAILED: {success_count}/{total_pages} pages. Refund: {refund_result.get('refunded')}")
+            
+            return {
+                "status": "failed",
+                "result_id": result_id,
+                "report_status": "failed",
+                "success_pages": success_count,
+                "total_pages": total_pages,
+                "refund_initiated": refund_result.get("refunded", False),
+                "message": f"Report generation failed ({success_count}/{total_pages} pages). "
+                           f"{'Automatic refund initiated.' if refund_result.get('refunded') else 'Please contact support.'}"
+            }
+        
+        # 10. 성공 → Firestore 저장
         doc_ref.update({
             "report_pages": report_pages,
             "report_status": "ready",
@@ -1248,7 +1286,7 @@ async def generate_report(result_id: str, lang: str = "en"):
             "report_version": "v2"
         })
         
-        print(f"✅ Report V2 Complete!")
+        print(f"✅ Report V2 Complete! ({success_count}/{total_pages} pages)")
         
         return {
             "status": "success",
@@ -1264,10 +1302,20 @@ async def generate_report(result_id: str, lang: str = "en"):
         import traceback
         print(traceback.format_exc())
         
+        # ★ 예상치 못한 에러 → report_status: "failed" + 자동 환불
         try:
             doc_ref.update({"report_status": "failed"})
         except:
             pass
+        
+        try:
+            refund_result = await auto_refund_if_needed(
+                result_id,
+                f"Unexpected report generation error: {str(e)[:100]}"
+            )
+            print(f"🔄 [REFUND] Emergency refund for {result_id}: {refund_result}")
+        except:
+            print(f"❌ [REFUND] Emergency refund also failed for {result_id}")
         
         raise HTTPException(status_code=500, detail=f"Report generation error: {str(e)}")
 

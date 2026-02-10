@@ -286,6 +286,9 @@ const UI_TEXT = {
         viewReport: "View Premium Report",
         ready: "Your report is ready!",
         failed: "Generation failed. Please try again.",
+        failedWithRefund: "Generation failed. An automatic refund has been initiated.",
+        failedContactSupport: "Generation failed. Please contact support for a refund.",
+        refundNotice: "Your payment will be refunded within 3-5 business days.",
         retry: "Try Again"
       },
       premiumPreview: {
@@ -626,6 +629,9 @@ function PersonalityTestResult() {
   
   // 리포트 내부 탭 상태 관리
   const [activeTab, setActiveTab] = useState('table_of_contents')
+  
+  // 환불 상태
+  const [refundInitiated, setRefundInitiated] = useState(false)
 
   // Context에서 결과 가져오기 - 캐시에 report_status가 없으면 강제 갱신
   useEffect(() => {
@@ -816,6 +822,22 @@ function PersonalityTestResult() {
         return
       }
 
+      // ★ generating 타임아웃으로 환불된 경우
+      if (response.data.status === 'generation_timeout') {
+        setIsStartingPayment(false)
+        setRefundInitiated(response.data.refund_initiated || false)
+        setReportStatus('failed')
+        
+        alert(response.data.refund_initiated
+          ? (lang === 'jp'
+            ? 'レポート生成がタイムアウトしました。自動返金処理を開始しました。'
+            : 'Report generation timed out. An automatic refund has been initiated.')
+          : (lang === 'jp'
+            ? 'レポート生成がタイムアウトしました。サポートにお問い合わせください。'
+            : 'Report generation timed out. Please contact support.'))
+        return
+      }
+
       if (response.data.status === 'success' && response.data.checkout_url) {
         window.location.href = response.data.checkout_url
       } else {
@@ -925,9 +947,19 @@ function PersonalityTestResult() {
             setReportStatus('failed')
             setIsGeneratingReport(false)
             setCurrentTab('basic')
-            alert(lang === 'jp'
-              ? '決済の確認に失敗しました。サポートにお問い合わせください。'
-              : 'Payment verification failed. Please contact support.')
+            
+            // ★ 자동 환불 여부 확인
+            if (verifyResponse.data.refund_initiated) {
+              setRefundInitiated(true)
+            }
+            
+            alert(verifyResponse.data.refund_initiated
+              ? (lang === 'jp'
+                ? '決済の確認に失敗しました。自動返金処理を開始しました。3〜5営業日以内に返金されます。'
+                : 'Payment verification failed. An automatic refund has been initiated. Please allow 3-5 business days.')
+              : (lang === 'jp'
+                ? '決済の確認に失敗しました。サポートにお問い合わせください。'
+                : 'Payment verification failed. Please contact support.'))
             return
           }
 
@@ -998,6 +1030,18 @@ function PersonalityTestResult() {
                 }
               }
             }, 1000)
+          }
+          
+          // ★ 생성 실패 + 환불 정보 처리
+          if (response.data.status === 'failed') {
+            setReportStatus('failed')
+            setIsGeneratingReport(false)
+            setCurrentTab('basic')
+            
+            if (response.data.refund_initiated) {
+              setRefundInitiated(true)
+            }
+            return
           }
         } catch (error) {
           console.error('리포트 생성 실패:', error)
@@ -1557,6 +1601,7 @@ function PersonalityTestResult() {
               window.scrollTo({ top: 0, behavior: 'auto' })
             }}
             hookText={ctaHook}
+            refundInitiated={refundInitiated}
           />
         )}
         

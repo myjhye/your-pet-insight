@@ -78,6 +78,7 @@ function PremiumCTA({
   onGetReport,
   onViewReport,
   hookText,
+  refundInitiated = false,
 }) {
   const text = CTA_TEXT[lang] || CTA_TEXT.en
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -257,7 +258,40 @@ function PremiumCTA({
                 </div>
               )}
               {isFailed && (
-                <p className="text-red-300/80 text-sm mt-3">{text.failed}</p>
+                <div className="text-center space-y-3 mt-3">
+                  {refundInitiated ? (
+                    <>
+                      <div className="flex items-center justify-center gap-2 text-emerald-300">
+                        <span className="material-symbols-outlined">check_circle</span>
+                        <p className="font-bold text-sm md:text-base">
+                          {lang === 'jp' ? '自動返金処理を開始しました' : 'Automatic refund initiated'}
+                        </p>
+                      </div>
+                      <p className="text-white/60 text-xs md:text-sm">
+                        {lang === 'jp' 
+                          ? 'お支払いは3〜5営業日以内に返金されます。' 
+                          : 'Your payment will be refunded within 3-5 business days.'}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-red-300 font-bold text-sm md:text-base">
+                        {lang === 'jp' ? '生成に失敗しました。' : 'Generation failed.'}
+                      </p>
+                      <button
+                        onClick={onGetReport}
+                        className="px-6 py-3 bg-white text-primary rounded-full font-bold text-sm hover:bg-gray-100 transition-all"
+                      >
+                        {lang === 'jp' ? '再試行' : 'Try Again'}
+                      </button>
+                      <p className="text-white/40 text-xs">
+                        {lang === 'jp' 
+                          ? '再試行しても失敗する場合、自動的に返金されます。' 
+                          : 'If retry fails, an automatic refund will be processed.'}
+                      </p>
+                    </>
+                  )}
+                </div>
               )}
 
               {/* Guarantee line */}
