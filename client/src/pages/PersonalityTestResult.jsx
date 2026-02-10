@@ -18,6 +18,226 @@ const STATS_ORDER = [
   { key: 'temperament', color: 'bg-yellow-400' },
 ]
 
+// ============================================================
+// 잠긴 카드 개인화 preview 생성
+// ============================================================
+
+function getPersonalizedPreviews(stats, petName, lang) {
+  if (!stats || !petName) return null
+
+  const soc = stats.sociability ?? 50
+  const sag = stats.sagacity ?? 50
+  const emo = stats.emotionality ?? 50
+  const obe = stats.obedience ?? 50
+
+  // 강도 퍼센트 (StatBar와 동일 계산)
+  const strength = (v) => v >= 50 ? v : 100 - v
+
+  const socStr = strength(soc)
+  const sagStr = strength(sag)
+  const emoStr = strength(emo)
+  const obeStr = strength(obe)
+
+  // 스탯 레벨 판정
+  const level = (v) => {
+    if (v >= 75) return 'extreme'
+    if (v >= 60) return 'high'
+    if (v >= 40) return 'moderate'
+    if (v >= 25) return 'low'
+    return 'very_low'
+  }
+
+  const socLevel = level(soc)
+  const sagLevel = level(sag)
+  const emoLevel = level(emo)
+  const obeLevel = level(obe)
+
+  // 히든 패턴 감지 (report.py의 get_hidden_patterns와 동일 로직)
+  let patternName = null
+  let patternHint = null
+
+  if (lang === 'jp') {
+    if (soc >= 65 && emo >= 65) {
+      patternName = '感情的な絆の達人'
+      patternHint = `${petName}の高い社交性と感情感度が独特なパターンを作り出しています`
+    } else if (soc >= 65 && emo <= 35) {
+      patternName = 'ソーシャル・バタフライ'
+      patternHint = `${petName}はみんなを愛しますが、クールな距離感を保ちます`
+    } else if (soc <= 35 && emo >= 65) {
+      patternName = '一途な忠犬'
+      patternHint = `${petName}の世界はあなたを中心に回っています`
+    } else if (sag >= 65 && obe <= 35) {
+      patternName = '賢い反逆者'
+      patternHint = `${petName}はすべてを理解していますが、従うかどうかは自分で決めます`
+    } else if (sag >= 65 && obe >= 65) {
+      patternName = '優等生'
+      patternHint = `${petName}は賢くて従順 — 理想的な訓練生です`
+    } else if (sag <= 35 && obe >= 65) {
+      patternName = '忠実な兵士'
+      patternHint = `${petName}の献身は比類がありません`
+    } else if (soc <= 35 && sag >= 65) {
+      patternName = '静かな観察者'
+      patternHint = `${petName}は行動する前にすべてを観察します`
+    } else if (emo >= 65 && obe <= 35) {
+      patternName = 'ドラマの王様'
+      patternHint = `${petName}はすべてを深く感じ、自分のやり方を貫きます`
+    }
+  } else {
+    if (soc >= 65 && emo >= 65) {
+      patternName = 'The Emotional Connector'
+      patternHint = `${petName}'s high sociability and emotional sensitivity create a unique pattern`
+    } else if (soc >= 65 && emo <= 35) {
+      patternName = 'The Social Butterfly'
+      patternHint = `${petName} loves everyone but keeps a cool emotional distance`
+    } else if (soc <= 35 && emo >= 65) {
+      patternName = 'The One-Person Dog'
+      patternHint = `${petName}'s world revolves entirely around you`
+    } else if (sag >= 65 && obe <= 35) {
+      patternName = 'The Clever Rebel'
+      patternHint = `${petName} understands everything but chooses when to listen`
+    } else if (sag >= 65 && obe >= 65) {
+      patternName = 'The Star Student'
+      patternHint = `${petName} is smart AND eager to please — the dream trainee`
+    } else if (sag <= 35 && obe >= 65) {
+      patternName = 'The Loyal Soldier'
+      patternHint = `${petName}'s dedication is unmatched`
+    } else if (soc <= 35 && sag >= 65) {
+      patternName = 'The Silent Observer'
+      patternHint = `${petName} watches everything before deciding to act`
+    } else if (emo >= 65 && obe <= 35) {
+      patternName = 'The Drama Queen/King'
+      patternHint = `${petName} feels everything deeply and insists on doing things their way`
+    }
+  }
+
+  // 가장 높은/낮은 스탯 찾기
+  const statEntries = [
+    { key: 'sociability', raw: soc, str: socStr },
+    { key: 'sagacity', raw: sag, str: sagStr },
+    { key: 'emotionality', raw: emo, str: emoStr },
+    { key: 'obedience', raw: obe, str: obeStr },
+  ]
+  const sorted = [...statEntries].sort((a, b) => b.str - a.str)
+  const highest = sorted[0]
+  const lowest = sorted[sorted.length - 1]
+
+  // 스탯 이름 다국어
+  const statNames = lang === 'jp' 
+    ? { sociability: '社交性', sagacity: '知性', emotionality: '感情性', obedience: '従順性' }
+    : { sociability: 'Sociability', sagacity: 'Sagacity', emotionality: 'Emotionality', obedience: 'Obedience' }
+
+  // ============================================================
+  // 각 카드별 개인화 preview 생성
+  // ============================================================
+
+  if (lang === 'jp') {
+    return {
+      deep_dive_traits: patternName
+        ? `${petName}のスコア組み合わせが「${patternName}」という珍しいパターンを示しています。${patternHint}...`
+        : `${petName}の最も強い特性は${statNames[highest.key]} ${highest.str}%。この強みが日常行動にどう現れるか...`,
+
+      cognitive_strengths: sag >= 65
+        ? `知性 ${sagStr}%の${petName}は${sag >= 75 ? '1-2回でトリックを覚える天才タイプ' : 'パターンを素早く把握する頭脳派'}。最適な頭脳ゲームとは...`
+        : `${petName}は${sag <= 35 ? '直感と本能で生きるタイプ' : '実践を通じて学ぶ体験型学習者'}。${petName}に合った学び方を発見...`,
+
+      owner_chemistry: patternName
+        ? `「${patternName}」タイプの${petName}とあなたの間には独特な相乗効果があります。最高のチームになる理由...`
+        : `${petName}の${statNames[highest.key]}(${highest.str}%)があなたとの関係にどう影響するか。相性のポイント...`,
+
+      training_roadmap: sag >= 65 && obe <= 35
+        ? `${petName}は知性 ${sagStr}%だが従順性 ${obeStr}% — コマンドは理解するが従うかは自分で決める。この子に効くのは...`
+        : obe >= 65
+        ? `従順性 ${obeStr}%の${petName}はルールベースのトレーニングが最適。2週間で変わる具体的なプラン...`
+        : `${petName}の性格に合わせた「${sag >= 50 ? 'チャレンジ型' : '遊び型'}」トレーニング法。退屈させない秘訣...`,
+
+      social_adaptation: soc >= 65
+        ? `社交性 ${socStr}%の${petName}は${soc >= 75 ? '全員に挨拶したがるパーティー好き' : '社交的だが空気を読める'}。ドッグパークでの注意点...`
+        : `${petName}は${soc <= 35 ? '信頼できる少数の仲間を選ぶタイプ' : '状況を見てから行動する慎重派'}。新しい出会いをスムーズにする方法...`,
+
+      lifestyle_guide: `${petName}の${statNames[highest.key]}(${highest.str}%)に最適化された朝・昼・夜のルーティン。一人の時間の過ごし方から就寝まで...`
+    }
+  }
+
+  // English
+  return {
+    deep_dive_traits: patternName
+      ? `${petName}'s score combination reveals a rare "${patternName}" pattern. ${patternHint}...`
+      : `${petName}'s strongest trait is ${statNames[highest.key]} at ${highest.str}%. Discover how this shapes their daily behavior...`,
+
+    cognitive_strengths: sag >= 65
+      ? `With ${sagStr}% sagacity, ${petName} is a ${sag >= 75 ? 'genius who learns tricks in 1-2 tries' : 'quick pattern-spotter who loves mental challenges'}. The best brain games for this mind...`
+      : `${petName} is ${sag <= 35 ? 'an instinct-first reactor who lives in the moment' : 'a hands-on learner who learns best by doing'}. Discover the right approach...`,
+
+    owner_chemistry: patternName
+      ? `As "${patternName}", ${petName} creates a unique dynamic with you. Find out why you make a great team...`
+      : `${petName}'s ${statNames[highest.key]} (${highest.str}%) shapes how they bond with you. Your compatibility secrets...`,
+
+    training_roadmap: sag >= 65 && obe <= 35
+      ? `${petName} scored ${sagStr}% sagacity but ${obeStr}% obedience — understands every command but chooses when to follow. What actually works...`
+      : obe >= 65
+      ? `With ${obeStr}% obedience, ${petName} thrives on structure. A 2-week plan designed for eager learners...`
+      : `${petName}'s personality calls for a "${sag >= 50 ? 'challenge-based' : 'play-disguised'}" approach. How to train without boring them...`,
+
+    social_adaptation: soc >= 65
+      ? `At ${socStr}% sociability, ${petName} is ${soc >= 75 ? 'the one greeting everyone at the dog park' : 'friendly but reads the room first'}. Tips for social success...`
+      : `${petName} ${soc <= 35 ? 'bonds deeply with a chosen few rather than the crowd' : 'takes time to assess before engaging'}. Making introductions smooth...`,
+
+    lifestyle_guide: `A morning-to-night routine optimized for ${petName}'s ${statNames[highest.key]} (${highest.str}%). From alone-time setup to the perfect bedtime ritual...`
+  }
+}
+
+// PremiumCTA에 표시할 hook 문구 생성
+function getCTAHook(stats, petName, lang) {
+  if (!stats || !petName) return null
+
+  const soc = stats.sociability ?? 50
+  const sag = stats.sagacity ?? 50
+  const emo = stats.emotionality ?? 50
+  const obe = stats.obedience ?? 50
+
+  const strength = (v) => v >= 50 ? v : 100 - v
+
+  // 가장 인상적인 조합 찾기
+  if (lang === 'jp') {
+    if (soc >= 65 && emo >= 65)
+      return `${petName}の社交性(${strength(soc)}%) × 感情性(${strength(emo)}%)が「感情的な絆の達人」パターンを示しています`
+    if (sag >= 65 && obe <= 35)
+      return `${petName}は知性${strength(sag)}%なのに従順性${strength(obe)}% — 典型的な「賢い反逆者」パターン`
+    if (soc <= 35 && emo >= 65)
+      return `${petName}は群衆より飼い主を選ぶ「一途な忠犬」タイプ — その理由を解明`
+    if (sag >= 65 && obe >= 65)
+      return `知性${strength(sag)}% × 従順性${strength(obe)}% — ${petName}は理想的な「優等生」タイプ`
+
+    // fallback: 가장 높은 스탯 기반
+    const entries = [
+      { name: '社交性', val: soc, str: strength(soc) },
+      { name: '知性', val: sag, str: strength(sag) },
+      { name: '感情性', val: emo, str: strength(emo) },
+      { name: '従順性', val: obe, str: strength(obe) },
+    ].sort((a, b) => b.str - a.str)
+    return `${petName}の${entries[0].name}${entries[0].str}%が日常にどう影響しているか — 詳細分析で解明`
+  }
+
+  // English
+  if (soc >= 65 && emo >= 65)
+    return `${petName}'s Sociability (${strength(soc)}%) × Emotionality (${strength(emo)}%) reveals an "Emotional Connector" pattern`
+  if (sag >= 65 && obe <= 35)
+    return `${petName} scored ${strength(sag)}% Sagacity but ${strength(obe)}% Obedience — a classic "Clever Rebel" pattern`
+  if (soc <= 35 && emo >= 65)
+    return `${petName} chooses you over the crowd — a "One-Person Dog" pattern. Find out why`
+  if (sag >= 65 && obe >= 65)
+    return `${strength(sag)}% Sagacity × ${strength(obe)}% Obedience — ${petName} is "The Star Student" type`
+
+  // fallback
+  const entries = [
+    { name: 'Sociability', val: soc, str: strength(soc) },
+    { name: 'Sagacity', val: sag, str: strength(sag) },
+    { name: 'Emotionality', val: emo, str: strength(emo) },
+    { name: 'Obedience', val: obe, str: strength(obe) },
+  ].sort((a, b) => b.str - a.str)
+  return `${petName}'s ${entries[0].name} at ${entries[0].str}% shapes their daily behavior — deep analysis inside`
+}
+
 // UI 텍스트 다국어 정의
 const UI_TEXT = {
   en: {
@@ -359,8 +579,8 @@ function LockedPreviewCard({ icon, title, preview, petName, onUnlockClick, unloc
       
       {/* Blurred Preview Content */}
       <div className="relative mt-2">
-        <p className="text-[#2D3436]/60 text-sm leading-relaxed blur-[5px] select-none pointer-events-none line-clamp-2">
-          {preview} {preview}
+        <p className="text-[#2D3436]/70 text-sm leading-relaxed blur-[3px] select-none pointer-events-none line-clamp-2">
+          {preview}
         </p>
         
         {/* Unlock Overlay & Button */}
@@ -890,6 +1110,10 @@ function PersonalityTestResult() {
   
   const displayPetName = capitalizeFirstLetter(pet_name)
   
+  // ★ 개인화 preview 생성
+  const personalizedPreviews = getPersonalizedPreviews(stats, displayPetName, lang)
+  const ctaHook = getCTAHook(stats, displayPetName, lang)
+  
   // Archetype 데이터에서 현재 언어 텍스트 추출
   const getLocalizedText = (obj) => {
     if (!obj) return ''
@@ -1307,7 +1531,7 @@ function PersonalityTestResult() {
                     key={section.key}
                     icon={section.icon}
                     title={section.title}
-                    preview={section.preview}
+                    preview={personalizedPreviews?.[section.key] || section.preview}
                     petName={displayPetName}
                     unlockButtonText={uiText.premium.premiumPreview.unlockButton}
                     onUnlockClick={scrollToPremiumCTA}
@@ -1332,6 +1556,7 @@ function PersonalityTestResult() {
               setCurrentTab('premium')
               window.scrollTo({ top: 0, behavior: 'auto' })
             }}
+            hookText={ctaHook}
           />
         )}
         

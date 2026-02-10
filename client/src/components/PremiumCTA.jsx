@@ -77,6 +77,7 @@ function PremiumCTA({
   isStartingPayment,
   onGetReport,
   onViewReport,
+  hookText,
 }) {
   const text = CTA_TEXT[lang] || CTA_TEXT.en
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -176,9 +177,15 @@ function PremiumCTA({
               <h3 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-1.5 md:mb-2 leading-tight tracking-tight">
                 {text.title}
               </h3>
-              <p className="text-white/60 text-xs md:text-base mb-4 md:mb-6 max-w-md mx-auto md:mx-0">
-                {text.subtitle.replace('{name}', petName)}
-              </p>
+              {hookText ? (
+                <p className="text-emerald-300/90 text-xs md:text-sm leading-relaxed font-medium italic mb-4 md:mb-6 max-w-md mx-auto md:mx-0">
+                  🔍 {hookText}
+                </p>
+              ) : (
+                <p className="text-white/60 text-xs md:text-base mb-4 md:mb-6 max-w-md mx-auto md:mx-0">
+                  {text.subtitle.replace('{name}', petName)}
+                </p>
+              )}
 
               {/* Feature list - 모바일 1열, 데스크탑 2열 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-2.5 mb-6 md:mb-8">
