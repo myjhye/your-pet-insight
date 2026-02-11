@@ -3,6 +3,7 @@
 - send_premium_report_email(): 프리미엄 리포트를 이메일로 전송
 """
 import os
+import re
 import resend
 from datetime import datetime
 
@@ -13,6 +14,18 @@ def _init_resend():
     if not api_key:
         raise ValueError("RESEND_API_KEY not configured")
     resend.api_key = api_key
+
+
+def _strip_first_heading(markdown_text: str) -> str:
+    """마크다운 본문의 첫 번째 heading을 제거 (이메일 템플릿 헤더와 중복 방지)"""
+    lines = markdown_text.strip().split('\n')
+    # 첫 줄이 # 또는 ## 로 시작하면 제거
+    while lines and re.match(r'^#{1,3}\s', lines[0].strip()):
+        lines.pop(0)
+        # 빈 줄도 제거
+        while lines and not lines[0].strip():
+            lines.pop(0)
+    return '\n'.join(lines)
 
 
 def _render_report_html(pet_name: str, report_pages: dict, lang: str) -> str:
@@ -159,7 +172,7 @@ def _render_report_html(pet_name: str, report_pages: dict, lang: str) -> str:
             continue
         
         title = titles.get(page_key, page_key)
-        content_html = md_to_html(content)
+        content_html = md_to_html(_strip_first_heading(content))
         
         sections_html += f"""
         <div style="margin-bottom:32px;padding:24px;background:white;border-radius:12px;border:1px solid #e8ebe8;">
