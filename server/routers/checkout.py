@@ -60,10 +60,18 @@ async def create_polar_checkout(result_id: str, lang: str = "en"):
                                     else check_data["order"]
                                 )
 
+                            # ★ 이메일 추출
+                            customer_email = (
+                                check_data.get("customer_email")
+                                or check_data.get("customer", {}).get("email") if isinstance(check_data.get("customer"), dict) else None
+                                or check_data.get("metadata", {}).get("customer_email") if isinstance(check_data.get("metadata"), dict) else None
+                            )
+
                             doc_ref.update({
                                 "payment_verified": True,
                                 "payment_status": "paid",
-                                **({"order_id": order_id} if order_id else {})
+                                **({"order_id": order_id} if order_id else {}),
+                                **({"customer_email": customer_email} if customer_email else {}),
                             })
 
                             is_verified = True

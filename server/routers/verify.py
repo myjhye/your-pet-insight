@@ -1,9 +1,9 @@
 """
 결제 완료 검증 API
 result_id로 Firestore에서 checkout_id를 찾고, Polar API로 결제 상태를 검증합니다.
-검증 성공 시 Firestore에 payment_verified: true를 저장합니다.
+검증 성공 시 Firestore에 payment_verified: true를 저장하고, BackgroundTask로 리포트 생성을 자동 시작합니다.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 import os
 import httpx
 import asyncio
@@ -13,8 +13,26 @@ from routers.refund import auto_refund_if_needed
 router = APIRouter(prefix="/api", tags=["verify"])
 
 
+# ★ 백그라운드 리포트 생성 함수
+async def _trigger_report_generation(result_id: str, lang: str):
+    """
+    BackgroundTask에서 실행되는 리포트 생성 트리거.
+    verify 응답을 먼저 보낸 후 비동기로 실행됩니다.
+    """
+    try:
+        from routers.report_generation import _generate_report_internal
+        
+        # 약간의 딜레이 (Firestore 업데이트 반영 대기)
+        await asyncio.sleep(1)
+        
+        result = await _generate_report_internal(result_id, lang)
+        print(f"📝 [BG_GENERATE] {result_id}: {result.get('status')} - {result.get('message', '')}")
+    except Exception as e:
+        print(f"❌ [BG_GENERATE] {result_id}: Background generation failed - {str(e)}")
+
+
 @router.get("/verify-payment/{result_id}")
-async def verify_payment(result_id: str):
+async def verify_payment(result_id: str, background_tasks: BackgroundTasks, lang: str = "en"):
     """
     결제 완료 검증 - result_id로 결제 상태를 확인하고 Firestore에 기록합니다.
 
@@ -34,12 +52,18 @@ async def verify_payment(result_id: str):
 
         result_data = doc.to_dict()
 
-        # ★ 이미 검증 완료된 경우 바로 반환 (Polar API 호출 불필요)
+        # ★ 이미 검증 완료된 경우
         if result_data.get("payment_verified") == True:
+            # ★ 리포트가 아직 안 만들어졌으면 백그라운드 생성 트리거
+            report_status = result_data.get("report_status")
+            if report_status not in ["ready", "generating"]:
+                background_tasks.add_task(_trigger_report_generation, result_id, lang)
+            
             return {
                 "status": "success",
                 "is_verified": True,
                 "result_id": result_id,
+                "report_status": report_status or "pending",
                 "message": "Payment already verified"
             }
 
@@ -113,22 +137,42 @@ async def verify_payment(result_id: str):
                     else checkout_data["order"]
                 )
 
-            # ★ Firestore에 결제 검증 결과 저장
+            # ★ 이메일 추출 (Polar checkout 응답에서)
+            customer_email = None
+            # Polar checkout 응답 구조에 따라 이메일 위치가 다를 수 있음
+            # 가능한 위치들을 순서대로 시도
+            customer_email = (
+                checkout_data.get("customer_email")           # 직접 필드
+                or checkout_data.get("customer", {}).get("email") if isinstance(checkout_data.get("customer"), dict) else None  # customer 객체 내
+                or checkout_data.get("metadata", {}).get("customer_email") if isinstance(checkout_data.get("metadata"), dict) else None  # metadata
+            )
+            
+            # 디버깅: checkout_data 구조 확인 (이메일 필드 위치 파악용)
+            if not customer_email:
+                print(f"⚠️ [VERIFY] {result_id}: No email found in checkout_data. Available keys: {list(checkout_data.keys())}")
+
+            # ★ Firestore에 결제 검증 결과 + 이메일 저장
             update_data = {
                 "payment_verified": True,
                 "payment_status": "paid",
             }
             if order_id:
                 update_data["order_id"] = order_id
+            if customer_email:
+                update_data["customer_email"] = customer_email
 
             doc_ref.update(update_data)
+
+            # ★★★ 핵심: 리포트 생성을 백그라운드로 즉시 시작 ★★★
+            background_tasks.add_task(_trigger_report_generation, result_id, lang)
 
             return {
                 "status": "success",
                 "is_verified": True,
                 "result_id": result_id,
                 "order_id": order_id,
-                "message": "Payment verified successfully"
+                "report_status": "generating",  # ★ 프론트에 generating 상태 전달
+                "message": "Payment verified. Report generation started automatically."
             }
         else:
             # ★ 재시도 후에도 실패 → 자동 환불 시도

@@ -6,6 +6,7 @@ import random
 import httpx
 from config import db
 from routers.refund import auto_refund_if_needed
+from routers.email import send_premium_report_email
 
 router = APIRouter(prefix="/api/test", tags=["report"])
 
@@ -1024,28 +1025,47 @@ Forever yours,
 # ============================================================
 # [POST] 프리미엄 리포트 생성 API V2
 # ============================================================
-@router.post("/generate-report/{result_id}")
-async def generate_report(result_id: str, lang: str = "en"):
+async def _generate_report_internal(result_id: str, lang: str = "en") -> dict:
     """
-    프리미엄 리포트 생성 - 체크 순서: ready → payment → generating
+    리포트 생성 핵심 로직.
+    verify.py의 BackgroundTask에서 호출하거나, API 엔드포인트에서 호출합니다.
+    HTTPException 대신 dict를 반환합니다 (백그라운드에서는 HTTP 응답이 없으므로).
     """
     try:
         # 언어 검증
         if lang not in ["en", "jp"]:
-            raise HTTPException(status_code=400, detail="Language must be 'en' or 'jp' only.")
+            return {"status": "error", "message": "Language must be 'en' or 'jp' only."}
 
         # 1. Firestore에서 결과 데이터 조회
         doc_ref = db.collection("test_results").document(result_id)
         doc = doc_ref.get()
 
         if not doc.exists:
-            raise HTTPException(status_code=404, detail="Result not found.")
+            return {"status": "error", "message": "Result not found."}
 
         result_data = doc.to_dict()
 
         # ★ 2. [중복 방지 - 최우선] 이미 리포트가 ready면 재생성하지 않음
-        #    기존 유저(payment_verified 필드 없음)도 여기서 걸려서 정상 반환됨
+        #    ready인데 이메일 안 보냈으면 이메일만 재전송
         if result_data.get("report_status") == "ready" and result_data.get("report_pages"):
+            # ★ ready인데 이메일 안 보냈으면 이메일만 재전송
+            if not result_data.get("email_sent") and result_data.get("customer_email"):
+                try:
+                    email_result = await send_premium_report_email(
+                        to_email=result_data["customer_email"],
+                        pet_name=result_data.get("pet_name", "Pet"),
+                        report_pages=result_data["report_pages"],
+                        lang=lang,
+                        result_id=result_id
+                    )
+                    doc_ref.update({
+                        "email_sent": email_result.get("sent", False),
+                        "email_sent_at": datetime.utcnow() if email_result.get("sent") else None,
+                        "email_id": email_result.get("email_id"),
+                    })
+                except Exception as e:
+                    print(f"⚠️ [EMAIL RETRY] {result_id}: {str(e)}")
+            
             return {
                 "status": "success",
                 "result_id": result_id,
@@ -1055,12 +1075,8 @@ async def generate_report(result_id: str, lang: str = "en"):
             }
 
         # ★ 3. [보안] 결제 검증 체크 - 리포트가 없는 경우에만 체크
-        #    신규 무결제 요청만 여기서 차단됨
         if not result_data.get("payment_verified"):
-            raise HTTPException(
-                status_code=403,
-                detail="Payment not verified. Please complete payment first."
-            )
+            return {"status": "error", "message": "Payment not verified. Please complete payment first."}
 
         # ★ 4. [중복 방지] 현재 생성 중이면 중복 요청 방지
         if result_data.get("report_status") == "generating":
@@ -1288,16 +1304,48 @@ async def generate_report(result_id: str, lang: str = "en"):
         
         print(f"✅ Report V2 Complete! ({success_count}/{total_pages} pages)")
         
+        # ★ 11. 이메일 전송 (실패해도 리포트 상태에 영향 없음)
+        email_result = {"sent": False, "message": "No email", "email_id": None}
+        customer_email = result_data.get("customer_email")
+        if customer_email:
+            try:
+                email_result = await send_premium_report_email(
+                    to_email=customer_email,
+                    pet_name=pet_name,
+                    report_pages=report_pages,
+                    lang=lang,
+                    result_id=result_id
+                )
+                
+                # 이메일 전송 결과를 Firestore에 기록
+                doc_ref.update({
+                    "email_sent": email_result.get("sent", False),
+                    "email_sent_at": datetime.utcnow() if email_result.get("sent") else None,
+                    "email_id": email_result.get("email_id"),
+                })
+                
+                if email_result.get("sent"):
+                    print(f"📧 Report email sent to {customer_email}")
+                else:
+                    print(f"⚠️ Report email failed: {email_result.get('message')}")
+            except Exception as e:
+                print(f"⚠️ [EMAIL] Error sending report email (non-blocking): {str(e)}")
+                try:
+                    doc_ref.update({"email_sent": False, "email_error": str(e)[:200]})
+                except:
+                    pass
+        else:
+            print(f"ℹ️ No customer email found for {result_id}, skipping email delivery")
+        
         return {
             "status": "success",
             "result_id": result_id,
             "report_status": "ready",
             "pages": list(report_pages.keys()),
-            "version": "v2"
+            "version": "v2",
+            "email_sent": bool(customer_email and email_result.get("sent")) if customer_email else False
         }
         
-    except HTTPException:
-        raise
     except Exception as e:
         import traceback
         print(traceback.format_exc())
@@ -1317,7 +1365,28 @@ async def generate_report(result_id: str, lang: str = "en"):
         except:
             print(f"❌ [REFUND] Emergency refund also failed for {result_id}")
         
-        raise HTTPException(status_code=500, detail=f"Report generation error: {str(e)}")
+        return {"status": "error", "message": f"Report generation error: {str(e)}"}
+
+
+@router.post("/generate-report/{result_id}")
+async def generate_report(result_id: str, lang: str = "en"):
+    """
+    프리미엄 리포트 생성 API.
+    프론트엔드에서 직접 호출하는 폴백용으로 유지합니다.
+    주요 생성은 verify 성공 시 BackgroundTask로 자동 실행됩니다.
+    """
+    result = await _generate_report_internal(result_id, lang)
+    
+    if result.get("status") == "error":
+        error_message = result.get("message", "Unknown error")
+        if "not verified" in error_message:
+            raise HTTPException(status_code=403, detail=error_message)
+        elif "not found" in error_message:
+            raise HTTPException(status_code=404, detail=error_message)
+        else:
+            raise HTTPException(status_code=500, detail=error_message)
+    
+    return result
 
 
 # ============================================================
