@@ -1,5 +1,7 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import html2canvas from 'html2canvas'
+import { useRef, useState, useCallback, useEffect } from 'react'
 
 function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, uiText, onCopyLink, onNativeShare, isCopied }) {
   const pageOrder = [
@@ -20,6 +22,162 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
   const activePageTitle = pageTitles[activeTab] || activeTab.replace(/_/g, ' ')
   const currentPageIndex = availablePages.indexOf(activeTab) + 1
   const totalPages = availablePages.length
+
+  // 각 페이지 콘텐츠를 참조하는 ref
+  const pageContentRef = useRef(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // 탭 변경 시 저장 상태 초기화
+  useEffect(() => {
+    setIsSaving(false)
+  }, [activeTab])
+
+  // 이미지 저장 핸들러
+  const handleSaveImage = useCallback(async () => {
+    if (!pageContentRef.current || isSaving) return
+
+    setIsSaving(true)
+
+    try {
+      // 저장 버튼 자체를 캡처에서 제외하기 위해 일시적으로 숨김
+      const saveButton = pageContentRef.current.querySelector('[data-save-button]')
+      if (saveButton) saveButton.style.visibility = 'hidden'
+
+      const element = pageContentRef.current
+
+      const canvas = await html2canvas(element, {
+        scale: 2,                    // 고해상도 (Retina 대응)
+        useCORS: true,               // 외부 이미지 허용
+        backgroundColor: '#FFFFFF',   // 리포트 배경색과 동일
+        logging: false,
+        // 전체 콘텐츠를 캡처하기 위한 설정
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        // 모바일에서 position: fixed 요소 무시
+        ignoreElements: (el) => {
+          return el.tagName === 'HEADER' || el.tagName === 'NAV' || el.classList?.contains('fixed')
+        }
+      })
+
+      // 저장 버튼 복원
+      if (saveButton) saveButton.style.visibility = 'visible'
+
+      // 파일명 생성
+      const lang = uiText?.tabs?.basic === '基本結果' ? 'jp' : 'en'
+      const pageTitle = activeTab.replace(/_/g, '-')
+      const fileName = `${petName}-${pageTitle}.png`
+
+      // 플랫폼별 저장 방식
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+      const dataUrl = canvas.toDataURL('image/png')
+
+      if (isIOS) {
+        // iOS Safari: 새 탭에서 이미지 열기 → 길게 눌러 저장 유도
+        const newTab = window.open()
+        if (newTab) {
+          const tipText = lang === 'jp' 
+            ? '💡 画像を長押し → 写真に保存' 
+            : '💡 Long press the image → Save to Photos'
+          newTab.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>${fileName}</title>
+              <style>
+                body { margin: 0; background: #f5f5f5; }
+                img { max-width: 100%; height: auto; display: block; }
+                .tip { text-align: center; padding: 14px 16px; font-family: -apple-system, sans-serif;
+                       font-size: 14px; color: #555; background: #fff; border-bottom: 1px solid #eee;
+                       position: sticky; top: 0; z-index: 10; }
+              </style>
+            </head>
+            <body>
+              <div class="tip">${tipText}</div>
+              <img src="${dataUrl}" alt="${fileName}" />
+            </body>
+            </html>
+          `)
+          newTab.document.close()
+        } else {
+          // 팝업 차단된 경우 fallback
+          window.location.href = dataUrl
+        }
+      } else if (navigator.share && /Android/i.test(navigator.userAgent)) {
+        // Android: Web Share API로 직접 공유/저장 (지원 시)
+        try {
+          const blob = await (await fetch(dataUrl)).blob()
+          const file = new File([blob], fileName, { type: 'image/png' })
+          await navigator.share({ files: [file] })
+        } catch {
+          // share 실패 시 일반 다운로드 fallback
+          const link = document.createElement('a')
+          link.download = fileName
+          link.href = dataUrl
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }
+      } else {
+        // Desktop / 기타: 직접 다운로드
+        const link = document.createElement('a')
+        link.download = fileName
+        link.href = dataUrl
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+    } catch (error) {
+      console.error('이미지 저장 실패:', error)
+      const saveButton = pageContentRef.current?.querySelector('[data-save-button]')
+      if (saveButton) saveButton.style.visibility = 'visible'
+    } finally {
+      setIsSaving(false)
+    }
+  }, [activeTab, petName, isSaving, uiText])
+
+  // 저장 버튼 컴포넌트
+  const SaveButton = () => {
+    const lang = uiText?.tabs?.basic === '基本結果' ? 'jp' : 'en'
+    return (
+      <button
+        data-save-button
+        onClick={handleSaveImage}
+        disabled={isSaving}
+        className={`
+          inline-flex items-center gap-1.5
+          px-3 py-1.5
+          rounded-lg
+          text-xs font-medium
+          transition-all duration-200
+          ${isSaving 
+            ? 'bg-primary/10 text-primary/40 cursor-wait' 
+            : 'bg-white text-primary/60 hover:text-primary hover:bg-primary/5 border border-primary/15 hover:border-primary/30 shadow-sm hover:shadow'
+          }
+        `}
+        title={isSaving 
+          ? (lang === 'jp' ? '保存中...' : 'Saving...') 
+          : (lang === 'jp' ? '画像を保存' : 'Save as Image')
+        }
+      >
+        {isSaving ? (
+          <>
+            <div className="w-3.5 h-3.5 border-2 border-primary/30 border-t-transparent rounded-full animate-spin" />
+            <span>{lang === 'jp' ? '保存中...' : 'Saving...'}</span>
+          </>
+        ) : (
+          <>
+            <span className="material-symbols-outlined text-base">download</span>
+            <span>{lang === 'jp' ? '画像保存' : 'Save'}</span>
+          </>
+        )}
+      </button>
+    )
+  }
 
   // 탭 클릭 핸들러
   const handleTabClick = (pageKey, event) => {
@@ -134,8 +292,14 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
         {activePageData && (
           <div
             key={activeTab}
-            className="px-5 py-8 md:px-12 md:py-12 max-w-4xl mx-auto"
+            ref={pageContentRef}
+            className="px-5 py-8 md:px-12 md:py-12 max-w-4xl mx-auto relative"
           >
+              {/* 저장 버튼 - 우측 상단 고정 */}
+              <div className="flex justify-end mb-3 sticky top-0 z-10">
+                <SaveButton />
+              </div>
+
               {/* 챕터 제목 */}
               <div className="mb-8">
                 <h3 className="text-2xl font-display font-bold text-primary mb-2">
@@ -192,6 +356,12 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
                 >
                   {activePageData.content}
                 </ReactMarkdown>
+              </div>
+
+              {/* 이미지 저장 시 포함되는 브랜딩 (화면에서도 보임) */}
+              <div className="mt-8 pt-4 border-t border-primary/10 flex items-center justify-between text-xs text-primary/30">
+                <span>🐾 yourpetinsight.com</span>
+                <span>{petName}'s Premium Report</span>
               </div>
           </div>
         )}
