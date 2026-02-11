@@ -226,13 +226,12 @@ function PremiumCTA({
                     {lang === 'jp' ? (
                       <>
                         <Link to={`/${lang}/refund`} className="underline text-white/60 hover:text-white/80" target="_blank">返金ポリシー</Link>
-                        に同意します。レポート配信後の返金はできません。
+                        に同意します。
                       </>
                     ) : (
                       <>
                         I agree to the{' '}
                         <Link to={`/${lang}/refund`} className="underline text-white/60 hover:text-white/80" target="_blank">Refund Policy</Link>.
-                        {' '}No refunds after report delivery.
                       </>
                     )}
                   </span>
