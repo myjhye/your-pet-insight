@@ -78,6 +78,7 @@ function PremiumCTA({
   isStartingPayment,
   onGetReport,
   onViewReport,
+  onRetry,
   hookText,
   refundInitiated = false,
 }) {
@@ -97,6 +98,7 @@ function PremiumCTA({
 
   const isReady = reportStatus === 'ready' && reportPages
   const isFailed = reportStatus === 'failed'
+  const isTimeout = reportStatus === 'timeout'
 
   const handleClick = () => {
     if (isReady) {
@@ -239,7 +241,7 @@ function PremiumCTA({
               )}
 
               {/* Button - 항상 풀 너비(모바일), 데스크탑은 auto, 최소 높이 52px */}
-              {reportStatus !== 'generating' && (
+              {reportStatus !== 'generating' && !isTimeout && (
                 <button
                   id="premium-cta-button"
                   onClick={handleClick}
@@ -286,6 +288,26 @@ function PremiumCTA({
                   <span className="text-sm font-medium">{text.ready}</span>
                 </div>
               )}
+              {isTimeout && (
+                <div className="text-center space-y-3 mt-3">
+                  <p className="text-amber-300 font-bold text-sm md:text-base">
+                    {lang === 'jp' ? '生成に時間がかかっています。' : 'Generation is taking longer than expected.'}
+                  </p>
+                  {onRetry && (
+                    <button
+                      onClick={onRetry}
+                      className="px-6 py-3 bg-white text-primary rounded-full font-bold text-sm hover:bg-gray-100 transition-all"
+                    >
+                      {lang === 'jp' ? '再試行' : 'Retry Generation'}
+                    </button>
+                  )}
+                  <p className="text-white/40 text-xs">
+                    {lang === 'jp' 
+                      ? '再試行ボタンをクリックするか、しばらく待ってからページを更新してください。' 
+                      : 'Click retry or refresh the page after a moment.'}
+                  </p>
+                </div>
+              )}
               {isFailed && (
                 <div className="text-center space-y-3 mt-3">
                   {refundInitiated ? (
@@ -307,12 +329,14 @@ function PremiumCTA({
                       <p className="text-red-300 font-bold text-sm md:text-base">
                         {lang === 'jp' ? '生成に失敗しました。' : 'Generation failed.'}
                       </p>
-                      <button
-                        onClick={onGetReport}
-                        className="px-6 py-3 bg-white text-primary rounded-full font-bold text-sm hover:bg-gray-100 transition-all"
-                      >
-                        {lang === 'jp' ? '再試行' : 'Try Again'}
-                      </button>
+                      {onRetry && (
+                        <button
+                          onClick={onRetry}
+                          className="px-6 py-3 bg-white text-primary rounded-full font-bold text-sm hover:bg-gray-100 transition-all"
+                        >
+                          {lang === 'jp' ? '再試行' : 'Try Again'}
+                        </button>
+                      )}
                       <p className="text-white/40 text-xs">
                         {lang === 'jp' 
                           ? '再試行しても失敗する場合、自動的に返金されます。' 
@@ -324,7 +348,7 @@ function PremiumCTA({
               )}
 
               {/* Guarantee line */}
-              {!isReady && !isFailed && reportStatus !== 'generating' && (
+              {!isReady && !isFailed && !isTimeout && reportStatus !== 'generating' && (
                 <div className="flex items-center gap-1.5 text-white/35 text-[11px] md:text-xs mt-3 md:mt-4 justify-center md:justify-start">
                   <span className="material-symbols-outlined text-sm">verified</span>
                   <span>{text.guarantee}</span>

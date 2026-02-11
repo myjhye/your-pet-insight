@@ -929,16 +929,16 @@ function PersonalityTestResult() {
     }
   }, [resultId, paymentProcessed])
 
-  // 로딩 상태가 설정된 후: verify → generate 순서로 실행
+  // 로딩 상태가 설정된 후: verify → polling (백엔드가 자동으로 리포트 생성 시작)
   useEffect(() => {
     if (reportStatus === 'generating' && paymentProcessed && resultId && !reportGenerationStarted) {
       setReportGenerationStarted(true)
 
-      const verifyAndGenerate = async () => {
+      const verifyAndPoll = async () => {
         try {
-          // ★ Step 1: 결제 검증
+          // ★ Step 1: 결제 검증 (백엔드가 자동으로 리포트 생성 시작)
           const verifyResponse = await axios.get(
-            `${API_BASE_URL}/api/verify-payment/${resultId}`
+            `${API_BASE_URL}/api/verify-payment/${resultId}?lang=${lang}`
           )
 
           if (!verifyResponse.data.is_verified) {
@@ -963,88 +963,77 @@ function PersonalityTestResult() {
             return
           }
 
-          // ★ Step 2: 결제 검증 성공 → 리포트 생성
-          const response = await axios.post(
-            `${API_BASE_URL}/api/test/generate-report/${resultId}?lang=${lang}`
-          )
-
-          if (response.data.status === 'success') {
-            // 이미 ready인 경우 (중복 요청 방지에 의한 즉시 반환)
-            if (response.data.report_status === 'ready') {
-              await fetchResult(resultId, true)
-              setReportStatus('ready')
-              setIsGeneratingReport(false)
-              setCurrentTab('premium')
-              window.scrollTo({ top: 0, behavior: 'auto' })
-              return
-            }
-
-            // 폴링으로 리포트 상태 확인 (최대 90초)
-            let attempts = 0
-            const maxAttempts = 90
-
-            const checkStatus = setInterval(async () => {
-              attempts++
-              try {
-                const resultResponse = await axios.get(
-                  `${API_BASE_URL}/api/results/${resultId}`
-                )
-                const updatedData = resultResponse.data
-
-                if (updatedData.report_status === 'ready') {
-                  clearInterval(checkStatus)
-                  await fetchResult(resultId, true)
-
-                  setReportStatus('ready')
-                  setReportPages(updatedData.report_pages || null)
-                  setIsGeneratingReport(false)
-                  setCurrentTab('premium')
-
-                  const pageOrder = [
-                    'table_of_contents', 'deep_dive_traits', 'cognitive_strengths',
-                    'owner_chemistry', 'training_roadmap', 'social_adaptation',
-                    'lifestyle_guide', 'heartfelt_message'
-                  ]
-                  const firstPage = pageOrder.find(k => updatedData.report_pages?.[k])
-                  if (firstPage) setActiveTab(firstPage)
-
-                  window.scrollTo({ top: 0, behavior: 'auto' })
-                } else if (updatedData.report_status === 'failed') {
-                  setReportStatus('failed')
-                  setIsGeneratingReport(false)
-                  setCurrentTab('basic')
-                  clearInterval(checkStatus)
-                } else if (attempts >= maxAttempts) {
-                  setReportStatus('failed')
-                  setIsGeneratingReport(false)
-                  setCurrentTab('basic')
-                  clearInterval(checkStatus)
-                }
-              } catch (err) {
-                console.error('리포트 상태 확인 실패:', err)
-                if (attempts >= maxAttempts) {
-                  setReportStatus('failed')
-                  setIsGeneratingReport(false)
-                  setCurrentTab('basic')
-                  clearInterval(checkStatus)
-                }
-              }
-            }, 1000)
-          }
+          // ★ Step 2: verify 응답의 report_status 확인
+          const verifyReportStatus = verifyResponse.data.report_status
           
-          // ★ 생성 실패 + 환불 정보 처리
-          if (response.data.status === 'failed') {
-            setReportStatus('failed')
+          if (verifyReportStatus === 'ready') {
+            // 이미 완료됨 (재방문 케이스)
+            await fetchResult(resultId, true)
+            setReportStatus('ready')
             setIsGeneratingReport(false)
-            setCurrentTab('basic')
-            
-            if (response.data.refund_initiated) {
-              setRefundInitiated(true)
-            }
+            setCurrentTab('premium')
+            window.scrollTo({ top: 0, behavior: 'auto' })
             return
           }
+
+          // generating 중 — polling 시작 (백엔드가 자동으로 생성 중)
+          // 폴링으로 리포트 상태 확인 (최대 180초 = 3분)
+          let attempts = 0
+          const maxAttempts = 180  // 3분 타임아웃
+
+          const checkStatus = setInterval(async () => {
+            attempts++
+            try {
+              const resultResponse = await axios.get(
+                `${API_BASE_URL}/api/results/${resultId}`
+              )
+              const updatedData = resultResponse.data
+
+              if (updatedData.report_status === 'ready') {
+                clearInterval(checkStatus)
+                await fetchResult(resultId, true)
+
+                setReportStatus('ready')
+                setReportPages(updatedData.report_pages || null)
+                setIsGeneratingReport(false)
+                setCurrentTab('premium')
+
+                const pageOrder = [
+                  'table_of_contents', 'deep_dive_traits', 'cognitive_strengths',
+                  'owner_chemistry', 'training_roadmap', 'social_adaptation',
+                  'lifestyle_guide', 'heartfelt_message'
+                ]
+                const firstPage = pageOrder.find(k => updatedData.report_pages?.[k])
+                if (firstPage) setActiveTab(firstPage)
+
+                window.scrollTo({ top: 0, behavior: 'auto' })
+              } else if (updatedData.report_status === 'failed') {
+                clearInterval(checkStatus)
+                setReportStatus('failed')
+                setIsGeneratingReport(false)
+                setCurrentTab('basic')
+                
+                // 환불 정보 확인
+                if (updatedData.refund_initiated) {
+                  setRefundInitiated(true)
+                }
+              } else if (attempts >= maxAttempts) {
+                // 타임아웃 → 재시도 버튼 표시
+                clearInterval(checkStatus)
+                setReportStatus('timeout')
+                setIsGeneratingReport(false)
+              }
+            } catch (err) {
+              console.error('리포트 상태 확인 실패:', err)
+              if (attempts >= maxAttempts) {
+                clearInterval(checkStatus)
+                setReportStatus('timeout')
+                setIsGeneratingReport(false)
+              }
+            }
+          }, 3000)  // 3초 간격으로 polling
         } catch (error) {
-          console.error('리포트 생성 실패:', error)
+          console.error('결제 검증 실패:', error)
 
           // ★ 403 에러 = 결제 미검증
           if (error.response?.status === 403) {
@@ -1059,9 +1048,44 @@ function PersonalityTestResult() {
         }
       }
 
-      verifyAndGenerate()
+      verifyAndPoll()
     }
   }, [reportStatus, paymentProcessed, resultId, reportGenerationStarted, lang]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 타임아웃 시 재시도 함수 (폴백용 - generate-report 직접 호출)
+  const handleRetryGenerate = async () => {
+    if (!resultId) return
+    
+    setReportStatus('generating')
+    setIsGeneratingReport(true)
+    setReportGenerationStarted(false)  // 재시도 플래그 리셋
+    
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/test/generate-report/${resultId}?lang=${lang}`
+      )
+      
+      if (response.data.status === 'success') {
+        if (response.data.report_status === 'ready') {
+          await fetchResult(resultId, true)
+          setReportStatus('ready')
+          setIsGeneratingReport(false)
+          setCurrentTab('premium')
+          window.scrollTo({ top: 0, behavior: 'auto' })
+        } else {
+          // generating 상태 → polling 재시작
+          setPaymentProcessed(true)
+        }
+      } else {
+        setReportStatus('failed')
+        setIsGeneratingReport(false)
+      }
+    } catch (error) {
+      console.error('리포트 재생성 실패:', error)
+      setReportStatus('failed')
+      setIsGeneratingReport(false)
+    }
+  }
 
   // 링크 복사 함수
   const handleCopyLink = async () => {
@@ -1600,6 +1624,7 @@ function PersonalityTestResult() {
               setCurrentTab('premium')
               window.scrollTo({ top: 0, behavior: 'auto' })
             }}
+            onRetry={handleRetryGenerate}
             hookText={ctaHook}
             refundInitiated={refundInitiated}
           />
