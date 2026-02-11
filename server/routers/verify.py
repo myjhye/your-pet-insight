@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 import os
 import httpx
 import asyncio
+import json
 from config import db
 from routers.refund import auto_refund_if_needed
 
@@ -52,8 +53,41 @@ async def verify_payment(result_id: str, background_tasks: BackgroundTasks, lang
 
         result_data = doc.to_dict()
 
+        # Polar API 설정 (이메일 가져오기용으로 먼저 설정)
+        polar_api_key = os.getenv("POLAR_ACCESS_TOKEN")
+        if not polar_api_key:
+            raise HTTPException(status_code=500, detail="Polar API key not configured")
+
+        polar_api_url = "https://api.polar.sh/v1"
+        headers = {
+            "Authorization": f"Bearer {polar_api_key}",
+            "Content-Type": "application/json"
+        }
+
         # ★ 이미 검증 완료된 경우
         if result_data.get("payment_verified") == True:
+            # ★ 이메일이 아직 없으면 Polar에서 가져오기
+            if not result_data.get("customer_email") and result_data.get("checkout_id"):
+                try:
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        resp = await client.get(
+                            f"{polar_api_url}/checkouts/{result_data['checkout_id']}",
+                            headers=headers
+                        )
+                        if resp.status_code == 200:
+                            cd = resp.json()
+                            # 이메일 추출 시도
+                            email = (
+                                cd.get("customer_email")
+                                or (cd.get("customer") or {}).get("email")
+                                or (cd.get("metadata") or {}).get("customer_email")
+                            )
+                            if email:
+                                doc_ref.update({"customer_email": email})
+                                result_data["customer_email"] = email
+                except Exception as e:
+                    print(f"⚠️ [VERIFY] Email fetch failed: {e}")
+
             # ★ 리포트가 아직 안 만들어졌으면 백그라운드 생성 트리거
             report_status = result_data.get("report_status")
             if report_status not in ["ready", "generating"]:
@@ -78,15 +112,6 @@ async def verify_payment(result_id: str, background_tasks: BackgroundTasks, lang
             }
 
         # 3. Polar API로 결제 상태 확인 (재시도 포함)
-        polar_api_key = os.getenv("POLAR_ACCESS_TOKEN")
-        if not polar_api_key:
-            raise HTTPException(status_code=500, detail="Polar API key not configured")
-
-        polar_api_url = "https://api.polar.sh/v1"
-        headers = {
-            "Authorization": f"Bearer {polar_api_key}",
-            "Content-Type": "application/json"
-        }
 
         # ★ Polar 상태 반영 딜레이 대응: 최대 3회 재시도 (2초 간격)
         checkout_status = "unknown"
@@ -142,14 +167,10 @@ async def verify_payment(result_id: str, background_tasks: BackgroundTasks, lang
             # Polar checkout 응답 구조에 따라 이메일 위치가 다를 수 있음
             # 가능한 위치들을 순서대로 시도
             customer_email = (
-                checkout_data.get("customer_email")           # 직접 필드
-                or checkout_data.get("customer", {}).get("email") if isinstance(checkout_data.get("customer"), dict) else None  # customer 객체 내
-                or checkout_data.get("metadata", {}).get("customer_email") if isinstance(checkout_data.get("metadata"), dict) else None  # metadata
+                checkout_data.get("customer_email")
+                or (checkout_data.get("customer") or {}).get("email")
+                or (checkout_data.get("metadata") or {}).get("customer_email")
             )
-            
-            # 디버깅: checkout_data 구조 확인 (이메일 필드 위치 파악용)
-            if not customer_email:
-                print(f"⚠️ [VERIFY] {result_id}: No email found in checkout_data. Available keys: {list(checkout_data.keys())}")
 
             # ★ Firestore에 결제 검증 결과 + 이메일 저장
             update_data = {

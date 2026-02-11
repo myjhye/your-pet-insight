@@ -63,8 +63,8 @@ async def create_polar_checkout(result_id: str, lang: str = "en"):
                             # ★ 이메일 추출
                             customer_email = (
                                 check_data.get("customer_email")
-                                or check_data.get("customer", {}).get("email") if isinstance(check_data.get("customer"), dict) else None
-                                or check_data.get("metadata", {}).get("customer_email") if isinstance(check_data.get("metadata"), dict) else None
+                                or (check_data.get("customer") or {}).get("email")
+                                or (check_data.get("metadata") or {}).get("customer_email")
                             )
 
                             doc_ref.update({

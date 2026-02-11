@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
@@ -906,7 +906,67 @@ function PersonalityTestResult() {
     }
   }
 
-  // 결제 완료 후 처리 (URL 파라미터 확인) - 최초 1회만 실행
+  // 폴링 함수 (별도 함수로 분리)
+  const startPolling = useCallback(() => {
+    if (!resultId) return
+    
+    let attempts = 0
+    const maxAttempts = 180  // 3분 타임아웃
+
+    const checkStatus = setInterval(async () => {
+      attempts++
+      try {
+        const resultResponse = await axios.get(
+          `${API_BASE_URL}/api/results/${resultId}`
+        )
+        const updatedData = resultResponse.data
+
+        if (updatedData.report_status === 'ready') {
+          clearInterval(checkStatus)
+          await fetchResult(resultId, true)
+
+          setReportStatus('ready')
+          setReportPages(updatedData.report_pages || null)
+          setIsGeneratingReport(false)
+          setCurrentTab('premium')
+
+          const pageOrder = [
+            'table_of_contents', 'deep_dive_traits', 'cognitive_strengths',
+            'owner_chemistry', 'training_roadmap', 'social_adaptation',
+            'lifestyle_guide', 'heartfelt_message'
+          ]
+          const firstPage = pageOrder.find(k => updatedData.report_pages?.[k])
+          if (firstPage) setActiveTab(firstPage)
+
+          window.scrollTo({ top: 0, behavior: 'auto' })
+        } else if (updatedData.report_status === 'failed') {
+          clearInterval(checkStatus)
+          setReportStatus('failed')
+          setIsGeneratingReport(false)
+          setCurrentTab('basic')
+          
+          // 환불 정보 확인
+          if (updatedData.refund_initiated) {
+            setRefundInitiated(true)
+          }
+        } else if (attempts >= maxAttempts) {
+          // 타임아웃 → 재시도 버튼 표시
+          clearInterval(checkStatus)
+          setReportStatus('timeout')
+          setIsGeneratingReport(false)
+        }
+      } catch (err) {
+        console.error('리포트 상태 확인 실패:', err)
+        if (attempts >= maxAttempts) {
+          clearInterval(checkStatus)
+          setReportStatus('timeout')
+          setIsGeneratingReport(false)
+        }
+      }
+    }, 3000)  // 3초 간격으로 polling
+  }, [resultId, fetchResult]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 결제 완료 후 처리 (URL 파라미터 확인) - 최초 1회만 실행 + verify 직접 호출
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const paymentStatus = urlParams.get('payment')
@@ -926,24 +986,17 @@ function PersonalityTestResult() {
       
       // 최상단으로 스크롤
       window.scrollTo({ top: 0, behavior: 'auto' })
-    }
-  }, [resultId, paymentProcessed])
-
-  // 로딩 상태가 설정된 후: verify → polling (백엔드가 자동으로 리포트 생성 시작)
-  useEffect(() => {
-    if (reportStatus === 'generating' && paymentProcessed && resultId && !reportGenerationStarted) {
-      setReportGenerationStarted(true)
-
-      const verifyAndPoll = async () => {
+      
+      // ★ 여기서 바로 verify 호출 (다른 useEffect에 의존하지 않음)
+      const runVerify = async () => {
+        const verifyUrl = `${API_BASE_URL}/api/verify-payment/${resultId}?lang=${lang}`
+        
         try {
-          // ★ Step 1: 결제 검증 (백엔드가 자동으로 리포트 생성 시작)
-          const verifyResponse = await axios.get(
-            `${API_BASE_URL}/api/verify-payment/${resultId}?lang=${lang}`
-          )
-
+          const verifyResponse = await axios.get(verifyUrl)
+          
           if (!verifyResponse.data.is_verified) {
             // 결제 검증 실패
-            console.error('결제 검증 실패:', verifyResponse.data.message)
+            console.error('Payment verification failed:', verifyResponse.data.message)
             setReportStatus('failed')
             setIsGeneratingReport(false)
             setCurrentTab('basic')
@@ -963,7 +1016,7 @@ function PersonalityTestResult() {
             return
           }
 
-          // ★ Step 2: verify 응답의 report_status 확인
+          // ★ verify 응답의 report_status 확인
           const verifyReportStatus = verifyResponse.data.report_status
           
           if (verifyReportStatus === 'ready') {
@@ -976,64 +1029,10 @@ function PersonalityTestResult() {
             return
           }
 
-          // generating 중 — polling 시작 (백엔드가 자동으로 생성 중)
-          // 폴링으로 리포트 상태 확인 (최대 180초 = 3분)
-          let attempts = 0
-          const maxAttempts = 180  // 3분 타임아웃
-
-          const checkStatus = setInterval(async () => {
-            attempts++
-            try {
-              const resultResponse = await axios.get(
-                `${API_BASE_URL}/api/results/${resultId}`
-              )
-              const updatedData = resultResponse.data
-
-              if (updatedData.report_status === 'ready') {
-                clearInterval(checkStatus)
-                await fetchResult(resultId, true)
-
-                setReportStatus('ready')
-                setReportPages(updatedData.report_pages || null)
-                setIsGeneratingReport(false)
-                setCurrentTab('premium')
-
-                const pageOrder = [
-                  'table_of_contents', 'deep_dive_traits', 'cognitive_strengths',
-                  'owner_chemistry', 'training_roadmap', 'social_adaptation',
-                  'lifestyle_guide', 'heartfelt_message'
-                ]
-                const firstPage = pageOrder.find(k => updatedData.report_pages?.[k])
-                if (firstPage) setActiveTab(firstPage)
-
-                window.scrollTo({ top: 0, behavior: 'auto' })
-              } else if (updatedData.report_status === 'failed') {
-                clearInterval(checkStatus)
-                setReportStatus('failed')
-                setIsGeneratingReport(false)
-                setCurrentTab('basic')
-                
-                // 환불 정보 확인
-                if (updatedData.refund_initiated) {
-                  setRefundInitiated(true)
-                }
-              } else if (attempts >= maxAttempts) {
-                // 타임아웃 → 재시도 버튼 표시
-                clearInterval(checkStatus)
-                setReportStatus('timeout')
-                setIsGeneratingReport(false)
-              }
-            } catch (err) {
-              console.error('리포트 상태 확인 실패:', err)
-              if (attempts >= maxAttempts) {
-                clearInterval(checkStatus)
-                setReportStatus('timeout')
-                setIsGeneratingReport(false)
-              }
-            }
-          }, 3000)  // 3초 간격으로 polling
+          // generating 중 — 백엔드가 자동 생성 시작함 → polling 시작
+          startPolling()
         } catch (error) {
-          console.error('결제 검증 실패:', error)
+          console.error('Payment verification failed:', error)
 
           // ★ 403 에러 = 결제 미검증
           if (error.response?.status === 403) {
@@ -1047,10 +1046,12 @@ function PersonalityTestResult() {
           setCurrentTab('basic')
         }
       }
-
-      verifyAndPoll()
+      
+      runVerify()
     }
-  }, [reportStatus, paymentProcessed, resultId, reportGenerationStarted, lang]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [resultId, paymentProcessed, lang, startPolling]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 이 useEffect는 제거됨 - verify는 첫 번째 useEffect에서 직접 호출하므로 중복 제거
 
   // 타임아웃 시 재시도 함수 (폴백용 - generate-report 직접 호출)
   const handleRetryGenerate = async () => {
