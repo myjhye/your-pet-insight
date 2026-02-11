@@ -84,6 +84,7 @@ function PremiumCTA({
   const text = CTA_TEXT[lang] || CTA_TEXT.en
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isImageLoaded, setIsImageLoaded] = useState(false)
+  const [agreedToRefund, setAgreedToRefund] = useState(false)
 
   // Archetype 이미지 슬라이드 (5초 간격)
   useEffect(() => {
@@ -101,7 +102,9 @@ function PremiumCTA({
     if (isReady) {
       onViewReport?.()
     } else {
-      onGetReport?.()
+      if (agreedToRefund) {
+        onGetReport?.()
+      }
     }
   }
 
@@ -210,14 +213,40 @@ function PremiumCTA({
                 </div>
               )}
 
+              {/* 환불 정책 동의 (결제 버튼 위) */}
+              {reportStatus !== 'ready' && reportStatus !== 'generating' && (
+                <label className="flex items-start gap-3 cursor-pointer mb-3 select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreedToRefund}
+                    onChange={(e) => setAgreedToRefund(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-white/30 bg-white/10 text-emerald-400 focus:ring-emerald-400/50 cursor-pointer flex-shrink-0"
+                  />
+                  <span className="text-[11px] text-white/50 leading-relaxed">
+                    {lang === 'jp' ? (
+                      <>
+                        <Link to={`/${lang}/refund`} className="underline text-white/60 hover:text-white/80" target="_blank">返金ポリシー</Link>
+                        に同意します。レポート配信後の返金はできません。
+                      </>
+                    ) : (
+                      <>
+                        I agree to the{' '}
+                        <Link to={`/${lang}/refund`} className="underline text-white/60 hover:text-white/80" target="_blank">Refund Policy</Link>.
+                        {' '}No refunds after report delivery.
+                      </>
+                    )}
+                  </span>
+                </label>
+              )}
+
               {/* Button - 항상 풀 너비(모바일), 데스크탑은 auto, 최소 높이 52px */}
               {reportStatus !== 'generating' && (
                 <button
                   id="premium-cta-button"
                   onClick={handleClick}
-                  disabled={isGeneratingReport || isStartingPayment}
+                  disabled={isGeneratingReport || isStartingPayment || (!isReady && !agreedToRefund)}
                   className={`group relative w-full md:w-auto font-bold text-base md:text-lg min-h-[52px] py-3.5 md:py-4 px-8 md:px-10 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.97] disabled:cursor-not-allowed overflow-hidden ${
-                    isStartingPayment
+                    isStartingPayment || (!isReady && !agreedToRefund)
                       ? 'bg-white/60 text-primary/60'
                       : isReady
                       ? 'bg-emerald-400 text-[#1a3a2a] hover:bg-emerald-300'

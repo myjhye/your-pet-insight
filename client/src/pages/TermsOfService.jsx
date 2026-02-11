@@ -54,7 +54,7 @@ const CONTENT = {
         heading: "2. Eligibility",
         paragraphs: [
           "You must be at least 14 years old to use this service. By using our service, you represent and warrant that you meet this age requirement.",
-          "You may use our service without creating an account. However, an email address may be required for premium report purchases and delivery."
+          "You may use our service without creating an account. No registration is required. An email address is collected by our payment processor (Polar) only when you purchase a Premium Report."
         ]
       },
       {
@@ -81,7 +81,7 @@ const CONTENT = {
           "Once deleted, your results cannot be recovered. We strongly recommend that you save your results if you wish to access them after the 30-day period.",
           "To preserve your results:",
           "• Use the image save functionality available on the results screen to download or screenshot your results",
-          "• If you purchase a Premium Report, a copy will be sent to the email address you provide during checkout",
+          "• If you purchase a Premium Report, a copy may be sent to the email address you provide during checkout (when available)",
           "For detailed information about data handling, please refer to our Privacy Policy."
         ]
       },
@@ -135,7 +135,7 @@ const CONTENT = {
         heading: "2. 利用資格",
         paragraphs: [
           "本サービスを利用するには、14歳以上である必要があります。当サービスを使用することにより、この年齢要件を満たしていることを表明し保証します。",
-          "アカウントを作成せずに当サービスを利用できます。ただし、プレミアムレポートの購入および配信にはメールアドレスが必要な場合があります。"
+          "アカウントを作成せずに当サービスを利用できます。登録は不要です。メールアドレスは、プレミアムレポートを購入する場合にのみ、決済処理業者（Polar）が収集します。"
         ]
       },
       {
@@ -162,7 +162,7 @@ const CONTENT = {
           "削除後、結果を復元することはできません。30日後も結果にアクセスしたい場合は、結果を保存することを強く推奨します。",
           "結果を保存するには：",
           "• 結果画面で利用可能な画像保存機能を使用して、結果をダウンロードまたはスクリーンショットする",
-          "• プレミアムレポートを購入した場合、チェックアウト時に提供したメールアドレスにコピーが送信されます",
+          "• プレミアムレポートを購入した場合、チェックアウト時に提供したメールアドレスにコピーが送信される場合があります（利用可能な場合）",
           "データ処理の詳細については、当社のプライバシーポリシーを参照してください。"
         ]
       },

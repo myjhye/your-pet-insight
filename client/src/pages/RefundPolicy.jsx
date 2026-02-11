@@ -88,7 +88,7 @@ const CONTENT = {
           "Refunds are not available after the 30-day deletion period due to inability to access results. This is a normal part of our data retention policy.",
           "**To preserve your results:**",
           "• Use the image save functionality available on the results screen to download or screenshot your results to your local device",
-          "• If you purchase a Premium Report, a copy will be sent to the email address you provide during checkout. We strongly recommend keeping this email for your records.",
+          "• Premium Report copies may also be delivered to your checkout email (when this feature is available)",
           "We strongly recommend saving your results within the 30-day period if you wish to access them later."
         ]
       },
@@ -166,7 +166,7 @@ const CONTENT = {
           "結果にアクセスできないことを理由に、30日の削除期間後は返金は利用できません。これは、当社のデータ保持ポリシーの正常な部分です。",
           "**結果を保存するには：**",
           "• 結果画面で利用可能な画像保存機能を使用して、結果をローカルデバイスにダウンロードまたはスクリーンショットする",
-          "• プレミアムレポートを購入した場合、チェックアウト時に提供したメールアドレスにコピーが送信されます。記録のためにこのメールを保持することを強く推奨します。",
+          "• プレミアムレポートのコピーは、チェックアウト時のメールアドレスにも配信される場合があります（この機能が利用可能な場合）",
           "後で結果にアクセスしたい場合は、30日以内に結果を保存することを強く推奨します。"
         ]
       },

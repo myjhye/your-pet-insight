@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import { useLang } from '../contexts/LanguageContext'
 import { useQuestions } from '../contexts/QuestionsContext'
@@ -90,6 +90,7 @@ function PersonalityTest() {
   const [bonusAnswers, setBonusAnswers] = useState({})
   const [petName, setPetName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const questionRefs = useRef([])
 
   // Context에서 질문 가져오기 (캐시 활용, 현재 언어 기준)
@@ -105,6 +106,7 @@ function PersonalityTest() {
     setBonusAnswers({})
     setPetName('')
     setIsSubmitting(false)
+    setAgreedToTerms(false)
     questionRefs.current = []
     // 스크롤 최상단으로
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -178,7 +180,7 @@ function PersonalityTest() {
   }
 
   const handleSeeResults = async () => {
-    if (!allAnswered || stage !== 2 || !petName.trim() || isSubmitting) return
+    if (!allAnswered || stage !== 2 || !petName.trim() || !agreedToTerms || isSubmitting) return
 
     setIsSubmitting(true)
     
@@ -210,7 +212,7 @@ function PersonalityTest() {
     }
   }
 
-  const canSeeResults = allAnswered && petName.trim().length > 0 && !isSubmitting
+  const canSeeResults = allAnswered && petName.trim().length > 0 && agreedToTerms && !isSubmitting
 
   const getQuestionNumber = (index) => {
     return stage === 1 ? index + 1 : questions.stage1.length + index + 1
@@ -338,6 +340,34 @@ function PersonalityTest() {
                     className="w-full px-6 py-4 text-base md:text-lg rounded-xl border-2 border-primary/20 bg-white text-primary placeholder-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center font-medium"
                   />
                 </div>
+
+                {/* Terms 동의 체크박스 */}
+                <label className="flex items-start gap-3 cursor-pointer mt-2 mb-2 select-none max-w-md">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/50 cursor-pointer flex-shrink-0"
+                  />
+                  <span className="text-xs text-primary/60 leading-relaxed">
+                    {lang === 'jp' ? (
+                      <>
+                        <Link to={`/${lang}/terms`} className="underline hover:text-primary" target="_blank">利用規約</Link>
+                        と
+                        <Link to={`/${lang}/privacy`} className="underline hover:text-primary" target="_blank">プライバシーポリシー</Link>
+                        に同意します。テスト回答データは30日後に自動削除されます。
+                      </>
+                    ) : (
+                      <>
+                        I agree to the{' '}
+                        <Link to={`/${lang}/terms`} className="underline hover:text-primary" target="_blank">Terms of Service</Link>
+                        {' '}and{' '}
+                        <Link to={`/${lang}/privacy`} className="underline hover:text-primary" target="_blank">Privacy Policy</Link>.
+                        {' '}Test data is automatically deleted after 30 days.
+                      </>
+                    )}
+                  </span>
+                </label>
 
                 <button
                   onClick={handleSeeResults}

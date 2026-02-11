@@ -53,69 +53,92 @@ const CONTENT = {
       {
         heading: "2. Information We Collect",
         paragraphs: [
-          "**Information You Provide:**",
-          "• Pet name (required for personality analysis)",
-          "• Test responses (pet personality questions and owner personality questions)",
-          "• Email address (only when purchasing a Premium Report, collected through Polar payment processor)",
+          "**Information You Directly Provide:**",
+          "• Pet name (required to generate personality analysis)",
+          "• Test responses (answers to pet personality and owner personality questions)",
           "",
-          "**Information Automatically Collected:**",
-          "• Browser type and device information",
-          "• IP address (anonymized)",
-          "• Service usage patterns (page views, clicks, etc.)",
+          "These are stored in our database (Google Firestore) and automatically deleted 30 days after creation.",
           "",
-          "**Information We Do NOT Collect:**",
-          "• Real name, address, or phone number",
-          "• Pet medical records",
-          "• Payment card information (processed directly by Polar, not stored on our servers)"
+          "**Information Collected by Third-Party Services:**",
+          "• Email address: Collected by Polar (our payment processor) only when you purchase a Premium Report. This information is stored on Polar's servers, not ours.",
+          "• Payment information (card details, billing): Processed and stored entirely by Polar. We never see or store your payment card information.",
+          "• Anonymous usage data: Google Analytics collects anonymized browsing data (page views, general geographic region, device type) to help us improve our service. This data cannot identify you personally.",
+          "",
+          "**Information We Do NOT Collect or Store:**",
+          "• Your real name, address, or phone number",
+          "• Your pet's medical records",
+          "• IP addresses (we do not log or store IP addresses)",
+          "• Payment card details (handled entirely by Polar)"
         ]
       },
       {
         heading: "3. How We Use Your Information",
         paragraphs: [
-          "We use the information we collect to:",
-          "• Generate AI-based personality analysis results",
-          "• Create and deliver Premium Reports via email",
-          "• Improve our service and conduct statistical analysis (using anonymized data)",
-          "• Ensure service functionality and security"
+          "• Pet name and test responses: Used solely to generate your AI-based personality analysis results. This data is sent to OpenAI's API for report generation and is automatically deleted from our database after 30 days.",
+          "• Anonymous analytics data: Used to understand general usage patterns and improve our service. This data cannot be linked to individual users.",
+          "",
+          "We do not sell, rent, or share your personal data with third parties for marketing purposes."
         ]
       },
       {
-        heading: "4. Data Retention Period",
+        heading: "4. Data Retention",
         paragraphs: [
-          "**Your test result data will be automatically deleted 30 days after creation.**",
-          "Once deleted, your data cannot be recovered. We strongly recommend that you save your results if you wish to access them after the 30-day period.",
-          "**To preserve your results:**",
-          "• Use the image save functionality available on the results screen to download or screenshot your results",
-          "• If you purchase a Premium Report, a copy will be sent to the email address you provide during checkout. We recommend keeping this email for your records.",
-          "Payment records are retained for up to 5 years as required by tax laws."
+          "• Test result data (pet name, responses, analysis results, premium report): Automatically deleted 30 days after creation. This deletion is permanent and irreversible.",
+          "• Payment references (checkout ID, order ID): Retained in our database as transaction references. These do not contain your personal payment details.",
+          "• Payment and billing records: Retained by Polar according to their data retention policy and applicable tax laws.",
+          "",
+          "Once your data is deleted, it cannot be recovered. We strongly recommend saving your results within the 30-day period."
         ]
       },
       {
         heading: "5. Third-Party Services",
         paragraphs: [
-          "We use the following third-party services that may collect or process your information:",
-          "• **Polar** (payment processing): Your payment information is handled according to Polar's privacy policy (polar.sh)",
-          "• **OpenAI** (AI analysis): Your test responses are used to generate personality analysis reports",
-          "• **Google Analytics** (usage statistics): Only anonymized data is collected",
-          "• **Firebase/Firestore** (data storage): Google Cloud security policies apply"
+          "Our service integrates with the following third-party providers:",
+          "• **Polar** (polar.sh) — Payment processing. Polar collects your email address and payment information directly. We do not have access to your payment card details. See Polar's privacy policy for details.",
+          "• **OpenAI** — AI analysis. Your pet name and test responses are sent to OpenAI's API to generate personality analysis reports. OpenAI's data usage policy applies to this processing.",
+          "• **Google Analytics** — Anonymous usage statistics. GA collects anonymized browsing data using cookies. You can opt out via your browser settings or by using the Google Analytics Opt-out Browser Add-on.",
+          "• **Google Firebase/Firestore** — Data storage. Your test data is stored in Google Cloud infrastructure. Google Cloud security and compliance policies apply."
         ]
       },
       {
-        heading: "6. Cookies",
+        heading: "6. Cookies and Tracking",
         paragraphs: [
-          "We use cookies to enhance your experience:",
-          "• **Essential cookies**: Language preferences and session maintenance",
-          "• **Analytics cookies**: Google Analytics (you can opt out through your browser settings)"
+          "Our service uses minimal cookies:",
+          "• Google Analytics cookies: Used for anonymous usage statistics. These cookies help us understand how visitors use our site. You can opt out through your browser settings or the Google Analytics Opt-out Add-on.",
+          "",
+          "We do NOT use:",
+          "• Authentication or session cookies (no user accounts)",
+          "• Language preference cookies (language is determined by URL path)",
+          "• Advertising or tracking cookies",
+          "• Third-party marketing cookies",
+          "",
+          "EU/EEA users: Google Analytics cookies are set only after you consent via our cookie notice."
         ]
       },
       {
         heading: "7. Your Rights",
         paragraphs: [
-          "You have the right to:",
-          "• Request deletion of your data (contact us via email)",
-          "• Request early deletion before the 30-day automatic deletion period",
-          "• If you are a resident of the EU/EEA, exercise your rights under GDPR",
-          "• If you are a resident of Japan, exercise your rights under the Personal Information Protection Act"
+          "All users:",
+          "• Your data is automatically deleted after 30 days without any action required",
+          "• You may request early deletion of your data by contacting us via email",
+          "• You may request information about what data we hold about you",
+          "",
+          "EU/EEA residents (GDPR):",
+          "• Right of access, rectification, and erasure",
+          "• Right to restrict or object to processing",
+          "• Right to data portability",
+          "• Right to withdraw consent at any time",
+          "• Right to lodge a complaint with your local supervisory authority",
+          "",
+          "Japan residents (APPI):",
+          "• Right to request disclosure of retained personal data",
+          "• Right to request correction, addition, or deletion",
+          "• Right to request cessation of use or provision to third parties",
+          "",
+          "California residents (CCPA):",
+          "• Right to know what personal information is collected",
+          "• Right to request deletion of personal information",
+          "• Right to opt-out of the sale of personal information (we do not sell your data)"
         ]
       },
       {
@@ -152,69 +175,92 @@ const CONTENT = {
       {
         heading: "2. 収集する情報",
         paragraphs: [
-          "**お客様が提供する情報：**",
-          "• ペットの名前（性格分析に必要）",
-          "• テスト回答（ペットの性格に関する質問および飼い主の性格に関する質問）",
-          "• メールアドレス（プレミアムレポート購入時のみ、Polar決済処理業者を通じて収集）",
+          "**お客様が直接提供する情報:**",
+          "• ペットの名前（性格分析の生成に必要）",
+          "• テストの回答（ペット性格質問と飼い主性格質問への回答）",
           "",
-          "**自動的に収集される情報：**",
-          "• ブラウザタイプおよびデバイス情報",
-          "• IPアドレス（匿名化）",
-          "• サービス利用パターン（ページビュー、クリックなど）",
+          "これらはGoogle Firestoreに保存され、作成から30日後に自動的に削除されます。",
           "",
-          "**収集しない情報：**",
-          "• 実名、住所、または電話番号",
+          "**第三者サービスが収集する情報:**",
+          "• メールアドレス: プレミアムレポート購入時にPolar（決済処理業者）が収集。弊社のサーバーには保存されません。",
+          "• 決済情報（カード情報等）: Polarが処理・保存。弊社はお客様の決済カード情報を閲覧・保存しません。",
+          "• 匿名の利用データ: Google Analyticsがブラウジングデータを匿名で収集。このデータでお客様を個人的に特定することはできません。",
+          "",
+          "**収集・保存しない情報:**",
+          "• お客様の実名、住所、電話番号",
           "• ペットの医療記録",
-          "• 決済カード情報（Polarが直接処理し、当社のサーバーに保存されません）"
+          "• IPアドレス（記録・保存しません）",
+          "• 決済カード情報（Polarが管理）"
         ]
       },
       {
         heading: "3. 情報の使用目的",
         paragraphs: [
-          "収集した情報は、以下に使用されます：",
-          "• AIベースの性格分析結果の生成",
-          "• メールによるプレミアムレポートの作成および配信",
-          "• サービスの改善および統計分析（匿名化データを使用）",
-          "• サービスの機能性およびセキュリティの確保"
+          "• ペットの名前とテスト回答: AIベースの性格分析結果を生成するためのみに使用されます。このデータはレポート生成のためにOpenAIのAPIに送信され、30日後に弊社のデータベースから自動的に削除されます。",
+          "• 匿名の分析データ: 一般的な利用パターンを理解し、サービスを改善するために使用されます。このデータは個々のユーザーにリンクすることはできません。",
+          "",
+          "弊社は、マーケティング目的で第三者に個人データを販売、賃貸、または共有しません。"
         ]
       },
       {
-        heading: "4. データ保持期間",
+        heading: "4. データ保持",
         paragraphs: [
-          "**テスト結果データは、作成日から30日後に自動的に削除されます。**",
-          "削除後、データを復元することはできません。30日後も結果にアクセスしたい場合は、結果を保存することを強く推奨します。",
-          "**結果を保存するには：**",
-          "• 結果画面で利用可能な画像保存機能を使用して、結果をダウンロードまたはスクリーンショットする",
-          "• プレミアムレポートを購入した場合、チェックアウト時に提供したメールアドレスにコピーが送信されます。記録のためにこのメールを保持することを推奨します。",
-          "決済記録は、税法の要件に従って最大5年間保持されます。"
+          "• テスト結果データ（ペット名、回答、分析結果、プレミアムレポート）: 作成から30日後に自動的に削除されます。この削除は永続的で不可逆的です。",
+          "• 決済参照（checkout ID、order ID）: 取引参照として弊社のデータベースに保持されます。これらにはお客様の個人決済詳細は含まれません。",
+          "• 決済および請求記録: Polarのデータ保持ポリシーおよび適用される税法に従ってPolarが保持します。",
+          "",
+          "データが削除されると、復元することはできません。30日以内に結果を保存することを強く推奨します。"
         ]
       },
       {
         heading: "5. 第三者サービス",
         paragraphs: [
-          "お客様の情報を収集または処理する可能性がある以下の第三者サービスを使用しています：",
-          "• **Polar**（決済処理）：お客様の決済情報は、Polarのプライバシーポリシー（polar.sh）に従って処理されます",
-          "• **OpenAI**（AI分析）：お客様のテスト回答は、性格分析レポートの生成に使用されます",
-          "• **Google Analytics**（利用統計）：匿名化されたデータのみが収集されます",
-          "• **Firebase/Firestore**（データ保存）：Google Cloudセキュリティポリシーが適用されます"
+          "当サービスは、以下の第三者プロバイダーと統合しています：",
+          "• **Polar**（polar.sh）— 決済処理。Polarがお客様のメールアドレスと決済情報を直接収集します。弊社はお客様の決済カード詳細にアクセスできません。詳細はPolarのプライバシーポリシーを参照してください。",
+          "• **OpenAI** — AI分析。お客様のペット名とテスト回答は、性格分析レポートを生成するためにOpenAIのAPIに送信されます。OpenAIのデータ使用ポリシーがこの処理に適用されます。",
+          "• **Google Analytics** — 匿名の利用統計。GAはクッキーを使用して匿名のブラウジングデータを収集します。ブラウザ設定またはGoogle Analyticsオプトアウトブラウザアドオンでオプトアウトできます。",
+          "• **Google Firebase/Firestore** — データ保存。お客様のテストデータはGoogle Cloudインフラストラクチャに保存されます。Google Cloudセキュリティおよびコンプライアンスポリシーが適用されます。"
         ]
       },
       {
-        heading: "6. クッキー",
+        heading: "6. クッキーとトラッキング",
         paragraphs: [
-          "お客様の体験を向上させるためにクッキーを使用しています：",
-          "• **必須クッキー**：言語設定およびセッション維持",
-          "• **分析クッキー**：Google Analytics（ブラウザ設定でオプトアウト可能）"
+          "当サービスは最小限のクッキーを使用します：",
+          "• Google Analyticsクッキー: 匿名の利用統計に使用。これらのクッキーは、訪問者がサイトをどのように使用するかを理解するのに役立ちます。ブラウザ設定またはGoogle Analyticsオプトアウトアドオンでオプトアウトできます。",
+          "",
+          "使用しないクッキー:",
+          "• 認証・セッションクッキー（アカウント機能なし）",
+          "• 言語設定クッキー（URLパスで言語を判定）",
+          "• 広告・トラッキングクッキー",
+          "• 第三者マーケティングクッキー",
+          "",
+          "EU/EEA在住のユーザー: クッキー同意を得た後にGoogle Analyticsクッキーが設定されます。"
         ]
       },
       {
         heading: "7. お客様の権利",
         paragraphs: [
-          "お客様には以下の権利があります：",
-          "• データの削除を要求する（メールでお問い合わせ）",
-          "• 30日の自動削除期間前に早期削除を要求する",
-          "• EU/EEA居住者の場合、GDPRに基づく権利を行使する",
-          "• 日本居住者の場合、個人情報保護法に基づく権利を行使する"
+          "すべてのユーザー:",
+          "• お客様のデータは、何も操作しなくても30日後に自動的に削除されます",
+          "• メールでお問い合わせいただくことで、データの早期削除を要求できます",
+          "• 弊社が保持しているデータについて情報を要求できます",
+          "",
+          "EU/EEA在住者（GDPR）:",
+          "• アクセス、訂正、削除の権利",
+          "• 処理の制限または異議申し立ての権利",
+          "• データポータビリティの権利",
+          "• いつでも同意を撤回する権利",
+          "• 地元の監督機関に苦情を申し立てる権利",
+          "",
+          "日本在住者（個人情報保護法）:",
+          "• 保持されている個人データの開示を要求する権利",
+          "• 訂正、追加、または削除を要求する権利",
+          "• 使用または第三者への提供の停止を要求する権利",
+          "",
+          "カリフォルニア在住者（CCPA）:",
+          "• 収集される個人情報を知る権利",
+          "• 個人情報の削除を要求する権利",
+          "• 個人情報の販売をオプトアウトする権利（弊社はお客様のデータを販売しません）"
         ]
       },
       {
