@@ -78,7 +78,7 @@ function BlogLanding() {
                   <h2 className="text-xl font-display font-bold text-primary group-hover:text-primary/80 transition-colors mb-2">
                     {post.title}
                   </h2>
-                  <p className="text-gray-600 leading-relaxed">{post.excerpt}</p>
+                  {post.excerpt && <p className="text-gray-600 leading-relaxed">{post.excerpt}</p>}
                   <div className="flex gap-2 mt-3">
                     {post.tags.map(tag => (
                       <span key={tag} className="text-xs text-gray-400">#{tag}</span>
@@ -95,4 +95,3 @@ function BlogLanding() {
 }
 
 export default BlogLanding
-

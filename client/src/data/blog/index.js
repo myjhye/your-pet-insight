@@ -1,5 +1,7 @@
 // ★ 마크다운 raw import
 // 강아지
+import separationAnxiety from './dog/separation-anxiety-tips.md?raw'
+import leashTraining from './dog/leash-training-basics.md?raw'
 import crateTraining from './dog/crate-training-benefits.md?raw'
 import dentalHealth from './dog/dental-health-tips.md?raw'
 import dogBodyLanguage from './dog/dog-body-language.md?raw'
@@ -10,6 +12,8 @@ import seniorDogCare from './dog/senior-dog-care.md?raw'
 import travelingWithDog from './dog/traveling-with-your-dog.md?raw'
 
 // 고양이
+import indoorEnrichment from './cat/indoor-enrichment-ideas.md?raw'
+import litterBoxProblems from './cat/litter-box-problems.md?raw'
 import catAnxietySigns from './cat/cat-anxiety-signs.md?raw'
 import catBodyLanguage from './cat/cat-body-language.md?raw'
 import catNutrition from './cat/cat-nutrition-guide.md?raw'
@@ -19,19 +23,12 @@ import multiCatHousehold from './cat/multi-cat-household.md?raw'
 import scratchingBehavior from './cat/scratching-behavior.md?raw'
 import seniorCatCare from './cat/senior-cat-care.md?raw'
 
-// 임시 빈 콘텐츠 (나중에 실제 파일 추가 예정)
-const separationAnxiety = '# 강아지 분리불안\n\n콘텐츠 준비 중입니다.'
-const leashTraining = '# 산책 훈련 기초\n\n콘텐츠 준비 중입니다.'
-const indoorEnrichment = '# 실내 고양이 풍요화\n\n콘텐츠 준비 중입니다.'
-const litterBoxProblems = '# 화장실 문제\n\n콘텐츠 준비 중입니다.'
-
 export const BLOG_POSTS = [
   // ===== 강아지 (10개) =====
   {
     slug: 'separation-anxiety-tips',
     category: 'dog',
     title: '강아지 분리불안, 이렇게 하면 극복할 수 있어요 (7가지 방법)',
-    excerpt: '분리불안은 전체 반려견의 약 20%가 겪는 흔한 문제입니다. 수의행동전문의가 추천하는 실전 해결법을 알려드립니다.',
     date: '2026-01-15',
     readTime: 8,
     tags: ['행동', '불안', '훈련'],

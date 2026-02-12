@@ -32,7 +32,7 @@ function BlogPost() {
     <>
       <BlogSEO
         title={post.title}
-        description={post.excerpt}
+        description={post.excerpt || post.title}
         url={`/ko/blog/${category}/${slug}`}
         publishedDate={post.date}
         category={category}
@@ -65,7 +65,7 @@ function BlogPost() {
           <h1 className="text-3xl md:text-4xl font-display font-bold text-primary leading-tight mb-4">
             {post.title}
           </h1>
-          <p className="text-lg text-gray-500 leading-relaxed">{post.excerpt}</p>
+          {post.excerpt && <p className="text-lg text-gray-500 leading-relaxed">{post.excerpt}</p>}
         </header>
 
         {/* 본문 */}
