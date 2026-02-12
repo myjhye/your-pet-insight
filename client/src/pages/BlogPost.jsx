@@ -1,4 +1,5 @@
-import { useParams, Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { BlogSEO } from '../components/BlogSEO'
@@ -6,7 +7,13 @@ import { getPostBySlug, getPostsByCategory } from '../data/blog'
 
 function BlogPost() {
   const { category, slug } = useParams()
+  const location = useLocation()
   const post = getPostBySlug(category, slug)
+
+  // 라우트 변경 시 최상단으로 스크롤
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [location.pathname])
 
   if (!post) {
     return (

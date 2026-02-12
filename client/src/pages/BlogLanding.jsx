@@ -1,10 +1,17 @@
-import { useParams, Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import { BlogSEO } from '../components/BlogSEO'
 import { BLOG_POSTS, getPostsByCategory, CATEGORY_META, getAllCategories } from '../data/blog'
 
 function BlogLanding() {
   const { category } = useParams()
+  const location = useLocation()
   const categories = getAllCategories()
+
+  // 라우트 변경 시 최상단으로 스크롤
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [location.pathname])
   
   const posts = category 
     ? getPostsByCategory(category) 
