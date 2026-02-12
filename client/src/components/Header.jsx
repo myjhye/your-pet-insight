@@ -14,6 +14,7 @@ function Header({ fixed = false }) {
   
   const location = useLocation()
   const isResultPage = location.pathname.includes('/result/')
+  const isBlogPage = location.pathname.startsWith('/ko/blog')
 
   // Blog 텍스트 변환
   const blogText = lang === 'jp' ? 'ブログ' : 'Blog'
@@ -48,10 +49,10 @@ function Header({ fixed = false }) {
         <div className="hidden md:flex items-center space-x-8">
           <nav className="flex space-x-6 text-sm font-medium text-secondary/80">
             {/* 요청하신 대로 Methodology, About Us 삭제됨 */}
-            <a className="hover:text-accent transition-colors" href="#">{blogText}</a>
+            <Link to="/ko/blog" className="hover:text-accent transition-colors">{blogText}</Link>
           </nav>
           
-          {!isResultPage && (
+          {!isResultPage && !isBlogPage && (
             <div className="relative">
               <button 
                 onClick={() => setIsLangOpen(!isLangOpen)}
@@ -115,16 +116,16 @@ function Header({ fixed = false }) {
           <div className="flex flex-col py-4 px-6 space-y-4">
             
             {/* Blog 링크 */}
-            <a 
-              href="#" 
+            <Link 
+              to="/ko/blog"
               className="text-gray-800 font-medium text-sm hover:text-primary py-2 border-b border-gray-100"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {blogText}
-            </a>
+            </Link>
 
             {/* 언어 선택 영역 (모바일용) */}
-            {!isResultPage && (
+            {!isResultPage && !isBlogPage && (
               <div className="pt-2">
                 <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-3">Select Language</p>
                 <div className="grid grid-cols-2 gap-2">
