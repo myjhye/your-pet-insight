@@ -5,6 +5,7 @@ import { useResults } from '../contexts/ResultsContext'
 import axios from 'axios'
 import PremiumReportViewer from '../components/PremiumReportViewer'
 import PremiumCTA from '../components/PremiumCTA'
+import { useSaveAsImage } from '../hooks/useSaveAsImage'
 
 // API Base URL (환경 변수 또는 기본값)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -621,6 +622,10 @@ function PersonalityTestResult() {
   // Share 기능 상태
   const [copied, setCopied] = useState(false)
   
+  // 이미지 저장 기능
+  const { fullPageRef, isSaving, saveMode, saveAsFullPage } = useSaveAsImage()
+  const [saveToast, setSaveToast] = useState(null) // 'saved' | 'shared' | null
+  
   // 언어 불일치 상태
   const [languageMismatch, setLanguageMismatch] = useState(false)
   
@@ -1111,27 +1116,6 @@ function PersonalityTestResult() {
     }
   }
 
-  // 네이티브 공유 함수 (모바일)
-  const handleNativeShare = async () => {
-    const shareUrl = `https://www.yourpetinsight.com/${lang}/dog-test/personality`
-    const shareData = {
-      title: lang === 'jp' 
-        ? `${displayPetName}の性格テスト` 
-        : `${displayPetName}'s Personality Test`,
-      text: lang === 'jp'
-        ? `${displayPetName}の性格タイプを発見しました！あなたのペットもテストしてみてください。`
-        : `I just discovered ${displayPetName}'s personality type! Take the test for your pet too.`,
-      url: shareUrl
-    }
-    
-    try {
-      await navigator.share(shareData)
-    } catch (err) {
-      // 사용자가 취소하거나 지원 안 되는 경우
-      console.log('Share cancelled or not supported')
-    }
-  }
-
   // UI 텍스트 가져오기 (언어별)
   const uiText = UI_TEXT[lang] || UI_TEXT.en
   
@@ -1179,6 +1163,27 @@ function PersonalityTestResult() {
   
   const displayPetName = capitalizeFirstLetter(pet_name)
   
+  // 네이티브 공유 함수 (모바일) - displayPetName 사용하므로 여기서 정의
+  const handleNativeShare = async () => {
+    const shareUrl = `https://www.yourpetinsight.com/${lang}/dog-test/personality`
+    const shareData = {
+      title: lang === 'jp' 
+        ? `${displayPetName}の性格テスト` 
+        : `${displayPetName}'s Personality Test`,
+      text: lang === 'jp'
+        ? `${displayPetName}の性格タイプを発見しました！あなたのペットもテストしてみてください。`
+        : `I just discovered ${displayPetName}'s personality type! Take the test for your pet too.`,
+      url: shareUrl
+    }
+    
+    try {
+      await navigator.share(shareData)
+    } catch (err) {
+      // 사용자가 취소하거나 지원 안 되는 경우
+      console.log('Share cancelled or not supported')
+    }
+  }
+  
   // ★ 개인화 preview 생성
   const personalizedPreviews = getPersonalizedPreviews(stats, displayPetName, lang)
   const ctaHook = getCTAHook(stats, displayPetName, lang)
@@ -1195,6 +1200,27 @@ function PersonalityTestResult() {
   const coreTraits = archetype?.coreTraits || []
   const dailyLife = archetype?.dailyLife || []
   const statsLabels = archetype?.statsLabels || {}
+  
+  // ★ 전체 결과 저장
+  const handleSaveFullPage = async () => {
+    const sanitizedName = (displayPetName || 'pet')
+      .replace(/[^a-zA-Z0-9가-힣ぁ-んァ-ヶ亜-熙]/g, '_')
+      .substring(0, 30)
+    
+    const result = await saveAsFullPage(`${sanitizedName}-full-result`)
+    
+    if (result?.downloaded) {
+      setSaveToast('saved')
+      setTimeout(() => setSaveToast(null), 2000)
+    } else if (result?.shared) {
+      setSaveToast('shared')
+      setTimeout(() => setSaveToast(null), 2000)
+    } else if (result?.error) {
+      alert(lang === 'jp'
+        ? '画像の保存に失敗しました。もう一度お試しください。'
+        : 'Failed to save image. Please try again.')
+    }
+  }
   
   // Stats 값 안전하게 추출 및 숫자 변환
   const getStatValue = (key) => {
@@ -1223,6 +1249,7 @@ function PersonalityTestResult() {
 
   return (
     <>
+
       {/* 전체 화면 리포트 생성 로딩 오버레이 */}
       {reportStatus === 'generating' && (
         <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
@@ -1300,7 +1327,7 @@ function PersonalityTestResult() {
             </div>
 
             {/* Right: Share Buttons (Icon Only) */}
-            <div className="flex gap-2 justify-center md:justify-end">
+            <div className="flex gap-2 justify-center md:justify-end share-btn-group">
               <button 
                 onClick={handleCopyLink}
                 className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all ${
@@ -1339,7 +1366,7 @@ function PersonalityTestResult() {
               {currentTab === 'basic' && (
               <div className="flex flex-col w-full mb-6">
                 {/* Row 1: Share Buttons (Right Aligned) */}
-                <div className="flex justify-end gap-2 w-full mb-1 px-1">
+                <div className="flex justify-end gap-2 w-full mb-1 px-1 share-btn-group">
                   <button 
                     onClick={handleCopyLink}
                     className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all shadow-md ${
@@ -1540,9 +1567,11 @@ function PersonalityTestResult() {
         {/* 기본 결과 섹션 (기본 탭일 때만 표시) */}
         {currentTab === 'basic' && (
           <>
-            {/* Core Traits */}
-            {coreTraits.length > 0 && (
-              <div className="space-y-4 md:space-y-12 mb-6 md:mb-16">
+            {/* ★ 전체 결과 캡처 영역 시작 */}
+            <div ref={fullPageRef} style={{ background: '#F9FBF9' }}>
+              {/* Core Traits */}
+              {coreTraits.length > 0 && (
+                <div className="space-y-4 md:space-y-12 mb-6 md:mb-16">
                 <div className="flex items-center gap-2 md:gap-4 mb-2 md:mb-8">
                   <h2 className="text-xl md:text-3xl font-display font-bold text-primary">{uiText.sections.coreTraits}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
@@ -1581,8 +1610,31 @@ function PersonalityTestResult() {
                 </div>
               </div>
             )}
+            </div>
+            {/* ★ 전체 결과 캡처 영역 끝 */}
 
-            {/* Premium Content Preview (잠긴 카드들) */}
+            {/* ★ 전체 결과 저장 버튼 (캡처 영역 바깥) */}
+            <div className="flex justify-center mb-8 md:mb-12">
+              <button
+                onClick={handleSaveFullPage}
+                disabled={isSaving}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border text-sm font-medium transition-all
+                  ${isSaving && saveMode === 'full'
+                    ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-wait'
+                    : 'bg-white border-gray-200 text-primary hover:bg-gray-50 hover:shadow-sm'
+                  }`}
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {isSaving && saveMode === 'full' ? 'hourglass_empty' : 'download'}
+                </span>
+                {isSaving && saveMode === 'full'
+                  ? (lang === 'jp' ? '保存中...' : 'Saving...')
+                  : (lang === 'jp' ? '全結果を画像で保存' : 'Save Full Results as Image')
+                }
+              </button>
+            </div>
+
+            {/* Premium Content Preview (잠긴 카드들) — 캡처 영역 밖 */}
             <div className="space-y-4 md:space-y-8 mb-8 md:mb-16">
               {/* 섹션 헤더 */}
               <div className="flex items-center gap-2 md:gap-4 mb-6 md:mb-8">
@@ -1647,6 +1699,20 @@ function PersonalityTestResult() {
         
         </div>
       </main>
+
+      {/* 토스트 메시지 */}
+      {saveToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 
+          bg-primary text-white px-6 py-3 rounded-full shadow-lg
+          flex items-center gap-2 animate-fade-in text-sm font-medium">
+          <span className="material-symbols-outlined text-lg">
+            {saveToast === 'shared' ? 'share' : 'check_circle'}
+          </span>
+          {saveToast === 'shared'
+            ? (lang === 'jp' ? '共有しました！' : 'Shared!')
+            : (lang === 'jp' ? '画像を保存しました！' : 'Image saved!')}
+        </div>
+      )}
     </>
   )
 }
