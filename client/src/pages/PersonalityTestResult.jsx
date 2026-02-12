@@ -634,7 +634,7 @@ function PersonalityTestResult() {
   
   // 리포트 내부 탭 상태 관리
   const [activeTab, setActiveTab] = useState('table_of_contents')
-  
+
   // 환불 상태
   const [refundInitiated, setRefundInitiated] = useState(false)
 
@@ -714,8 +714,8 @@ function PersonalityTestResult() {
         ]
         const firstAvailablePage = pageOrder.find(pageKey => resultData.report_pages[pageKey])
         if (firstAvailablePage) setActiveTab(firstAvailablePage)
+        }
       }
-    }
   }, [resultData, paymentProcessed, reportStatus, reportGenerationStarted])
   
   // 숫자와 % 강조 처리 (렌더링 후)
@@ -1267,8 +1267,8 @@ function PersonalityTestResult() {
         </div>
       )}
       
-      <main className={`min-h-screen text-[#2D3436] ${currentTab === 'premium' ? 'bg-[#F8F7F4]' : 'bg-[#F9FBF9]'}`}>
-        <div className="max-w-5xl mx-auto px-4 py-2 md:px-6 md:py-12">
+    <main className={`min-h-screen text-[#2D3436] ${currentTab === 'premium' ? 'bg-[#F8F7F4]' : 'bg-[#F9FBF9]'}`}>
+      <div className="max-w-5xl mx-auto px-4 py-2 md:px-6 md:py-12">
         {/* Main Result Card */}
         <div className={`bg-white shadow-sm border border-primary/5 overflow-hidden
           ${currentTab === 'premium' && reportStatus === 'ready' 
@@ -1569,9 +1569,9 @@ function PersonalityTestResult() {
           <>
             {/* ★ 전체 결과 캡처 영역 시작 */}
             <div ref={fullPageRef} style={{ background: '#F9FBF9' }}>
-              {/* Core Traits */}
-              {coreTraits.length > 0 && (
-                <div className="space-y-4 md:space-y-12 mb-6 md:mb-16">
+            {/* Core Traits */}
+            {coreTraits.length > 0 && (
+              <div className="space-y-4 md:space-y-12 mb-6 md:mb-16">
                 <div className="flex items-center gap-2 md:gap-4 mb-2 md:mb-8">
                   <h2 className="text-xl md:text-3xl font-display font-bold text-primary">{uiText.sections.coreTraits}</h2>
                   <div className="flex-grow h-[1px] bg-primary/10"></div>
@@ -1674,7 +1674,7 @@ function PersonalityTestResult() {
             isStartingPayment={isStartingPayment}
             onGetReport={handleStartPayment}
             onViewReport={() => {
-              setCurrentTab('premium')
+                            setCurrentTab('premium')
               window.scrollTo({ top: 0, behavior: 'auto' })
             }}
             onRetry={handleRetryGenerate}
@@ -1699,7 +1699,7 @@ function PersonalityTestResult() {
           />
         )}
         
-        </div>
+                  </div>
       </main>
 
       {/* 토스트 메시지 */}
@@ -1713,7 +1713,7 @@ function PersonalityTestResult() {
           {saveToast === 'shared'
             ? (lang === 'jp' ? '共有しました！' : 'Shared!')
             : (lang === 'jp' ? '画像を保存しました！' : 'Image saved!')}
-        </div>
+                            </div>
       )}
     </>
   )
