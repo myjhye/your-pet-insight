@@ -70,7 +70,8 @@ const CONTENT = {
           "• \"I don't like the AI analysis results\" is not a valid reason for refund",
           "• \"The results are different from what I expected\" is not a valid reason for refund",
           "• The report has already been viewed or accessed",
-          "• Due to the digital nature of our content, returns are not possible after viewing"
+          "• Due to the digital nature of our content, returns are not possible after viewing",
+          "• Email delivery failure due to an incorrect email address entered during checkout. You are responsible for entering a valid email address at the time of purchase. We cannot verify or correct email addresses after checkout is complete."
         ]
       },
       {
@@ -88,7 +89,7 @@ const CONTENT = {
           "Refunds are not available after the 30-day deletion period due to inability to access results. This is a normal part of our data retention policy.",
           "**To preserve your results:**",
           "• Use the image save functionality available on the results screen to download or screenshot your results to your local device",
-          "• Premium Report copies may also be delivered to your checkout email (when this feature is available)",
+          "• A copy of your Premium Report is automatically sent to the email address you provide during checkout. Please ensure you enter a valid email address, as we cannot resend reports to a different address after purchase.",
           "We strongly recommend saving your results within the 30-day period if you wish to access them later."
         ]
       },
@@ -148,7 +149,8 @@ const CONTENT = {
           "• 「AI分析結果が気に入らない」は返金の有効な理由ではありません",
           "• 「結果が期待と異なる」は返金の有効な理由ではありません",
           "• レポートが既に閲覧またはアクセスされた",
-          "• コンテンツのデジタル性質により、閲覧後の返品は不可能です"
+          "• コンテンツのデジタル性質により、閲覧後の返品は不可能です",
+          "• チェックアウト時に誤ったメールアドレスを入力したことによるメール配信の失敗。購入時に有効なメールアドレスを入力する責任はお客様にあります。チェックアウト完了後にメールアドレスを確認または修正することはできません。"
         ]
       },
       {
@@ -166,7 +168,7 @@ const CONTENT = {
           "結果にアクセスできないことを理由に、30日の削除期間後は返金は利用できません。これは、当社のデータ保持ポリシーの正常な部分です。",
           "**結果を保存するには：**",
           "• 結果画面で利用可能な画像保存機能を使用して、結果をローカルデバイスにダウンロードまたはスクリーンショットする",
-          "• プレミアムレポートのコピーは、チェックアウト時のメールアドレスにも配信される場合があります（この機能が利用可能な場合）",
+          "• プレミアムレポートのコピーは、チェックアウト時に提供したメールアドレスに自動的に送信されます。有効なメールアドレスを入力してください。購入後に別のアドレスにレポートを再送信することはできません。",
           "後で結果にアクセスしたい場合は、30日以内に結果を保存することを強く推奨します。"
         ]
       },
