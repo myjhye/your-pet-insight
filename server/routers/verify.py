@@ -8,6 +8,7 @@ import os
 import httpx
 import asyncio
 import json
+from datetime import datetime, timedelta
 from config import db
 from routers.refund import auto_refund_if_needed
 
@@ -172,10 +173,11 @@ async def verify_payment(result_id: str, background_tasks: BackgroundTasks, lang
                 or (checkout_data.get("metadata") or {}).get("customer_email")
             )
 
-            # ★ Firestore에 결제 검증 결과 + 이메일 저장
+            # ★ Firestore에 결제 검증 결과 + 이메일 + 만료일 저장
             update_data = {
                 "payment_verified": True,
                 "payment_status": "paid",
+                "expire_at": datetime.utcnow() + timedelta(days=30),  # 30일 후 만료
             }
             if order_id:
                 update_data["order_id"] = order_id

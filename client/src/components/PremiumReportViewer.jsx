@@ -3,7 +3,7 @@ import remarkGfm from 'remark-gfm'
 import html2canvas from 'html2canvas'
 import { useRef, useState, useCallback, useEffect } from 'react'
 
-function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, uiText, onCopyLink, onNativeShare, isCopied }) {
+function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, uiText, onCopyLink, onNativeShare, isCopied, expireAt, lang }) {
   const pageOrder = [
     'table_of_contents',
     'deep_dive_traits',
@@ -22,6 +22,48 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
   const activePageTitle = pageTitles[activeTab] || activeTab.replace(/_/g, ' ')
   const currentPageIndex = availablePages.indexOf(activeTab) + 1
   const totalPages = availablePages.length
+
+  // expire_at 포맷팅
+  const formatExpiredDate = (dateValue) => {
+    if (!dateValue) return null
+    
+    let date
+    // Firestore Timestamp 객체인 경우
+    if (dateValue?.toDate) {
+      date = dateValue.toDate()
+    } 
+    // seconds 필드가 있는 경우 (Firestore REST API)
+    else if (dateValue?._seconds) {
+      date = new Date(dateValue._seconds * 1000)
+    }
+    // ISO string인 경우
+    else if (typeof dateValue === 'string') {
+      date = new Date(dateValue)
+    }
+    // 숫자(timestamp)인 경우
+    else if (typeof dateValue === 'number') {
+      date = new Date(dateValue * 1000)
+    }
+    else {
+      return null
+    }
+    
+    if (isNaN(date.getTime())) return null
+    
+    // 언어별 포맷
+    if (lang === 'jp') {
+      return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+    }
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
+  // 만료일 포맷 (DB 값만 사용)
+  const formattedExpiry = expireAt ? formatExpiredDate(expireAt) : null
 
   // 각 페이지 콘텐츠를 참조하는 ref
   const pageContentRef = useRef(null)
@@ -282,6 +324,37 @@ function PremiumReportViewer({ petName, reportPages, activeTab, setActiveTab, ui
           </div>
         </nav>
       </div>
+
+      {/* ★ 만료일 + 이메일 안내 배너 */}
+      {formattedExpiry && (
+        <div className="mx-4 md:mx-6 mt-4 mb-2 md:mt-6 md:mb-3 px-4 py-3 md:px-5 md:py-4 
+          bg-[#F4F1EB] rounded-xl border border-[#E8E2D6]">
+          
+          {/* 이메일 안내 */}
+          <div className="flex items-start gap-2.5 mb-2">
+            <span className="material-symbols-outlined text-primary/50 text-lg mt-0.5 shrink-0">
+              mail
+            </span>
+            <p className="text-sm text-primary/70 leading-relaxed">
+              {lang === 'jp'
+                ? 'このレポートのコピーは、チェックアウト時に入力したメールアドレスに送信されました。'
+                : 'A copy of this report has been sent to the email you entered during checkout.'}
+            </p>
+          </div>
+          
+          {/* 만료일 안내 */}
+          <div className="flex items-start gap-2.5">
+            <span className="material-symbols-outlined text-primary/50 text-lg mt-0.5 shrink-0">
+              schedule
+            </span>
+            <p className="text-sm text-primary/70 leading-relaxed">
+              {lang === 'jp'
+                ? <>このレポートは <span className="font-semibold text-primary">{formattedExpiry}</span> までウェブサイトで閲覧できます。</>
+                : <>This report will be available on our website until <span className="font-semibold text-primary">{formattedExpiry}</span>.</>}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* [본문 영역]
         - 불필요한 패딩 제거, 텍스트 가독성 중심

@@ -1694,6 +1694,8 @@ function PersonalityTestResult() {
             onCopyLink={handleCopyLink}
             onNativeShare={handleNativeShare}
             isCopied={copied}
+            expireAt={resultData?.expire_at}
+            lang={lang}
           />
         )}
         
