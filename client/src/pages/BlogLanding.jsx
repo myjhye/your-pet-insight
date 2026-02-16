@@ -17,10 +17,10 @@ function BlogLanding() {
     ? getPostsByCategory(category) 
     : [...BLOG_POSTS].sort((a, b) => new Date(b.date) - new Date(a.date))
 
-  const pageTitle = category ? CATEGORY_META[category]?.title : '반려동물 블로그'
+  const pageTitle = category ? CATEGORY_META[category]?.title : '강아지 블로그'
   const pageDesc = category
     ? CATEGORY_META[category]?.description
-    : '강아지, 고양이 케어·훈련·행동·건강에 관한 전문 가이드.'
+    : '강아지 케어·훈련·행동·건강에 관한 전문 가이드.'
 
   return (
     <>
@@ -36,7 +36,7 @@ function BlogLanding() {
         <div className="bg-primary text-white py-12 md:py-16">
           <div className="max-w-4xl mx-auto px-4">
             <h1 className="text-3xl md:text-4xl font-display font-bold mb-3">
-              {category ? `${CATEGORY_META[category]?.emoji} ${pageTitle}` : '🐾 반려동물 블로그'}
+              {category ? `${CATEGORY_META[category]?.emoji} ${pageTitle}` : '🐕 강아지 블로그'}
             </h1>
             <p className="text-white/70 text-lg">{pageDesc}</p>
           </div>
@@ -69,7 +69,7 @@ function BlogLanding() {
                   className="block bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all group">
                   <div className="flex items-center gap-3 mb-3 text-sm text-gray-400">
                     <span className="px-2.5 py-1 bg-primary/5 text-primary text-xs font-semibold rounded-full uppercase">
-                      {post.category === 'dog' ? '강아지' : '고양이'}
+                      강아지
                     </span>
                     <span>{post.date}</span>
                     <span>·</span>

@@ -5,7 +5,6 @@ import { useLang } from '../contexts/LanguageContext'
 import { useQuestions } from '../contexts/QuestionsContext'
 import { useResults } from '../contexts/ResultsContext'
 import { useProgress } from '../contexts/ProgressContext'
-import Breadcrumb from '../components/Breadcrumb'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
 
@@ -218,11 +217,6 @@ function PersonalityTest() {
     return stage === 1 ? index + 1 : questions.stage1.length + index + 1
   }
 
-  const breadcrumbItems = [
-    { label: lang === 'jp' ? 'ホーム' : 'Home', href: '/' },
-    { label: lang === 'jp' ? '犬の性格診断' : 'Dog Personality Test' },
-  ]
-
   // 로딩 화면 (데이터가 아직 없을 때도 포함)
   if (loading || !questions?.stage1?.length) {
     return (
@@ -255,33 +249,114 @@ function PersonalityTest() {
 
   return (
     <main className="flex-grow bg-[#F9FBF9] min-h-screen">
+      
+      {/* ========== 인트로 섹션 (테스트 시작 전에만 표시) ========== */}
+      {stage === 1 && Object.keys(mainAnswers).length === 0 && (
+        <section className="relative overflow-hidden bg-gradient-to-b from-[#fff8e1] to-[#F9FBF9] pt-8 pb-12 md:pt-12 md:pb-16">
+          {/* 배경 장식 */}
+          <div className="absolute top-0 left-0 w-64 h-64 bg-orange-200/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-amber-200/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+          
+          <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-6">
+            {/* 강아지 이미지들 */}
+            <div className="flex justify-center gap-2 md:gap-4 mb-6 md:mb-8">
+              <img 
+                src="/images/dog/1.png" 
+                alt="Dog 1" 
+                className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-lg animate-bounce"
+                style={{ animationDelay: '0ms', animationDuration: '2s' }}
+              />
+              <img 
+                src="/images/dog/2.png" 
+                alt="Dog 2" 
+                className="w-20 h-20 md:w-32 md:h-32 object-contain drop-shadow-xl"
+              />
+              <img 
+                src="/images/dog/3.png" 
+                alt="Dog 3" 
+                className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-lg animate-bounce"
+                style={{ animationDelay: '500ms', animationDuration: '2s' }}
+              />
+            </div>
+            
+            {/* 메인 타이틀 */}
+            <div className="text-center mb-6 md:mb-8">
+              <h1 className="text-3xl md:text-5xl font-display font-black text-primary mb-3 md:mb-4 leading-tight">
+                {lang === 'jp' ? (
+                  <>愛犬の<span className="text-orange-500">本当の性格</span>を発見</>
+                ) : (
+                  <>Discover Your Dog's <span className="text-orange-500">True Personality</span></>
+                )}
+              </h1>
+              <p className="text-primary/70 text-base md:text-xl font-medium">
+                {lang === 'jp' 
+                  ? '3分で愛犬の性格タイプがわかります' 
+                  : 'Find out their personality type in just 3 minutes'}
+              </p>
+            </div>
+            
+            {/* 특징 뱃지들 */}
+            <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-10">
+              <div className="flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 bg-white rounded-full shadow-sm border border-orange-100">
+                <span className="material-symbols-outlined text-orange-500 text-lg md:text-xl">quiz</span>
+                <span className="text-primary font-medium text-xs md:text-sm">
+                  {lang === 'jp' ? '25の質問' : '25 Questions'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 bg-white rounded-full shadow-sm border border-orange-100">
+                <span className="material-symbols-outlined text-orange-500 text-lg md:text-xl">pets</span>
+                <span className="text-primary font-medium text-xs md:text-sm">
+                  {lang === 'jp' ? '16の性格タイプ' : '16 Personality Types'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 bg-white rounded-full shadow-sm border border-orange-100">
+                <span className="material-symbols-outlined text-orange-500 text-lg md:text-xl">auto_awesome</span>
+                <span className="text-primary font-medium text-xs md:text-sm">
+                  {lang === 'jp' ? 'AI分析' : 'AI-Powered'}
+                </span>
+              </div>
+            </div>
+            
+            {/* 시작 안내 */}
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 text-primary/60 text-sm md:text-base">
+                <span className="material-symbols-outlined animate-bounce">arrow_downward</span>
+                <span>{lang === 'jp' ? '下にスクロールして開始' : 'Scroll down to start'}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== 기존 테스트 영역 ========== */}
       <div className="px-4 md:px-20 lg:px-40 py-6 md:py-8">
         <div className="max-w-[800px] mx-auto">
           
-          <Breadcrumb items={breadcrumbItems} />
+          {/* 진행 상황 (인트로 지나면 표시) */}
+          {(stage !== 1 || Object.keys(mainAnswers).length > 0) && (
+            <div className="flex justify-end mb-4">
+              <span className="text-primary/60 text-xs md:text-sm font-medium">
+                {totalAnswered} / {totalQuestions} {lang === 'jp' ? '回答済み' : 'Answered'}
+              </span>
+            </div>
+          )}
           
-          <div className="flex justify-end mb-4">
-            <span className="text-primary/60 text-xs md:text-sm font-medium">
-              {totalAnswered} / {totalQuestions} {lang === 'jp' ? '回答済み' : 'Answered'}
-            </span>
-          </div>
-          
-          <div className="mb-6 md:mb-8">
-            <h1 className="text-primary text-2xl md:text-4xl font-display font-extrabold leading-tight tracking-tight mb-2">
-              {stage === 1 ? uiText.stage1.title : uiText.stage2.title}
-            </h1>
-            <p className="text-primary/60 text-sm md:text-base font-normal leading-normal">
-              {stage === 1 ? uiText.stage1.subtitle : uiText.stage2.subtitle}
-            </p>
-            {stage === 2 && (
-              <div className="mt-4">
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-accent/20 rounded-full">
-                  <span className="material-symbols-outlined text-accent text-sm md:text-base">favorite</span>
-                  <span className="text-accent font-medium text-xs md:text-sm">{uiText.stage2.badge}</span>
-                </span>
-              </div>
-            )}
-          </div>
+          {/* 기존 스테이지 헤더 (인트로 후에만 간략하게) */}
+          {(stage !== 1 || Object.keys(mainAnswers).length > 0) && (
+            <div className="mb-6 md:mb-8">
+              <h2 className="text-primary text-xl md:text-2xl font-display font-bold leading-tight tracking-tight mb-2">
+                {stage === 1 ? uiText.stage1.title : uiText.stage2.title}
+              </h2>
+              {stage === 2 && (
+                <div className="mt-3">
+                  <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-accent/20 rounded-full">
+                    <span className="material-symbols-outlined text-accent text-sm">favorite</span>
+                    <span className="text-accent font-medium text-xs">{uiText.stage2.badge}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4 md:space-y-6">
             {currentQuestions.map((q, index) => {

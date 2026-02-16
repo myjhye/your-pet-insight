@@ -3,19 +3,6 @@ import { useLang } from '../contexts/LanguageContext'
 
 // 1. 스타일 설정
 const styleConfig = {
-  cat: {
-    // 배경: 시원한 민트/틸 그라데이션
-    cardBg: 'bg-gradient-to-br from-[#e0f7fa] to-[#b2ebf2]',
-    borderColor: 'border-teal-200/50',
-    hoverBorder: 'group-hover:border-teal-300',
-    buttonBg: 'bg-teal-700',
-    buttonHover: 'hover:bg-teal-800',
-    buttonText: 'text-white',
-    buttonShadow: 'shadow-teal-900/20',
-    titleColor: 'text-teal-950',
-    descriptionColor: 'text-teal-800/90',
-    imagePath: '/assets/cat-3d.png'
-  },
   dog: {
     // 배경: 따뜻한 오렌지/앰버 그라데이션
     cardBg: 'bg-gradient-to-br from-[#fff8e1] to-[#ffe0b2]',
@@ -34,12 +21,6 @@ const styleConfig = {
 // 2. 텍스트 데이터 (언어별)
 const textContent = {
   en: {
-    cat: {
-      title: 'Cat Personality Test',
-      desc: "Decode your cat's unique personality style and behavioral quirks.",
-      btn: 'Start Analysis',
-      badge: "25 Questions • 3 min"
-    },
     dog: {
       title: 'Dog Personality Test',
       desc: "Reveal your dog's true personality type and hidden traits.",
@@ -48,12 +29,6 @@ const textContent = {
     }
   },
   jp: {
-    cat: {
-      title: '猫の性格診断を始める',
-      desc: "行動パターンを分析して、独立心や愛情表現のスタイルを理解します。",
-      btn: '診断を開始',
-      badge: "25問 • 3分"
-    },
     dog: {
       title: '犬の性格診断',
       desc: "AIを活用した診断で、あなたの愛犬の独自の性格タイプ、社交スタイル、隠れた特性を発見します。",

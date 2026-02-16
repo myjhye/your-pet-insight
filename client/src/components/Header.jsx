@@ -16,9 +16,6 @@ function Header({ fixed = false }) {
   const isResultPage = location.pathname.includes('/result/')
   const isBlogPage = location.pathname.startsWith('/ko/blog')
 
-  // Blog 텍스트 변환
-  const blogText = lang === 'jp' ? 'ブログ' : 'Blog'
-
   // 모바일 메뉴 토글 함수
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -47,11 +44,6 @@ function Header({ fixed = false }) {
 
         {/* 2. 데스크탑 메뉴 (MD 이상에서만 보임) */}
         <div className="hidden md:flex items-center space-x-8">
-          <nav className="flex space-x-6 text-sm font-medium text-secondary/80">
-            {/* 요청하신 대로 Methodology, About Us 삭제됨 */}
-            <Link to="/ko/blog" className="hover:text-accent transition-colors">{blogText}</Link>
-          </nav>
-          
           {!isResultPage && !isBlogPage && (
             <div className="relative">
               <button 
@@ -115,15 +107,6 @@ function Header({ fixed = false }) {
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-lg z-10 animate-fade-in-down">
           <div className="flex flex-col py-4 px-6 space-y-4">
             
-            {/* Blog 링크 */}
-            <Link 
-              to="/ko/blog"
-              className="text-gray-800 font-medium text-sm hover:text-primary py-2 border-b border-gray-100"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {blogText}
-            </Link>
-
             {/* 언어 선택 영역 (모바일용) */}
             {!isResultPage && !isBlogPage && (
               <div className="pt-2">

@@ -45,7 +45,7 @@ function BlogPost() {
             <Link to="/ko/blog" className="text-primary/60 hover:text-primary">블로그</Link>
             <span className="text-gray-300">/</span>
             <Link to={`/ko/blog/${category}`} className="text-primary/60 hover:text-primary">
-              {category === 'dog' ? '강아지' : '고양이'}
+              강아지
             </Link>
             <span className="text-gray-300">/</span>
             <span className="text-primary/40 truncate">{post.title}</span>
@@ -56,7 +56,7 @@ function BlogPost() {
         <header className="max-w-3xl mx-auto px-4 pt-8 md:pt-12 pb-6">
           <div className="flex items-center gap-3 mb-4 text-sm text-gray-400">
             <span className="px-3 py-1 bg-primary/5 text-primary text-xs font-semibold rounded-full">
-              {category === 'dog' ? '강아지' : '고양이'}
+              강아지
             </span>
             <time>{post.date}</time>
             <span>·</span>
@@ -93,9 +93,9 @@ function BlogPost() {
               🐾 우리 아이 성격이 궁금하다면?
             </p>
             <p className="text-primary/60 mb-4">
-              무료 성격 테스트로 우리 {category === 'dog' ? '강아지' : '고양이'}의 숨겨진 성격을 알아보세요.
+              무료 성격 테스트로 우리 강아지의 숨겨진 성격을 알아보세요.
             </p>
-            <Link to={`/en/${category}-test/personality`}
+            <Link to="/dog-test/personality"
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-full font-bold hover:bg-primary/90 transition-colors">
               무료 테스트 시작하기 →
             </Link>
@@ -105,7 +105,7 @@ function BlogPost() {
           {relatedPosts.length > 0 && (
             <div className="mt-12">
               <h2 className="text-xl font-display font-bold text-primary mb-6">
-                {category === 'dog' ? '🐕 다른 강아지 글' : '🐈 다른 고양이 글'}
+                🐕 다른 강아지 글
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {relatedPosts.map(rp => (

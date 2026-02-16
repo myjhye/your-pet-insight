@@ -11,18 +11,6 @@ import rawDietVsKibble from './dog/raw-diet-vs-kibble.md?raw'
 import seniorDogCare from './dog/senior-dog-care.md?raw'
 import travelingWithDog from './dog/traveling-with-your-dog.md?raw'
 
-// 고양이
-import indoorEnrichment from './cat/indoor-enrichment-ideas.md?raw'
-import litterBoxProblems from './cat/litter-box-problems.md?raw'
-import catAnxietySigns from './cat/cat-anxiety-signs.md?raw'
-import catBodyLanguage from './cat/cat-body-language.md?raw'
-import catNutrition from './cat/cat-nutrition-guide.md?raw'
-import groomingLongHair from './cat/grooming-long-hair-cats.md?raw'
-import introducingNewCat from './cat/introducing-new-cat.md?raw'
-import multiCatHousehold from './cat/multi-cat-household.md?raw'
-import scratchingBehavior from './cat/scratching-behavior.md?raw'
-import seniorCatCare from './cat/senior-cat-care.md?raw'
-
 export const BLOG_POSTS = [
   // ===== 강아지 (10개) =====
   {
@@ -124,108 +112,6 @@ export const BLOG_POSTS = [
     tags: ['여행', '팁', '안전'],
     content: travelingWithDog,
   },
-
-  // ===== 고양이 (10개) =====
-  {
-    slug: 'indoor-enrichment-ideas',
-    category: 'cat',
-    title: '실내 고양이를 위한 12가지 환경 풍요화 아이디어',
-    excerpt: '실내 고양이도 정신적 자극이 필요합니다. 지루함과 문제 행동을 예방하는 방법을 소개합니다.',
-    date: '2026-01-16',
-    readTime: 7,
-    tags: ['풍요화', '실내', '행동'],
-    content: indoorEnrichment,
-  },
-  {
-    slug: 'litter-box-problems',
-    category: 'cat',
-    title: '고양이가 화장실을 거부하는 이유와 해결법',
-    excerpt: '화장실 기피는 고양이 파양 1순위 이유입니다. 대부분의 원인은 해결 가능합니다.',
-    date: '2026-01-19',
-    readTime: 8,
-    tags: ['화장실', '행동', '건강'],
-    content: litterBoxProblems,
-  },
-  {
-    slug: 'cat-body-language',
-    category: 'cat',
-    title: '고양이 보디랭귀지 해독: 우리 냥이가 진짜 하고 싶은 말',
-    excerpt: '고양이는 미묘하게 소통합니다. 꼬리, 귀, 눈, 자세를 프로처럼 읽어보세요.',
-    date: '2026-01-23',
-    readTime: 7,
-    tags: ['행동', '소통', '기초'],
-    content: catBodyLanguage,
-  },
-  {
-    slug: 'introducing-new-cat',
-    category: 'cat',
-    title: '새 고양이 합사, 전쟁 없이 성공하는 법',
-    excerpt: '급한 합사는 거의 항상 실패합니다. 검증된 단계별 방법을 따라해보세요.',
-    date: '2026-01-26',
-    readTime: 9,
-    tags: ['다묘', '행동', '팁'],
-    content: introducingNewCat,
-  },
-  {
-    slug: 'senior-cat-care',
-    category: 'cat',
-    title: '노묘 돌봄 가이드: 나이 든 고양이를 편안하게 케어하는 법',
-    excerpt: '고양이는 아픔을 숨기는 데 능숙합니다. 노화의 징후와 케어법을 알아보세요.',
-    date: '2026-01-30',
-    readTime: 8,
-    tags: ['시니어', '건강', '케어'],
-    content: seniorCatCare,
-  },
-  {
-    slug: 'cat-nutrition-guide',
-    category: 'cat',
-    title: '고양이 영양 기초: 습식, 건식, 진짜 중요한 것',
-    excerpt: '사료 코너는 압도적입니다. 고양이 건강을 위해 꼭 확인해야 할 것들을 정리했습니다.',
-    date: '2026-02-02',
-    readTime: 8,
-    tags: ['영양', '건강', '식단'],
-    content: catNutrition,
-  },
-  {
-    slug: 'scratching-behavior',
-    category: 'cat',
-    title: '고양이가 모든 걸 긁는 이유 (그리고 행동을 바꾸는 법)',
-    excerpt: '긁기는 자연스럽고 필수적인 행동입니다. 멈추는 게 아니라 방향을 바꿔주세요.',
-    date: '2026-02-04',
-    readTime: 6,
-    tags: ['행동', '스크래칭', '훈련'],
-    content: scratchingBehavior,
-  },
-  {
-    slug: 'cat-anxiety-signs',
-    category: 'cat',
-    title: '고양이 스트레스, 놓치기 쉬운 8가지 신호',
-    excerpt: '고양이는 강아지처럼 스트레스를 드러내지 않습니다. 미묘한 신호를 읽어보세요.',
-    date: '2026-02-06',
-    readTime: 7,
-    tags: ['불안', '행동', '건강'],
-    content: catAnxietySigns,
-  },
-  {
-    slug: 'multi-cat-household',
-    category: 'cat',
-    title: '다묘 가정의 평화: 영역, 자원, 조화의 기술',
-    excerpt: '다묘 가정은 전략적 계획이 필요합니다. 갈등을 예방하는 자원 배분 법칙을 소개합니다.',
-    date: '2026-02-08',
-    readTime: 9,
-    tags: ['다묘', '행동', '팁'],
-    content: multiCatHousehold,
-  },
-  {
-    slug: 'grooming-long-hair-cats',
-    category: 'cat',
-    title: '장모종 고양이 그루밍: 매트, 헤어볼, 피부 문제 예방법',
-    excerpt: '페르시안, 메인쿤, 랙돌 — 장모종은 그루밍 루틴이 필수입니다.',
-    date: '2026-02-11',
-    readTime: 7,
-    tags: ['그루밍', '건강', '품종'],
-    content: groomingLongHair,
-  },
 ]
 
 // ===== 헬퍼 함수 =====
@@ -237,18 +123,13 @@ export const getPostsByCategory = (category) =>
 export const getPostBySlug = (category, slug) =>
   BLOG_POSTS.find(p => p.category === category && p.slug === slug)
 
-export const getAllCategories = () => ['dog', 'cat']
+export const getAllCategories = () => ['dog']
 
 export const CATEGORY_META = {
   dog: {
     title: '강아지 케어 & 훈련',
     description: '강아지 행동, 훈련, 영양, 건강에 관한 전문 가이드.',
     emoji: '🐕',
-  },
-  cat: {
-    title: '고양이 케어 & 행동',
-    description: '고양이 행동, 건강, 영양, 풍요화에 관한 전문 가이드.',
-    emoji: '🐈',
   },
 }
 
