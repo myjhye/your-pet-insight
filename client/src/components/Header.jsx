@@ -14,7 +14,6 @@ function Header({ fixed = false }) {
   
   const location = useLocation()
   const isResultPage = location.pathname.includes('/result/')
-  const isBlogPage = location.pathname.startsWith('/ko/blog')
 
   // 모바일 메뉴 토글 함수
   const toggleMobileMenu = () => {
@@ -44,7 +43,7 @@ function Header({ fixed = false }) {
 
         {/* 2. 데스크탑 메뉴 (MD 이상에서만 보임) */}
         <div className="hidden md:flex items-center space-x-8">
-          {!isResultPage && !isBlogPage && (
+          {!isResultPage && (
             <div className="relative">
               <button 
                 onClick={() => setIsLangOpen(!isLangOpen)}
@@ -108,7 +107,7 @@ function Header({ fixed = false }) {
           <div className="flex flex-col py-4 px-6 space-y-4">
             
             {/* 언어 선택 영역 (모바일용) */}
-            {!isResultPage && !isBlogPage && (
+            {!isResultPage && (
               <div className="pt-2">
                 <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-3">Select Language</p>
                 <div className="grid grid-cols-2 gap-2">

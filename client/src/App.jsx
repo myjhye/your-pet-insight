@@ -12,8 +12,6 @@ import PersonalityTestResult from './pages/PersonalityTestResult'
 import TermsOfService from './pages/TermsOfService'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import RefundPolicy from './pages/RefundPolicy'
-import BlogLanding from './pages/BlogLanding'
-import BlogPost from './pages/BlogPost'
 import NotFound from './pages/NotFound'
 
 function Layout({ children }) {
@@ -57,29 +55,6 @@ function App() {
       <Routes>
         {/* 루트 경로는 기본 언어로 리다이렉트 */}
         <Route path="/" element={<Navigate to={`/${DEFAULT_LANG}`} replace />} />
-        
-        {/* ★ 블로그 라우팅 (필요한 Provider들로 감싸서 Header/Footer가 정상 작동하도록) */}
-        <Route path="/ko/blog" element={
-          <LanguageProvider>
-            <ProgressProvider>
-              <Layout><BlogLanding /></Layout>
-            </ProgressProvider>
-          </LanguageProvider>
-        } />
-        <Route path="/ko/blog/:category" element={
-          <LanguageProvider>
-            <ProgressProvider>
-              <Layout><BlogLanding /></Layout>
-            </ProgressProvider>
-          </LanguageProvider>
-        } />
-        <Route path="/ko/blog/:category/:slug" element={
-          <LanguageProvider>
-            <ProgressProvider>
-              <Layout><BlogPost /></Layout>
-            </ProgressProvider>
-          </LanguageProvider>
-        } />
         
         {/* 언어 접두사가 있는 모든 라우트 */}
         <Route path="/:lang/*" element={<LangRoutes />} />
