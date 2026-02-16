@@ -244,13 +244,13 @@ function TermsOfService() {
 
         {/* 하단 링크 */}
         <div className="border-t border-primary/10 pt-8 mt-12 flex flex-wrap gap-6 text-sm text-primary/50">
-          <Link to={`/${lang}/terms`} className="hover:text-primary transition-colors">
+          <Link to="/terms" className="hover:text-primary transition-colors">
             {lang === 'jp' ? '利用規約' : 'Terms of Service'}
           </Link>
-          <Link to={`/${lang}/privacy`} className="hover:text-primary transition-colors">
+          <Link to="/privacy" className="hover:text-primary transition-colors">
             {lang === 'jp' ? 'プライバシーポリシー' : 'Privacy Policy'}
           </Link>
-          <Link to={`/${lang}/refund`} className="hover:text-primary transition-colors">
+          <Link to="/refund" className="hover:text-primary transition-colors">
             {lang === 'jp' ? '返金ポリシー' : 'Refund Policy'}
           </Link>
         </div>

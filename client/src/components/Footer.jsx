@@ -29,7 +29,7 @@ function Footer() {
           {policyLinks.map((link) => (
             <Link
               key={link.path}
-              to={`/${lang}${link.path}`}
+              to={link.path}
               className="hover:text-secondary transition-colors"
             >
               {lang === 'jp' ? link.jp : link.en}

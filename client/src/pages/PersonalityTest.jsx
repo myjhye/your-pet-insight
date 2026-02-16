@@ -197,7 +197,7 @@ function PersonalityTest() {
       })
 
       // 결과 페이지로 이동 (UUID 포함)
-      navigate(localePath(`/dog-test/personality/result/${resultId}`))
+      navigate(`/result/${resultId}`)
     } catch (error) {
       console.error('결과 계산 중 오류:', error)
       alert('결과 계산 중 오류가 발생했습니다. 다시 시도해주세요.')
@@ -421,17 +421,17 @@ function PersonalityTest() {
                   <span className="text-xs text-primary/60 leading-relaxed">
                     {lang === 'jp' ? (
                       <>
-                        <Link to={`/${lang}/terms`} className="underline hover:text-primary" target="_blank">利用規約</Link>
+                        <Link to="/terms" className="underline hover:text-primary" target="_blank">利用規約</Link>
                         と
-                        <Link to={`/${lang}/privacy`} className="underline hover:text-primary" target="_blank">プライバシーポリシー</Link>
+                        <Link to="/privacy" className="underline hover:text-primary" target="_blank">プライバシーポリシー</Link>
                         に同意します。テスト回答データは30日後に自動削除されます。
                       </>
                     ) : (
                       <>
                         I agree to the{' '}
-                        <Link to={`/${lang}/terms`} className="underline hover:text-primary" target="_blank">Terms of Service</Link>
+                        <Link to="/terms" className="underline hover:text-primary" target="_blank">Terms of Service</Link>
                         {' '}and{' '}
-                        <Link to={`/${lang}/privacy`} className="underline hover:text-primary" target="_blank">Privacy Policy</Link>.
+                        <Link to="/privacy" className="underline hover:text-primary" target="_blank">Privacy Policy</Link>.
                         {' '}Test data is automatically deleted after 30 days.
                       </>
                     )}

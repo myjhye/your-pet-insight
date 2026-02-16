@@ -227,13 +227,13 @@ function PremiumCTA({
                   <span className="text-[11px] text-white/50 leading-relaxed">
                     {lang === 'jp' ? (
                       <>
-                        <Link to={`/${lang}/refund`} className="underline text-white/60 hover:text-white/80" target="_blank">返金ポリシー</Link>
+                        <Link to="/refund" className="underline text-white/60 hover:text-white/80" target="_blank">返金ポリシー</Link>
                         に同意します。
                       </>
                     ) : (
                       <>
                         I agree to the{' '}
-                        <Link to={`/${lang}/refund`} className="underline text-white/60 hover:text-white/80" target="_blank">Refund Policy</Link>.
+                        <Link to="/refund" className="underline text-white/60 hover:text-white/80" target="_blank">Refund Policy</Link>.
                       </>
                     )}
                   </span>
@@ -357,15 +357,15 @@ function PremiumCTA({
 
               {/* Policy links */}
               <div className="flex justify-center gap-3 text-[10px] text-white/30 mt-2 md:mt-3">
-                <Link to={`/${lang}/terms`} className="hover:text-white/50 underline transition-colors">
+                <Link to="/terms" className="hover:text-white/50 underline transition-colors">
                   {lang === 'jp' ? '利用規約' : 'Terms'}
                 </Link>
                 <span>·</span>
-                <Link to={`/${lang}/privacy`} className="hover:text-white/50 underline transition-colors">
+                <Link to="/privacy" className="hover:text-white/50 underline transition-colors">
                   {lang === 'jp' ? 'プライバシー' : 'Privacy'}
                 </Link>
                 <span>·</span>
-                <Link to={`/${lang}/refund`} className="hover:text-white/50 underline transition-colors">
+                <Link to="/refund" className="hover:text-white/50 underline transition-colors">
                   {lang === 'jp' ? '返金ポリシー' : 'Refund'}
                 </Link>
               </div>
