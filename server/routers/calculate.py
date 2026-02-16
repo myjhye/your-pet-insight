@@ -2,12 +2,43 @@
 MBTI 계산 및 결과 저장 관련 API 라우터
 """
 from fastapi import APIRouter, HTTPException
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import uuid
 from models import CalculateRequest
 from config import db
 
 router = APIRouter(prefix="/api", tags=["calculate"])
+
+# 질문 메타데이터 (하드코딩)
+DOG_QUESTIONS_META = [
+    # Stage 1 (id 1-20)
+    {"id": 1, "axis": "E", "is_reverse": False},
+    {"id": 2, "axis": "E", "is_reverse": True},
+    {"id": 3, "axis": "E", "is_reverse": False},
+    {"id": 4, "axis": "E", "is_reverse": False},
+    {"id": 5, "axis": "E", "is_reverse": False},
+    {"id": 6, "axis": "S", "is_reverse": False},
+    {"id": 7, "axis": "S", "is_reverse": True},
+    {"id": 8, "axis": "S", "is_reverse": False},
+    {"id": 9, "axis": "S", "is_reverse": False},
+    {"id": 10, "axis": "S", "is_reverse": False},
+    {"id": 11, "axis": "F", "is_reverse": False},
+    {"id": 12, "axis": "F", "is_reverse": True},
+    {"id": 13, "axis": "F", "is_reverse": True},
+    {"id": 14, "axis": "F", "is_reverse": False},
+    {"id": 15, "axis": "F", "is_reverse": True},
+    {"id": 16, "axis": "J", "is_reverse": False},
+    {"id": 17, "axis": "J", "is_reverse": True},
+    {"id": 18, "axis": "J", "is_reverse": False},
+    {"id": 19, "axis": "J", "is_reverse": True},
+    {"id": 20, "axis": "J", "is_reverse": False},
+    # Stage 2 - Owner Questions (id 21-25)
+    {"id": 21, "axis": "Style", "is_reverse": False},
+    {"id": 22, "axis": "Bond", "is_reverse": False},
+    {"id": 23, "axis": "Logic", "is_reverse": False},
+    {"id": 24, "axis": "Routine", "is_reverse": False},
+    {"id": 25, "axis": "Goal", "is_reverse": False},
+]
 
 
 @router.post("/calculate")
@@ -17,16 +48,8 @@ async def calculate_mbti(request: CalculateRequest):
         # ---------------------------------------------------------
         # 1. 질문 메타데이터 조회 (axis, is_reverse 정보)
         # ---------------------------------------------------------
-        doc_ref = db.collection("assessment_configs").document("dog_v1")
-        doc = doc_ref.get()
-        
-        if not doc.exists:
-            raise HTTPException(status_code=404, detail="질문 설정을 찾을 수 없습니다.")
-        
-        config_data = doc.to_dict()
-        all_questions = config_data.get("questions", []) + config_data.get("owner_questions", [])
-        
-        # 질문 ID → 메타데이터 매핑 (ID를 문자열로 통일하여 안전하게 처리)
+        # 하드코딩된 질문 메타데이터 사용
+        all_questions = DOG_QUESTIONS_META
         question_meta = {str(q["id"]): q for q in all_questions}
         
         # ---------------------------------------------------------
@@ -112,19 +135,32 @@ async def calculate_mbti(request: CalculateRequest):
             })
         
         # ---------------------------------------------------------
-        # 4. 백분율 Stats 계산 (먼저 계산하여 MBTI 판정에 사용)
+        # 4. 백분율 Stats 계산 (동적 계산 방식으로 변경)
         # ---------------------------------------------------------
-        def get_stat(score: float) -> int:
-            """5~25점 범위를 0~100%로 변환"""
-            # (획득점수 - 최소점수5) / (최대점수25 - 최소점수5) * 100
-            percentage = ((score - 5) / 20) * 100
-            return round(percentage)
+        def get_stat(axis_name: str) -> int:
+            """질문 개수에 상관없이 0~100%로 변환"""
+            score = axis_scores.get(axis_name, 0)
+            count = axis_question_counts.get(axis_name, 0)
+            
+            if count == 0:
+                return 0
+            
+            # 최소점수: 모든 질문 1점 (count * 1)
+            # 최대점수: 모든 질문 5점 (count * 5)
+            min_score = count * 1
+            max_score = count * 5
+            
+            if max_score == min_score:
+                return 0
+            
+            percentage = ((score - min_score) / (max_score - min_score)) * 100
+            return round(max(0, min(100, percentage)))  # 0~100 사이로 보정
         
         stats = {
-            "sociability": get_stat(axis_scores["E"]),      # E축
-            "sagacity": get_stat(axis_scores["S"]),         # S축
-            "emotionality": get_stat(axis_scores["F"]),     # F축
-            "obedience": get_stat(axis_scores["J"]),        # J축
+            "sociability": get_stat("E"),      # E축
+            "sagacity": get_stat("S"),         # S축
+            "emotionality": get_stat("F"),     # F축
+            "obedience": get_stat("J"),        # J축
         }
         stats["temperament"] = round((stats["sociability"] + stats["obedience"]) / 2)
         
@@ -200,8 +236,13 @@ async def calculate_mbti(request: CalculateRequest):
         result_id = str(uuid.uuid4())
         
         # 현재 시간과 30일 뒤 시간 계산
-        now = datetime.utcnow()
+        # timezone-aware datetime 사용 (Python 3.12+ 권장)
+        now = datetime.now(timezone.utc)
         expire_at = now + timedelta(days=30)  # 30일 뒤 날짜 계산
+        
+        # 참고: Firestore TTL(Time To Live) 자동 삭제를 사용하려면
+        # Google Cloud Console에서 test_results 컬렉션의 expire_at 필드에 대해
+        # TTL 정책을 수동으로 활성화해야 합니다.
         
         result_data = {
             "result_id": result_id,
