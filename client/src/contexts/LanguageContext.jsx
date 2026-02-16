@@ -3,14 +3,18 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 
 const LanguageContext = createContext()
 
-export const LANGUAGES = {
+// 언어 상수 정의 (Fast Refresh 호환을 위해 컴포넌트 외부에 정의)
+const LANGUAGES = {
   en: { code: 'en', label: 'English', flag: '🇺🇸' },
   jp: { code: 'jp', label: '日本語', flag: '🇯🇵' },
 }
 
 // 지원하는 언어 목록 (여기서 관리)
-export const SUPPORTED_LANGUAGES = ['en', 'jp']
-export const DEFAULT_LANG = 'en'
+const SUPPORTED_LANGUAGES = ['en', 'jp']
+const DEFAULT_LANG = 'en'
+
+// Fast Refresh 호환을 위해 named export로 제공
+export { LANGUAGES, SUPPORTED_LANGUAGES, DEFAULT_LANG }
 
 export function LanguageProvider({ children }) {
   const { lang } = useParams()
