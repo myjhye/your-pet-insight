@@ -144,8 +144,8 @@ async def create_polar_checkout(result_id: str, lang: str = "en"):
         # 4. 새 Checkout Session 생성
         product_id = os.getenv("POLAR_PRODUCT_ID", "33971cec-204c-464b-8085-3823695fab01")
         base_url = os.getenv("FRONTEND_URL", "https://www.yourpetinsight.com")
-        success_url = f"{base_url}/{lang}/dog-test/personality/result/{result_id}?payment=success"
-        cancel_url = f"{base_url}/{lang}/dog-test/personality/result/{result_id}?payment=cancelled"
+        success_url = f"{base_url}/result/{result_id}?payment=success"
+        cancel_url = f"{base_url}/result/{result_id}?payment=cancelled"
 
         payload = {
             "product_id": product_id,
