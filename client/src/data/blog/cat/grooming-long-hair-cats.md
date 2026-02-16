@@ -1,1 +1,0 @@
-# Grooming Long Hair Cats
