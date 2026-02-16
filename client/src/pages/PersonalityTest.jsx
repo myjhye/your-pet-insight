@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import { useLang } from '../contexts/LanguageContext'
-import { useQuestions } from '../contexts/QuestionsContext'
 import { useResults } from '../contexts/ResultsContext'
 import { useProgress } from '../contexts/ProgressContext'
+import { DOG_QUESTIONS } from '../data/dogQuestions'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
 
@@ -77,7 +77,6 @@ const UI_TEXT = {
 function PersonalityTest() {
   const navigate = useNavigate()
   const { lang, localePath } = useLang()
-  const { fetchQuestions, getQuestions, isLoading, getError } = useQuestions()
   const { cacheResult } = useResults()
   const { setProgress } = useProgress()
   
@@ -91,11 +90,6 @@ function PersonalityTest() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const questionRefs = useRef([])
-
-  // Context에서 질문 가져오기 (캐시 활용, 현재 언어 기준)
-  useEffect(() => {
-    fetchQuestions(QUESTION_VERSION, lang)
-  }, [fetchQuestions, lang])
 
   // ✅ 언어 변경 시 테스트 상태 초기화
   useEffect(() => {
@@ -111,10 +105,10 @@ function PersonalityTest() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [lang])
 
-  // Context에서 데이터 읽기 (버전 + 언어 조합)
-  const questions = getQuestions(QUESTION_VERSION, lang) || { stage1: [], stage2: [] }
-  const loading = isLoading(QUESTION_VERSION, lang)
-  const error = getError(QUESTION_VERSION, lang)
+  // 직접 데이터 사용 (로컬 파일에서 즉시 로드)
+  const questions = DOG_QUESTIONS[lang] || DOG_QUESTIONS.en
+  const loading = false
+  const error = null
 
   // 스테이지 변경 시 스크롤 최상단으로
   useEffect(() => {
