@@ -8,7 +8,8 @@ import PremiumCTA from '../components/PremiumCTA'
 import { useSaveAsImage } from '../hooks/useSaveAsImage'
 
 // API Base URL (환경 변수 또는 기본값)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// 개발 환경에서는 Vite 프록시 사용 (상대 경로), 배포 환경에서는 절대 URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 // Stats 고정 순서 및 설정
 const STATS_ORDER = [

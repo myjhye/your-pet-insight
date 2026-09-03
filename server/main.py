@@ -19,7 +19,8 @@ from routers.verify import router as verify_router
 from routers.refund import router as refund_router
 
 # FastAPI 앱 생성
-app = FastAPI()
+# redirect_slashes=False: 슬래시 리다이렉트 비활성화 (엄격한 매칭)
+app = FastAPI(redirect_slashes=False)
 
 # CORS 설정 (리액트에서 접속 허용)
 app.add_middleware(

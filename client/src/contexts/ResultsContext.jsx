@@ -3,7 +3,8 @@ import axios from 'axios'
 
 const ResultsContext = createContext()
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// 개발 환경에서는 Vite 프록시 사용 (상대 경로), 배포 환경에서는 절대 URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 export function ResultsProvider({ children }) {
   // resultId별 결과 캐시

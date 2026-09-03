@@ -8,7 +8,8 @@ import { DOG_QUESTIONS } from '../data/dogQuestions'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// 개발 환경에서는 Vite 프록시 사용 (상대 경로), 배포 환경에서는 절대 URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 // 스테이지 1: 4개 이미지 (질문 4, 9, 14, 18에 배치) - 좌우 번갈아
 const stage1ImageConfig = {
