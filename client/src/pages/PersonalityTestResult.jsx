@@ -192,9 +192,6 @@ function PersonalityTestResult() {
   const [imageError, setImageError] = useState(false)
   const [imageSrc, setImageSrc] = useState(null)
   
-  // Share 기능 상태
-  const [copied, setCopied] = useState(false)
-  
   // 이미지 저장 기능
   const { fullPageRef, isSaving, saveMode, saveAsFullPage } = useSaveAsImage()
   const [saveToast, setSaveToast] = useState(null)
@@ -255,25 +252,9 @@ function PersonalityTestResult() {
     return textObj[lang] || textObj.en || textObj.ko || ''
   }, [lang])
 
-  // 공유 버튼 핸들러
-  const handleCopyLink = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      setCopied(true)
-      setSaveToast('copied')
-      trackEvent('share_click', { share_type: 'copy_link', method: 'copy_link', lang })
-      setTimeout(() => {
-        setCopied(false)
-        setSaveToast(null)
-      }, 2000)
-    } catch (err) {
-      console.error('링크 복사 실패:', err)
-    }
-  }, [lang])
-
   // 네이티브 공유 핸들러
   const handleNativeShare = useCallback(async () => {
-    if (navigator.share) {
+    if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
           title: resultData?.pet_name ? `${resultData.pet_name}'s Personality Result` : 'Pet Personality Result',
@@ -285,10 +266,8 @@ function PersonalityTestResult() {
           console.error('공유 실패:', err)
         }
       }
-    } else {
-      handleCopyLink()
     }
-  }, [resultData, lang, handleCopyLink])
+  }, [resultData, lang])
 
   // 전체 결과 이미지 저장 함수
   const handleSaveFullPage = useCallback(async () => {
@@ -383,22 +362,8 @@ function PersonalityTestResult() {
               </div>
 
               {/* Share Buttons */}
-              <div className="flex gap-2 justify-center md:justify-end share-btn-group">
-                <button 
-                  onClick={handleCopyLink}
-                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all ${
-                    copied 
-                      ? 'bg-green-500 border-green-500 text-white' 
-                      : 'bg-white border-gray-200 text-primary hover:bg-gray-50'
-                  }`}
-                  title={copied ? uiText.share.copied : uiText.share.copyLink}
-                >
-                  <span className="material-symbols-outlined text-lg">
-                    {copied ? 'check' : 'link'}
-                  </span>
-                </button>
-                
-                {typeof navigator !== 'undefined' && navigator.share && (
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <div className="flex gap-2 justify-center md:justify-end share-btn-group">
                   <button 
                     onClick={handleNativeShare}
                     className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all"
@@ -406,8 +371,8 @@ function PersonalityTestResult() {
                   >
                     <span className="material-symbols-outlined text-lg">share</span>
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* 메인 이미지 & 유형 뱃지 */}
@@ -415,22 +380,8 @@ function PersonalityTestResult() {
               {/* 모바일 뷰 */}
               <div className="w-full md:hidden flex flex-col items-center">
                 <div className="flex flex-col w-full mb-6">
-                  <div className="flex justify-end gap-2 w-full mb-1 px-1 share-btn-group">
-                    <button 
-                      onClick={handleCopyLink}
-                      className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all shadow-md ${
-                        copied 
-                          ? 'bg-green-500 border-green-500 text-white' 
-                          : 'bg-white border-gray-200 text-primary hover:bg-gray-50'
-                      }`}
-                      title={copied ? uiText.share.copied : uiText.share.copyLink}
-                    >
-                      <span className="material-symbols-outlined text-lg">
-                        {copied ? 'check' : 'link'}
-                      </span>
-                    </button>
-                    
-                    {typeof navigator !== 'undefined' && navigator.share && (
+                  {typeof navigator !== 'undefined' && navigator.share && (
+                    <div className="flex justify-end gap-2 w-full mb-1 px-1 share-btn-group">
                       <button 
                         onClick={handleNativeShare}
                         className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-all shadow-md"
@@ -438,8 +389,8 @@ function PersonalityTestResult() {
                       >
                         <span className="material-symbols-outlined text-lg">share</span>
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   
                   <div className="flex flex-col items-center justify-center px-4">
                     <div className="flex items-center gap-2 mb-1">
@@ -661,8 +612,6 @@ function PersonalityTestResult() {
           </span>
           {saveToast === 'shared'
             ? (lang === 'jp' ? '共有しました！' : 'Shared!')
-            : saveToast === 'copied'
-            ? (lang === 'jp' ? 'リンクをコピーしました！' : 'Link copied!')
             : (lang === 'jp' ? '画像を保存しました！' : 'Image saved!')}
         </div>
       )}
