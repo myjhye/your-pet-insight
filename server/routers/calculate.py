@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 import uuid
 from models import CalculateRequest
 from config import db
+from archetypes_data import get_archetype_data
 
 router = APIRouter(prefix="/api", tags=["calculate"])
 
@@ -197,79 +198,56 @@ async def calculate_mbti(request: CalculateRequest):
         print(f"{'='*60}\n")
         
         # ---------------------------------------------------------
-        # 6. Archetype 데이터 조회
+        # 6. Archetype 데이터 조회 (인메모리 즉시 조회)
         # ---------------------------------------------------------
-        archetype_ref = db.collection("archetypes").document(mbti_code)
-        archetype_doc = archetype_ref.get()
+        archetype_data = get_archetype_data(mbti_code, request.petName, request.locale)
         
-        archetype_data = None
-        if archetype_doc.exists:
-            archetype_data = archetype_doc.to_dict()
-            
-            # {{pet_name}} 플레이스홀더 치환 함수 (첫 글자 대문자 변환)
-            def capitalize_first_letter(s: str) -> str:
-                """문자열의 첫 글자를 대문자로 변환"""
-                if not s:
-                    return s
-                return s[0].upper() + s[1:] if len(s) > 1 else s.upper()
-            
-            def replace_placeholders(obj, pet_name: str, locale: str):
-                # 펫 이름 첫 글자 대문자 변환
-                display_pet_name = capitalize_first_letter(pet_name)
-                
-                if isinstance(obj, str):
-                    return obj.replace("{{pet_name}}", display_pet_name)
-                elif isinstance(obj, dict):
-                    # 다국어 처리: locale 키가 있으면 해당 언어만 추출
-                    if locale in obj and isinstance(obj[locale], str):
-                        return obj[locale].replace("{{pet_name}}", display_pet_name)
-                    return {k: replace_placeholders(v, pet_name, locale) for k, v in obj.items()}
-                elif isinstance(obj, list):
-                    return [replace_placeholders(item, pet_name, locale) for item in obj]
-                return obj
-            
-            archetype_data = replace_placeholders(archetype_data, request.petName, request.locale)
+        # Firestore 딜레이 없이 인메모리에 없는 경우만 DB 쿼리 백업 시도
+        if not archetype_data and db is not None:
+            try:
+                archetype_ref = db.collection("archetypes").document(mbti_code)
+                archetype_doc = archetype_ref.get()
+                if archetype_doc.exists:
+                    archetype_data = archetype_doc.to_dict()
+            except Exception as e:
+                print(f"⚠️ Firestore archetype 조회 오류: {e}")
         
         # ---------------------------------------------------------
-        # 7. 결과 저장 (Firestore)
+        # 7. 결과 UUID 생성 및 DB 저장 (DB 저장 불필요 / Non-blocking)
         # ---------------------------------------------------------
         result_id = str(uuid.uuid4())
-        
-        # 현재 시간과 30일 뒤 시간 계산
-        # timezone-aware datetime 사용 (Python 3.12+ 권장)
         now = datetime.now(timezone.utc)
-        expire_at = now + timedelta(days=30)  # 30일 뒤 날짜 계산
-        
-        # 참고: Firestore TTL(Time To Live) 자동 삭제를 사용하려면
-        # Google Cloud Console에서 test_results 컬렉션의 expire_at 필드에 대해
-        # TTL 정책을 수동으로 활성화해야 합니다.
+        expire_at = now + timedelta(days=30)
         
         result_data = {
             "result_id": result_id,
+            "resultId": result_id,
             "pet_name": request.petName,
+            "petName": request.petName,
             "locale": request.locale,
             "mbti_code": mbti_code,
+            "mbtiCode": mbti_code,
             "axis_scores": axis_scores,
             "stats": stats,
             "answers": all_answers,
             "archetype": archetype_data,
-            "created_at": now,
-            "expire_at": expire_at,  # 삭제될 시간을 저장
-            "report_status": "not_generated",  # 리포트 생성 상태 초기화
-            "report_pages": {},  # 리포트 페이지 데이터 초기화
+            "created_at": now.isoformat(),
+            "expire_at": expire_at.isoformat(),
+            "report_status": "not_generated",
+            "report_pages": {},
         }
         
-        db.collection("test_results").document(result_id).set(result_data)
+        # db 저장은 비동기/선택적으로 처리하여 DB 저장 유무와 관계없이 결과를 즉시 반환
+        try:
+            if db is not None:
+                db.collection("test_results").document(result_id).set(result_data)
+        except Exception as db_err:
+            print(f"⚠️ Firestore 저장 건너뜀/실패 (인메모리 즉시 반환 진행): {db_err}")
         
         # ---------------------------------------------------------
-        # 8. 응답 반환
+        # 8. 응답 반환 (전체 결과 데이터 포함)
         # ---------------------------------------------------------
-        return {
-            "resultId": result_id,
-            "mbtiCode": mbti_code,
-            "stats": stats,
-            "archetype": archetype_data
-        }
+        return result_data
         
     except HTTPException:
         raise

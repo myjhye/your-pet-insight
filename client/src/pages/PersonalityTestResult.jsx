@@ -640,16 +640,15 @@ function PersonalityTestResult() {
   // 환불 상태
   const [refundInitiated, setRefundInitiated] = useState(false)
 
-  // Context에서 결과 가져오기 - 캐시에 report_status가 없으면 강제 갱신
+  // Context에서 결과 가져오기 (로컬 캐시/sessionStorage 우선 사용)
   useEffect(() => {
     if (resultId) {
-      // 캐시에 report_status가 없으면 강제 갱신 (구매 여부 확인)
       const cached = getResult(resultId)
-      const needsRefresh = !cached || cached.report_status === undefined
-      fetchResult(resultId, needsRefresh)
+      if (!cached) {
+        fetchResult(resultId, false)
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resultId]) // fetchResult, getResult는 안정적인 함수이므로 의존성에서 제외
+  }, [resultId, getResult, fetchResult])
 
   // Context에서 데이터 읽기
   const resultData = getResult(resultId)
