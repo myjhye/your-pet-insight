@@ -3,10 +3,13 @@
 컨트롤러 역할: 모든 라우터를 등록하고 애플리케이션을 구성합니다.
 """
 import sys
-if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-if hasattr(sys.stderr, 'reconfigure'):
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,10 +31,11 @@ from routers.refund import router as refund_router
 # redirect_slashes=False: 슬래시 리다이렉트 비활성화 (엄격한 매칭)
 app = FastAPI(redirect_slashes=False)
 
-# CORS 설정 (리액트에서 접속 허용)
+# CORS 설정 (리액트 및 외부 크로스 오리진 허용)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 실제 배포 시에는 리액트 주소만 허용하도록 수정
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
