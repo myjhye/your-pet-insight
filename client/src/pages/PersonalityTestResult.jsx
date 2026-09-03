@@ -796,66 +796,25 @@ function PersonalityTestResult() {
     }
   }
 
-  const handleStartPayment = async () => {
-    if (!resultId) return
-
-    setIsStartingPayment(true)
-
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/polar/create-checkout`,
-        null,
-        { params: { result_id: resultId, lang: lang } }
-      )
-
-      // ★ 이미 결제 완료된 경우 (Self-Healing으로 발견된 경우 포함)
-      if (response.data.status === 'already_paid') {
-        setIsStartingPayment(false)
-        // 캐시 강제 갱신 후 상태 반영
-        const freshData = await fetchResult(resultId, true)
-        if (freshData?.report_status === 'ready') {
-          setReportStatus('ready')
-          setReportPages(freshData.report_pages || null)
-          setCurrentTab('premium')
-          window.scrollTo({ top: 0, behavior: 'auto' })
-        } else {
-          // 결제는 됐는데 리포트가 없는 경우 → 생성 시작
-          setPaymentProcessed(true)
-          setReportStatus('generating')
-          setIsGeneratingReport(true)
-          window.scrollTo({ top: 0, behavior: 'auto' })
-        }
-        return
-      }
-
-      // ★ generating 타임아웃으로 환불된 경우
-      if (response.data.status === 'generation_timeout') {
-        setIsStartingPayment(false)
-        setRefundInitiated(response.data.refund_initiated || false)
-        setReportStatus('failed')
-        
-        alert(response.data.refund_initiated
-          ? (lang === 'jp'
-            ? 'レポート生成がタイムアウトしました。自動返金処理を開始しました。'
-            : 'Report generation timed out. An automatic refund has been initiated.')
-          : (lang === 'jp'
-            ? 'レポート生成がタイムアウトしました。サポートにお問い合わせください。'
-            : 'Report generation timed out. Please contact support.'))
-        return
-      }
-
-      if (response.data.status === 'success' && response.data.checkout_url) {
-        window.location.href = response.data.checkout_url
-      } else {
-        throw new Error('Failed to create checkout session')
-      }
-    } catch (error) {
-      console.error('결제 세션 생성 실패:', error)
-      setIsStartingPayment(false)
-      alert(lang === 'jp'
-        ? '決済セッションの生成に失敗しました。もう一度お試しください。'
-        : 'Failed to create checkout session. Please try again.')
+  // 준비 중 알림 표시 함수
+  const showComingSoonAlert = () => {
+    const messages = {
+      ko: '프리미엄 리포트는 현재 준비 중입니다.',
+      jp: 'プレミアムレポート機能は現在準備中です。',
+      en: 'Premium Report feature is currently coming soon.'
     }
+    const msg = messages[lang] || messages[lang === 'kr' ? 'ko' : 'en'] || messages.en
+
+    setSaveToast(msg)
+    setTimeout(() => {
+      setSaveToast((prev) => (prev === msg ? null : prev))
+    }, 3000)
+
+    alert(msg)
+  }
+
+  const handleStartPayment = async () => {
+    showComingSoonAlert()
   }
   
   // 리포트 생성 함수
@@ -1289,16 +1248,7 @@ function PersonalityTestResult() {
                 {uiText.tabs.basic}
               </button>
               <button
-                onClick={() => {
-                  if (reportStatus === 'ready') {
-                    setCurrentTab('premium')
-                    // Premium 탭으로 전환 후 최상단으로 스크롤 (즉시)
-                    window.scrollTo({ top: 0, behavior: 'auto' })
-                  } else {
-                    // 최하단 결제 버튼으로 스크롤
-                    scrollToPremiumCTA()
-                  }
-                }}
+                onClick={showComingSoonAlert}
                 className={`px-3 md:px-6 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-1 text-xs md:text-sm ${
                   currentTab === 'premium' && reportStatus === 'ready'
                     ? 'bg-white text-primary shadow-sm'
@@ -1656,7 +1606,7 @@ function PersonalityTestResult() {
                     preview={personalizedPreviews?.[section.key] || section.preview}
                     petName={displayPetName}
                     unlockButtonText={uiText.premium.premiumPreview.unlockButton}
-                    onUnlockClick={scrollToPremiumCTA}
+                    onUnlockClick={showComingSoonAlert}
                   />
                 ))}
               </div>
@@ -1673,11 +1623,8 @@ function PersonalityTestResult() {
             reportPages={reportPages}
             isGeneratingReport={isGeneratingReport}
             isStartingPayment={isStartingPayment}
-            onGetReport={handleStartPayment}
-            onViewReport={() => {
-                            setCurrentTab('premium')
-              window.scrollTo({ top: 0, behavior: 'auto' })
-            }}
+            onGetReport={showComingSoonAlert}
+            onViewReport={showComingSoonAlert}
             onRetry={handleRetryGenerate}
             hookText={ctaHook}
             refundInitiated={refundInitiated}

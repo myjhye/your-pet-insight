@@ -104,9 +104,7 @@ function PremiumCTA({
     if (isReady) {
       onViewReport?.()
     } else {
-      if (agreedToRefund) {
-        onGetReport?.()
-      }
+      onGetReport?.()
     }
   }
 
@@ -245,9 +243,9 @@ function PremiumCTA({
                 <button
                   id="premium-cta-button"
                   onClick={handleClick}
-                  disabled={isGeneratingReport || isStartingPayment || (!isReady && !agreedToRefund)}
+                  disabled={isGeneratingReport || isStartingPayment}
                   className={`group relative w-full md:w-auto font-bold text-base md:text-lg min-h-[52px] py-3.5 md:py-4 px-8 md:px-10 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.97] disabled:cursor-not-allowed overflow-hidden ${
-                    isStartingPayment || (!isReady && !agreedToRefund)
+                    isStartingPayment
                       ? 'bg-white/60 text-primary/60'
                       : isReady
                       ? 'bg-emerald-400 text-[#1a3a2a] hover:bg-emerald-300'
