@@ -261,7 +261,7 @@ function PersonalityTestResult() {
       await navigator.clipboard.writeText(window.location.href)
       setCopied(true)
       setSaveToast('copied')
-      trackEvent('share_click', { method: 'copy_link', lang })
+      trackEvent('share_click', { share_type: 'copy_link', method: 'copy_link', lang })
       setTimeout(() => {
         setCopied(false)
         setSaveToast(null)
@@ -279,7 +279,7 @@ function PersonalityTestResult() {
           title: resultData?.pet_name ? `${resultData.pet_name}'s Personality Result` : 'Pet Personality Result',
           url: window.location.href,
         })
-        trackEvent('share_click', { method: 'native_share', lang })
+        trackEvent('share_click', { share_type: 'native_share', method: 'native_share', lang })
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('공유 실패:', err)
@@ -292,7 +292,7 @@ function PersonalityTestResult() {
 
   // 전체 결과 이미지 저장 함수
   const handleSaveFullPage = useCallback(async () => {
-    trackEvent('save_image', { mode: 'full_page', lang })
+    trackEvent('save_image', { save_type: 'full', mode: 'full_page', lang })
     const success = await saveAsFullPage()
     if (success) {
       setSaveToast('saved')
