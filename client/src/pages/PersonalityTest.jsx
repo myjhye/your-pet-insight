@@ -8,6 +8,7 @@ import { DOG_QUESTIONS } from '../data/dogQuestions'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
 import { trackEvent } from '../utils/gtm'
+import { calculateMbti } from '../utils/calculateMbti'
 
 // 개발 환경에서는 Vite 프록시 사용 (상대 경로), 배포 환경에서는 절대 URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || ''
@@ -194,25 +195,30 @@ function PersonalityTest() {
     setIsSubmitting(true)
     
     try {
-      // 백엔드 /api/calculate 호출
-      const response = await axios.post(`${API_BASE_URL}/api/calculate`, {
+      // 클라이언트 전용 즉시 MBTI 계산 (서버 없이 0.001초 계산)
+      const resultData = calculateMbti({
         petName: petName.trim(),
         mainAnswers,
         bonusAnswers,
         locale: lang
       })
 
-      const { resultId, ...resultData } = response.data
+      const resultId = resultData.result_id || resultData.resultId
 
-      // 결과를 캐시에 저장 (결과 페이지에서 API 재호출 방방)
-      cacheResult(resultId, {
-        result_id: resultId,
-        pet_name: petName.trim(),
-        locale: lang,
-        ...resultData
-      })
+      // 결과를 캐시에 저장 (sessionStorage 및 ResultsContext)
+      cacheResult(resultId, resultData)
 
-      // 결과 페이지로 이동 (UUID 포함)
+      // 백엔드가 동작하는 환경일 경우 백그라운드 백업 전달 시도 (실패 시 무시)
+      try {
+        axios.post(`${API_BASE_URL}/api/calculate`, {
+          petName: petName.trim(),
+          mainAnswers,
+          bonusAnswers,
+          locale: lang
+        }).catch(() => {})
+      } catch (e) {}
+
+      // 결과 페이지로 즉시 이동
       navigate(`/result/${resultId}`)
     } catch (error) {
       console.error('결과 계산 중 오류:', error)
