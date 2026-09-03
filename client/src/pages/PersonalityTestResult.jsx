@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
 import { useSaveAsImage } from '../hooks/useSaveAsImage'
@@ -185,7 +185,8 @@ function TraitCard({ icon, title, description, variant = 'default' }) {
 
 function PersonalityTestResult() {
   const { resultId } = useParams()
-  const { lang } = useLang()
+  const navigate = useNavigate()
+  const { lang, localePath } = useLang()
   const { fetchResult, getResult, isLoading, getError } = useResults()
   
   // 이미지 로드 상태 관리
@@ -579,24 +580,35 @@ function PersonalityTestResult() {
             )}
           </div>
 
-          {/* 전체 결과 이미지 저장 버튼 */}
-          <div className="flex justify-center mb-8 md:mb-12">
+          {/* 하단 액션 버튼 그룹 (이미지 저장 & 다시하기) */}
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 mb-8 md:mb-12">
             <button
               onClick={handleSaveFullPage}
               disabled={isSaving}
               className={`inline-flex items-center gap-2 px-6 py-3 rounded-full border text-base font-bold shadow-sm transition-all
                 ${isSaving && saveMode === 'full'
                   ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-wait'
-                  : 'bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 shadow-md hover:shadow-lg'
+                  : 'bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 shadow-md hover:shadow-lg active:scale-95'
                 }`}
             >
               <span className="material-symbols-outlined text-xl">
                 {isSaving && saveMode === 'full' ? 'hourglass_empty' : 'download'}
               </span>
               {isSaving && saveMode === 'full'
-                ? (lang === 'jp' ? '保存中...' : 'Saving...')
-                : (lang === 'jp' ? '結果を画像で保存' : 'Save Results as Image')
+                ? (lang === 'jp' ? '保存中...' : (lang === 'ko' ? '저장 중...' : 'Saving...'))
+                : (lang === 'jp' ? '結果を画像で保存' : (lang === 'ko' ? '결과 이미지 저장' : 'Save Results as Image'))
               }
+            </button>
+
+            <button
+              onClick={() => {
+                trackEvent('test_restart', { lang })
+                navigate(localePath('/test'))
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-gray-200 bg-white text-primary hover:bg-gray-50 text-base font-bold shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl">restart_alt</span>
+              {lang === 'jp' ? 'もう一度テストする' : (lang === 'ko' ? '테스트 다시하기' : 'Retake Test')}
             </button>
           </div>
         </div>
