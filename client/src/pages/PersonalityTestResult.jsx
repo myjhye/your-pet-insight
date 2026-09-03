@@ -6,6 +6,7 @@ import axios from 'axios'
 import PremiumReportViewer from '../components/PremiumReportViewer'
 import PremiumCTA from '../components/PremiumCTA'
 import { useSaveAsImage } from '../hooks/useSaveAsImage'
+import { trackEvent } from '../utils/gtm'
 
 // API Base URL (환경 변수 또는 기본값)
 // 개발 환경에서는 Vite 프록시 사용 (상대 경로), 배포 환경에서는 절대 URL
@@ -664,8 +665,14 @@ function PersonalityTestResult() {
       } else {
         setLanguageMismatch(false)
       }
+
+      trackEvent('result_view', {
+        result_id: resultId,
+        archetype_id: resultData.archetype?.id || resultData.archetype?.image_id,
+        lang: lang
+      })
     }
-  }, [resultData, lang])
+  }, [resultData, lang, resultId])
   
   // 이미지 경로 설정 및 확장자 시도
   useEffect(() => {
@@ -797,7 +804,9 @@ function PersonalityTestResult() {
   }
 
   // 준비 중 알림 표시 함수
-  const showComingSoonAlert = () => {
+  const showComingSoonAlert = (location = 'cta_button') => {
+    trackEvent('premium_cta_click', { location, lang })
+
     const messages = {
       ko: '프리미엄 리포트는 현재 준비 중입니다.',
       jp: 'プレミアムレポート機能は現在準備中です。',
@@ -1055,6 +1064,7 @@ function PersonalityTestResult() {
 
   // 링크 복사 함수
   const handleCopyLink = async () => {
+    trackEvent('share_click', { share_type: 'copy_link', lang })
     const shareUrl = `https://www.yourpetinsight.com/${lang}/dog-test/personality`
     
     try {
@@ -1125,6 +1135,7 @@ function PersonalityTestResult() {
   
   // 네이티브 공유 함수 (모바일) - displayPetName 사용하므로 여기서 정의
   const handleNativeShare = async () => {
+    trackEvent('share_click', { share_type: 'native_share', lang })
     const shareUrl = `https://www.yourpetinsight.com/${lang}/dog-test/personality`
     const shareData = {
       title: lang === 'jp' 
@@ -1163,6 +1174,7 @@ function PersonalityTestResult() {
   
   // ★ 전체 결과 저장
   const handleSaveFullPage = async () => {
+    trackEvent('save_image', { save_type: 'full', lang })
     const sanitizedName = (displayPetName || 'pet')
       .replace(/[^a-zA-Z0-9가-힣ぁ-んァ-ヶ亜-熙]/g, '_')
       .substring(0, 30)
@@ -1238,7 +1250,10 @@ function PersonalityTestResult() {
           <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
             <div className="flex gap-1">
               <button
-                onClick={() => setCurrentTab('basic')}
+                onClick={() => {
+                  trackEvent('tab_switch', { tab_name: 'basic', lang })
+                  setCurrentTab('basic')
+                }}
                 className={`px-3 md:px-6 py-2 rounded-lg font-medium transition-all text-xs md:text-sm ${
                   currentTab === 'basic'
                     ? 'bg-white text-primary shadow-sm'
@@ -1248,7 +1263,10 @@ function PersonalityTestResult() {
                 {uiText.tabs.basic}
               </button>
               <button
-                onClick={showComingSoonAlert}
+                onClick={() => {
+                  trackEvent('tab_switch', { tab_name: 'premium', lang })
+                  showComingSoonAlert('tab')
+                }}
                 className={`px-3 md:px-6 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-1 text-xs md:text-sm ${
                   currentTab === 'premium' && reportStatus === 'ready'
                     ? 'bg-white text-primary shadow-sm'
@@ -1606,7 +1624,7 @@ function PersonalityTestResult() {
                     preview={personalizedPreviews?.[section.key] || section.preview}
                     petName={displayPetName}
                     unlockButtonText={uiText.premium.premiumPreview.unlockButton}
-                    onUnlockClick={showComingSoonAlert}
+                    onUnlockClick={() => showComingSoonAlert('locked_card')}
                   />
                 ))}
               </div>

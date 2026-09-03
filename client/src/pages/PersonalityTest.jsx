@@ -7,6 +7,7 @@ import { useProgress } from '../contexts/ProgressContext'
 import { DOG_QUESTIONS } from '../data/dogQuestions'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
+import { trackEvent } from '../utils/gtm'
 
 // 개발 환경에서는 Vite 프록시 사용 (상대 경로), 배포 환경에서는 절대 URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || ''
@@ -92,6 +93,11 @@ function PersonalityTest() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const questionRefs = useRef([])
 
+  // 최초 컴포넌트 마운트 시 test_start 이벤트 발행
+  useEffect(() => {
+    trackEvent('test_start', { stage: 1, lang })
+  }, [])
+
   // ✅ 언어 변경 시 테스트 상태 초기화
   useEffect(() => {
     // 언어가 변경되면 테스트를 처음부터 다시 시작
@@ -150,6 +156,15 @@ function PersonalityTest() {
   const currentActiveIndex = getNextUnansweredIndex()
 
   const handleAnswer = (questionIndex, value) => {
+    const stepNumber = stage === 1 ? questionIndex + 1 : 20 + questionIndex + 1
+    trackEvent('question_answer', {
+      step_number: stepNumber,
+      stage: stage,
+      question_index: questionIndex + 1,
+      option_value: value,
+      lang: lang
+    })
+
     setCurrentAnswers(prev => ({
       ...prev,
       [questionIndex]: value
@@ -169,6 +184,7 @@ function PersonalityTest() {
 
   const handleNext = () => {
     if (allAnswered && stage === 1) {
+      trackEvent('test_start', { stage: 2, lang })
       setStage(2)
     }
   }
@@ -176,6 +192,7 @@ function PersonalityTest() {
   const handleSeeResults = async () => {
     if (!allAnswered || stage !== 2 || !petName.trim() || !agreedToTerms || isSubmitting) return
 
+    trackEvent('test_submit', { lang })
     setIsSubmitting(true)
     
     try {

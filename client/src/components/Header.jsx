@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
 import { useProgress } from '../contexts/ProgressContext'
+import { trackEvent } from '../utils/gtm'
 
 function Header({ fixed = false }) {
   const { lang, langInfo, changeLang, localePath, languages } = useLang()
@@ -64,6 +65,7 @@ function Header({ fixed = false }) {
                       <button
                         key={language.code}
                         onClick={() => {
+                          trackEvent('language_change', { from_lang: lang, to_lang: language.code })
                           changeLang(language.code)
                           setIsLangOpen(false)
                         }}
@@ -115,6 +117,7 @@ function Header({ fixed = false }) {
                     <button
                       key={language.code}
                       onClick={() => {
+                        trackEvent('language_change', { from_lang: lang, to_lang: language.code })
                         changeLang(language.code)
                         setIsMobileMenuOpen(false)
                       }}
