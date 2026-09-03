@@ -2,6 +2,12 @@
 메인 FastAPI 애플리케이션
 컨트롤러 역할: 모든 라우터를 등록하고 애플리케이션을 구성합니다.
 """
+import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
