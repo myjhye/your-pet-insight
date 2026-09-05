@@ -7,6 +7,7 @@ import { useProgress } from '../contexts/ProgressContext'
 import { DOG_QUESTIONS } from '../data/dogQuestions'
 import QuestionCard from '../components/QuestionCard'
 import QuestionWithSideImage from '../components/TestSideImages'
+import AnalyzingLoader from '../components/AnalyzingLoader'
 import { trackEvent } from '../utils/gtm'
 import { calculateMbti } from '../utils/calculateMbti'
 
@@ -206,7 +207,10 @@ function PersonalityTest() {
         })
       }
 
-      // 결과 페이지로 즉시 이동
+      // 3초간 AI 분석 애니메이션 연출 후 결과 페이지 이동
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+
+      // 결과 페이지로 이동
       navigate(`/result/${resultId}`)
     } catch (error) {
       console.error('결과 계산 중 오류:', error)
@@ -222,6 +226,11 @@ function PersonalityTest() {
   const canSeeResults = allAnswered && !isSubmitting
 
   const getQuestionNumber = (index) => index + 1
+
+  // 제출 중 3초 로딩 연출 화면
+  if (isSubmitting) {
+    return <AnalyzingLoader lang={lang} />
+  }
 
   // 로딩 화면 (데이터가 아직 없을 때도 포함)
   if (loading || !questions?.stage1?.length) {
