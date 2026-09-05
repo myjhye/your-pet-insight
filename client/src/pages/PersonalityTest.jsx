@@ -275,8 +275,8 @@ function PersonalityTest() {
         })
       }
 
-      // 3초간 AI 분석 애니메이션 연출 후 결과 페이지 이동
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      // 3.5초간 AI 분석 애니메이션 연출 후 결과 페이지 이동
+      await new Promise((resolve) => setTimeout(resolve, 3500))
 
       // 결과 페이지로 이동
       navigate(`/result/${resultId}`)
@@ -365,12 +365,12 @@ function PersonalityTest() {
               </div>
             </div>
 
-            {/* 우측 강아지 일러스트 썸네일 */}
-            <div className="flex items-center shrink-0">
+            {/* 우측 강아지 일러스트 썸네일 (크기 확대 적용) */}
+            <div className="flex items-center shrink-0 pl-2">
               <img 
                 src="/images/dog/2.png" 
                 alt="Dog" 
-                className="w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 object-contain drop-shadow-md"
+                className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain drop-shadow-lg transform hover:scale-105 transition-transform duration-300"
               />
             </div>
           </div>
