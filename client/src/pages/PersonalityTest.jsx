@@ -92,6 +92,8 @@ function PersonalityTest() {
   const [petName, setPetName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const questionRefs = useRef([])
+  const hasTrackedFirstQuestion = useRef(false)
+  const hasTrackedStage2Complete = useRef(false)
 
   // 최초 컴포넌트 마운트 시 test_start 이벤트 발행
   useEffect(() => {
@@ -107,6 +109,8 @@ function PersonalityTest() {
     setPetName('')
     setIsSubmitting(false)
     questionRefs.current = []
+    hasTrackedFirstQuestion.current = false
+    hasTrackedStage2Complete.current = false
     // 스크롤 최상단으로
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [lang])
@@ -132,7 +136,39 @@ function PersonalityTest() {
   const totalQuestions = (questions?.stage1?.length || 0) + (questions?.stage2?.length || 0)
   const totalAnswered = Object.keys(mainAnswers).length + Object.keys(bonusAnswers).length
   const allAnswered = currentQuestions.length > 0 && Object.keys(currentAnswers).length === currentQuestions.length
-  
+
+  // 📌 1. 1번 문항 뷰포트 실제 노출 트래킹 (IntersectionObserver)
+  useEffect(() => {
+    if (stage !== 1 || hasTrackedFirstQuestion.current) return
+
+    const targetEl = questionRefs.current[0]
+    if (!targetEl) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting && !hasTrackedFirstQuestion.current) {
+          hasTrackedFirstQuestion.current = true
+          trackEvent('first_question_viewed', { lang })
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.2 }
+    )
+
+    observer.observe(targetEl)
+
+    return () => observer.disconnect()
+  }, [stage, lang, currentQuestions])
+
+  // 📌 4. Stage 2 (보호자 문항 5개) 모두 응답 완료 트래킹
+  useEffect(() => {
+    if (stage === 2 && allAnswered && !hasTrackedStage2Complete.current) {
+      hasTrackedStage2Complete.current = true
+      trackEvent('stage2_complete', { lang })
+    }
+  }, [stage, allAnswered, lang])
+
   // 진행률 계산
   const progressPercent = totalQuestions > 0 ? (totalAnswered / totalQuestions) * 100 : 0
   
@@ -212,20 +248,35 @@ function PersonalityTest() {
       // 결과를 캐시에 저장 (sessionStorage 및 ResultsContext)
       cacheResult(resultId, resultData)
 
-      // 백엔드가 동작하는 환경일 경우 백그라운드 백업 전달 시도 (실패 시 무시)
+      // 📌 3. 백엔드가 동작하는 환경일 경우 백그라운드 백업 전달 시도 (실패 시 에러 트래킹)
       try {
         axios.post(`${API_BASE_URL}/api/calculate`, {
           petName: petName.trim(),
           mainAnswers,
           bonusAnswers,
           locale: lang
-        }).catch(() => {})
-      } catch (e) {}
+        }).catch((err) => {
+          trackEvent('backup_api_error', {
+            lang,
+            error_message: String(err?.message || err).slice(0, 100)
+          })
+        })
+      } catch (e) {
+        trackEvent('backup_api_error', {
+          lang,
+          error_message: String(e?.message || e).slice(0, 100)
+        })
+      }
 
       // 결과 페이지로 즉시 이동
       navigate(`/result/${resultId}`)
     } catch (error) {
       console.error('결과 계산 중 오류:', error)
+      // 📌 3. 제출/계산 과정 오류 시 트래킹
+      trackEvent('test_submit_error', {
+        lang,
+        error_message: String(error?.message || error).slice(0, 100)
+      })
       alert('결과 계산 중 오류가 발생했습니다. 다시 시도해주세요.')
       setIsSubmitting(false)
     }

@@ -199,6 +199,7 @@ function PersonalityTestResult() {
   
   // 결과 저장 CTA 문구 A/B 분기 (50:50 세션 고정)
   const [saveCtaVariant] = useState(() => (Math.random() < 0.5 ? 'A' : 'B'))
+  const hasTrackedCtaVariant = useRef(false)
   
   // 언어 불일치 상태
   const [languageMismatch, setLanguageMismatch] = useState(false)
@@ -235,6 +236,17 @@ function PersonalityTestResult() {
       })
     }
   }, [resultData, lang, resultId])
+
+  // 📌 2. CTA 변형(A/B) 노출 이벤트 트래킹 (전환율 분모 데이터)
+  useEffect(() => {
+    if (resultData && saveCtaVariant && !hasTrackedCtaVariant.current) {
+      hasTrackedCtaVariant.current = true
+      trackEvent('cta_variant_shown', {
+        lang,
+        cta_variant: saveCtaVariant
+      })
+    }
+  }, [resultData, lang, saveCtaVariant])
   
   // 이미지 경로 설정
   useEffect(() => {
