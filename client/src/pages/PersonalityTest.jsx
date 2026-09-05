@@ -270,78 +270,47 @@ function PersonalityTest() {
   return (
     <main className="flex-grow bg-[#F9FBF9] min-h-screen">
       
-      {/* ========== 인트로 섹션 (테스트 시작 전에만 표시) ========== */}
+      {/* ========== 인트로 헤더 (컴팩트하게 배치하여 첫 번째 문제가 첫 화면에 즉시 노출되도록 구현) ========== */}
       {stage === 1 && Object.keys(mainAnswers).length === 0 && (
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#fff8e1] to-[#F9FBF9] pt-8 pb-12 md:pt-12 md:pb-16">
+        <section className="relative overflow-hidden bg-gradient-to-b from-[#fff8e1] to-[#F9FBF9] pt-4 pb-3 md:pt-6 md:pb-4 border-b border-orange-100/60 shadow-xs">
           {/* 배경 장식 */}
-          <div className="absolute top-0 left-0 w-64 h-64 bg-orange-200/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-80 h-80 bg-amber-200/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+          <div className="absolute top-0 left-0 w-48 h-48 bg-orange-200/20 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
           
-          <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-6">
-            {/* 강아지 이미지들 */}
-            <div className="flex justify-center gap-2 md:gap-4 mb-6 md:mb-8">
-              <img 
-                src="/images/dog/1.png" 
-                alt="Dog 1" 
-                className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-lg animate-bounce"
-                style={{ animationDelay: '0ms', animationDuration: '2s' }}
-              />
-              <img 
-                src="/images/dog/2.png" 
-                alt="Dog 2" 
-                className="w-20 h-20 md:w-32 md:h-32 object-contain drop-shadow-xl"
-              />
-              <img 
-                src="/images/dog/3.png" 
-                alt="Dog 3" 
-                className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-lg animate-bounce"
-                style={{ animationDelay: '500ms', animationDuration: '2s' }}
-              />
-            </div>
-            
-            {/* 메인 타이틀 */}
-            <div className="text-center mb-6 md:mb-8">
-              <h1 className="text-3xl md:text-5xl font-display font-black text-primary mb-3 md:mb-4 leading-tight">
-                {lang === 'jp' ? (
-                  <>愛犬の<span className="text-orange-500">本当の性格</span>を発見</>
-                ) : (
-                  <>Discover Your Dog's <span className="text-orange-500">True Personality</span></>
-                )}
-              </h1>
-              <p className="text-primary/70 text-base md:text-xl font-medium">
-                {lang === 'jp' 
-                  ? '3分で愛犬の性格タイプがわかります' 
-                  : 'Find out their personality type in just 3 minutes'}
-              </p>
-            </div>
-            
-            {/* 특징 뱃지들 */}
-            <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-10">
-              <div className="flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 bg-white rounded-full shadow-sm border border-orange-100">
-                <span className="material-symbols-outlined text-orange-500 text-lg md:text-xl">quiz</span>
-                <span className="text-primary font-medium text-xs md:text-sm">
-                  {lang === 'jp' ? '25の質問' : '25 Questions'}
-                </span>
+          <div className="relative z-10 max-w-[800px] mx-auto px-4 md:px-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                {/* 메인 타이틀 */}
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-primary leading-tight tracking-tight">
+                  {lang === 'jp' ? (
+                    <>愛犬の<span className="text-orange-500">本当の性格</span>を発見</>
+                  ) : (
+                    <>Discover Your Dog's <span className="text-orange-500">True Personality</span></>
+                  )}
+                </h1>
+
+                {/* 서브문구 & 뱃지 (AI Powered 문구 제거) */}
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  <span className="text-xs sm:text-sm text-primary/70 font-medium">
+                    {lang === 'jp' ? '3分でわかる性格診断' : '3-min personality assessment'}
+                  </span>
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
+                    <span className="material-symbols-outlined text-orange-500 text-xs">quiz</span>
+                    <span>{lang === 'jp' ? '25の質問' : '25 Questions'}</span>
+                  </div>
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
+                    <span className="material-symbols-outlined text-orange-500 text-xs">pets</span>
+                    <span>{lang === 'jp' ? '16の性格タイプ' : '16 Types'}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 bg-white rounded-full shadow-sm border border-orange-100">
-                <span className="material-symbols-outlined text-orange-500 text-lg md:text-xl">pets</span>
-                <span className="text-primary font-medium text-xs md:text-sm">
-                  {lang === 'jp' ? '16の性格タイプ' : '16 Personality Types'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 bg-white rounded-full shadow-sm border border-orange-100">
-                <span className="material-symbols-outlined text-orange-500 text-lg md:text-xl">auto_awesome</span>
-                <span className="text-primary font-medium text-xs md:text-sm">
-                  {lang === 'jp' ? 'AI分析' : 'AI-Powered'}
-                </span>
-              </div>
-            </div>
-            
-            {/* 시작 안내 */}
-            <div className="text-center">
-              <div className="inline-flex items-center gap-2 text-primary/60 text-sm md:text-base">
-                <span className="material-symbols-outlined animate-bounce">arrow_downward</span>
-                <span>{lang === 'jp' ? '下にスクロールして開始' : 'Scroll down to start'}</span>
+
+              {/* 우측 강아지 일러스트 썸네일 */}
+              <div className="flex items-center shrink-0">
+                <img 
+                  src="/images/dog/2.png" 
+                  alt="Dog" 
+                  className="w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 object-contain drop-shadow-md"
+                />
               </div>
             </div>
           </div>
@@ -349,7 +318,7 @@ function PersonalityTest() {
       )}
 
       {/* ========== 기존 테스트 영역 ========== */}
-      <div className="px-4 md:px-20 lg:px-40 py-6 md:py-8">
+      <div className="px-4 md:px-20 lg:px-40 py-3 md:py-6">
         <div className="max-w-[800px] mx-auto">
           
           {/* 진행 상황 (인트로 지나면 표시) */}
