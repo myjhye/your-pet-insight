@@ -253,13 +253,52 @@ function PersonalityTestResult() {
     return textObj[lang] || textObj.en || textObj.ko || ''
   }, [lang])
 
+  // 공유용 URL 생성 헬퍼 (홈 경로 기준 + UTM 파라미터 자동 포함)
+  const getShareUrl = useCallback(() => {
+    try {
+      const homePath = localePath('/')
+      const baseUrl = `${window.location.origin}${homePath}`
+      const url = new URL(baseUrl)
+      url.searchParams.set('utm_source', 'user_share')
+      url.searchParams.set('utm_medium', 'viral')
+      return url.toString()
+    } catch {
+      const homePath = localePath('/')
+      const baseUrl = `${window.location.origin}${homePath}`
+      return `${baseUrl}?utm_source=user_share&utm_medium=viral`
+    }
+  }, [localePath])
+
+  // 클립보드 링크 복사 핸들러
+  const handleCopyLink = useCallback(async () => {
+    const shareUrl = getShareUrl()
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = shareUrl
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+      trackEvent('share_click', { share_type: 'copy_link', method: 'copy_link', lang })
+      setSaveToast('copied')
+      setTimeout(() => setSaveToast(null), 3000)
+    } catch (err) {
+      console.error('링크 복사 실패:', err)
+    }
+  }, [getShareUrl, lang])
+
   // 네이티브 공유 핸들러
   const handleNativeShare = useCallback(async () => {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
+        const shareUrl = getShareUrl()
         await navigator.share({
           title: resultData?.pet_name ? `${resultData.pet_name}'s Personality Result` : 'Pet Personality Result',
-          url: window.location.href,
+          url: shareUrl,
         })
         trackEvent('share_click', { share_type: 'native_share', method: 'native_share', lang })
       } catch (err) {
@@ -267,8 +306,10 @@ function PersonalityTestResult() {
           console.error('공유 실패:', err)
         }
       }
+    } else {
+      handleCopyLink()
     }
-  }, [resultData, lang])
+  }, [resultData, lang, getShareUrl, handleCopyLink])
 
   // 전체 결과 이미지 저장 함수
   const handleSaveFullPage = useCallback(async () => {
@@ -622,11 +663,13 @@ function PersonalityTestResult() {
           bg-primary text-white px-6 py-3 rounded-full shadow-lg
           flex items-center gap-2 animate-fade-in text-sm font-medium">
           <span className="material-symbols-outlined text-lg">
-            {saveToast === 'shared' ? 'share' : 'check_circle'}
+            {saveToast === 'shared' ? 'share' : (saveToast === 'copied' ? 'content_copy' : 'check_circle')}
           </span>
           {saveToast === 'shared'
             ? (lang === 'jp' ? '共有しました！' : 'Shared!')
-            : (lang === 'jp' ? '画像を保存しました！' : 'Image saved!')}
+            : (saveToast === 'copied'
+              ? (lang === 'jp' ? 'リンクをコピーしました！' : (lang === 'ko' ? '링크가 복사되었습니다!' : 'Link copied!'))
+              : (lang === 'jp' ? '画像を保存しました！' : (lang === 'ko' ? '이미지가 저장되었습니다!' : 'Image saved!')))}
         </div>
       )}
     </>
