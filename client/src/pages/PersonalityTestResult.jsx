@@ -622,7 +622,7 @@ function PersonalityTestResult() {
             )}
           </div>
 
-          {/* 하단 액션 버튼 그룹 (이미지 저장 & 다시하기) */}
+          {/* 하단 액션 버튼 그룹 (이미지 저장, 공유하기 & 다시하기) */}
           <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 mb-8 md:mb-12">
             {/* 결과 이미지 저장 (보조 버튼 - 아웃라인 스타일) */}
             <button
@@ -641,6 +641,15 @@ function PersonalityTestResult() {
                 ? (lang === 'jp' ? '保存中...' : (lang === 'ko' ? '저장 중...' : 'Saving...'))
                 : (lang === 'jp' ? '結果を画像で保存' : (lang === 'ko' ? '결과 이미지 저장' : 'Save Results as Image'))
               }
+            </button>
+
+            {/* 테스트 공유하기 (보조 버튼 - 아웃라인 스타일) */}
+            <button
+              onClick={handleNativeShare}
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border-2 bg-white border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 text-base font-bold shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl">share</span>
+              {lang === 'jp' ? 'テストを共有' : (lang === 'ko' ? '테스트 공유하기' : 'Share Test')}
             </button>
 
             {/* 테스트 다시하기 (메인 강조 CTA - 솔리드 에메랄드 스타일) */}
