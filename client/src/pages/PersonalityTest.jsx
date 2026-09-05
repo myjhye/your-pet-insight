@@ -50,6 +50,71 @@ const UI_TEXT = {
   }
 }
 
+// A/B 테스트용 최상단 후킹 메시지 변종 정의
+const HOOK_VARIANTS = {
+  A: {
+    // 속마음/호기심 자극형
+    en: {
+      title: <>What is your dog <span className="text-orange-500">really thinking?</span></>,
+      sub: "1-min secret mind assessment"
+    },
+    jp: {
+      title: <>愛犬は今、<span className="text-orange-500">何を考えている？</span></>,
+      sub: "1分でわかる隠れた本心"
+    },
+    default: {
+      title: <>우리 강아지는 지금 <span className="text-orange-500">무슨 생각할까?</span></>,
+      sub: "1분 만에 알아채는 속마음"
+    }
+  },
+  B: {
+    // 숨겨진 성격/재능 궁금증 유발형
+    en: {
+      title: <>Is your dog a <span className="text-orange-500">Genius or Free Spirit?</span></>,
+      sub: "Discover hidden talents & traits"
+    },
+    jp: {
+      title: <>天才犬？自由人？<span className="text-orange-500">愛犬の隠された才能</span></>,
+      sub: "16のタイプで性格を完全診断"
+    },
+    default: {
+      title: <>천재견? 자유로운 영혼? <span className="text-orange-500">숨겨진 성격</span></>,
+      sub: "16가지 유형으로 보는 특별한 성향"
+    }
+  },
+  C: {
+    // 성격 파악 & 유대감 직관형
+    en: {
+      title: <>Discover Your Dog's <span className="text-orange-500">True Personality</span></>,
+      sub: "1-min personality assessment"
+    },
+    jp: {
+      title: <>愛犬の<span className="text-orange-500">本当の性格</span>を発見</>,
+      sub: "1分でわかる性格診断"
+    },
+    default: {
+      title: <>우리 강아지의 <span className="text-orange-500">진짜 성격</span> 알아보기</>,
+      sub: "1분 만에 완성하는 성격 리포트"
+    }
+  }
+}
+
+const getOrAssignHookVariant = () => {
+  try {
+    const saved = sessionStorage.getItem('ab_hook_variant')
+    if (saved && HOOK_VARIANTS[saved]) {
+      return saved
+    }
+  } catch (e) {}
+
+  const variants = ['A', 'B', 'C']
+  const randomVariant = variants[Math.floor(Math.random() * variants.length)]
+  try {
+    sessionStorage.setItem('ab_hook_variant', randomVariant)
+  } catch (e) {}
+  return randomVariant
+}
+
 function PersonalityTest() {
   const navigate = useNavigate()
   const { lang, localePath } = useLang()
@@ -62,13 +127,15 @@ function PersonalityTest() {
   const [stage] = useState(1)
   const [mainAnswers, setMainAnswers] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [hookVariant] = useState(() => getOrAssignHookVariant())
   const questionRefs = useRef([])
   const hasTrackedFirstQuestion = useRef(false)
 
-  // 최초 컴포넌트 마운트 시 test_start 이벤트 발행
+  // 최초 컴포넌트 마운트 시 test_start 및 hook_variant_shown 이벤트 발행
   useEffect(() => {
-    trackEvent('test_start', { stage: 1, lang })
-  }, [])
+    trackEvent('test_start', { stage: 1, lang, hook_variant: hookVariant })
+    trackEvent('hook_variant_shown', { variant: hookVariant, lang })
+  }, [hookVariant, lang])
 
   // ✅ 언어 변경 시 테스트 상태 초기화
   useEffect(() => {
@@ -109,7 +176,7 @@ function PersonalityTest() {
         const [entry] = entries
         if (entry.isIntersecting && !hasTrackedFirstQuestion.current) {
           hasTrackedFirstQuestion.current = true
-          trackEvent('first_question_viewed', { lang })
+          trackEvent('first_question_viewed', { lang, hook_variant: hookVariant })
           observer.disconnect()
         }
       },
@@ -119,7 +186,7 @@ function PersonalityTest() {
     observer.observe(targetEl)
 
     return () => observer.disconnect()
-  }, [stage, lang, currentQuestions])
+  }, [stage, lang, currentQuestions, hookVariant])
 
   // 진행률 계산
   const progressPercent = totalQuestions > 0 ? (totalAnswered / totalQuestions) * 100 : 0
@@ -149,7 +216,8 @@ function PersonalityTest() {
       stage: 1,
       question_index: questionIndex + 1,
       option_value: value,
-      lang: lang
+      lang: lang,
+      hook_variant: hookVariant
     })
 
     setCurrentAnswers(prev => ({
@@ -172,7 +240,7 @@ function PersonalityTest() {
   const handleSeeResults = async () => {
     if (!allAnswered || isSubmitting) return
 
-    trackEvent('test_submit', { lang })
+    trackEvent('test_submit', { lang, hook_variant: hookVariant })
     setIsSubmitting(true)
     
     try {
@@ -262,10 +330,13 @@ function PersonalityTest() {
     )
   }
 
+  // 현재 후킹 문구 변종 선택
+  const activeHook = HOOK_VARIANTS[hookVariant]?.[lang] || HOOK_VARIANTS[hookVariant]?.default
+
   return (
     <main className="flex-grow bg-[#F9FBF9] min-h-screen">
       
-      {/* ========== 인트로 헤더 (상단 고정 유지) ========== */}
+      {/* ========== 인트로 헤더 (A/B 테스트 후킹 문구 고정 노출) ========== */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#fff8e1] to-[#F9FBF9] pt-4 pb-3 md:pt-6 md:pb-4 border-b border-orange-100/60 shadow-xs">
         {/* 배경 장식 */}
         <div className="absolute top-0 left-0 w-48 h-48 bg-orange-200/20 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
@@ -273,19 +344,15 @@ function PersonalityTest() {
         <div className="relative z-10 max-w-[800px] mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1">
-              {/* 메인 타이틀 */}
+              {/* 메인 타이틀 (A/B 변종 적용) */}
               <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-primary leading-tight tracking-tight">
-                {lang === 'jp' ? (
-                  <>愛犬の<span className="text-orange-500">本当の性格</span>を発見</>
-                ) : (
-                  <>Discover Your Dog's <span className="text-orange-500">True Personality</span></>
-                )}
+                {activeHook.title}
               </h1>
 
-              {/* 서브문구 & 뱃지 */}
+              {/* 서브문구 & 뱃지 (A/B 변종 적용) */}
               <div className="flex flex-wrap items-center gap-2 mt-1.5">
                 <span className="text-xs sm:text-sm text-primary/70 font-medium">
-                  {lang === 'jp' ? '1分でわかる性格診断' : '1-min personality assessment'}
+                  {activeHook.sub}
                 </span>
                 <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
                   <span className="material-symbols-outlined text-orange-500 text-xs">quiz</span>
