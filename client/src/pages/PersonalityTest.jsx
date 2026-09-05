@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
@@ -13,18 +13,10 @@ import { calculateMbti } from '../utils/calculateMbti'
 // 개발 환경에서는 Vite 프록시 사용 (상대 경로), 배포 환경에서는 절대 URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
-// 스테이지 1: 4개 이미지 (질문 4, 9, 14, 18에 배치) - 좌우 번갈아
+// 12개 질문에 맞게 쾌적한 간격으로 배치된 측면 이미지 설정 (Q4: 좌측, Q9: 우측)
 const stage1ImageConfig = {
   3: { image: '1.png', isLeft: true },
   8: { image: '2.png', isLeft: false },
-  13: { image: '3.png', isLeft: true },
-  17: { image: '4.png', isLeft: false },
-}
-
-// 스테이지 2: 2개 이미지 (질문 2, 4에 배치) - 좌우 번갈아
-const stage2ImageConfig = {
-  1: { image: '5.png', isLeft: true },
-  3: { image: '6.png', isLeft: false },
 }
 
 const QUESTION_VERSION = 'dog_v1'
@@ -36,21 +28,11 @@ const UI_TEXT = {
     error: { retry: "Retry" },
     stage1: {
       title: "Dog Personality Assessment",
-      subtitle: "Answer 20 questions to discover your dog's true nature."
-    },
-    stage2: {
-      title: "Owner Connection",
-      subtitle: "Almost done! Just 5 more questions about you.",
-      badge: "Owner Connection Round"
+      subtitle: "Answer 12 questions to discover your dog's true nature."
     },
     buttons: {
-      next: "Next",
       seeResults: "See Results",
       analyzing: "Analyzing..."
-    },
-    petName: {
-      label: "🐾 What's your pet's name?",
-      placeholder: "Enter your pet's name"
     }
   },
   jp: {
@@ -58,21 +40,11 @@ const UI_TEXT = {
     error: { retry: "再試行" },
     stage1: {
       title: "犬の性格診断",
-      subtitle: "愛犬の本当の性格を知るために、質問に答えてください。"
-    },
-    stage2: {
-      title: "飼い主とのつながり",
-      subtitle: "もう少しです！あなたについて5つの質問に答えてください。",
-      badge: "飼い主とのつながりラウンド"
+      subtitle: "愛犬の本当の性格を知るために、12の質問に答えてください。"
     },
     buttons: {
-      next: "次へ",
       seeResults: "結果を見る",
       analyzing: "分析中..."
-    },
-    petName: {
-      label: "🐾 ペットの名前は？",
-      placeholder: "ペットの名前を入力してください"
     }
   }
 }
@@ -86,14 +58,11 @@ function PersonalityTest() {
   // UI 텍스트 가져오기 (언어별)
   const uiText = UI_TEXT[lang] || UI_TEXT.en
   
-  const [stage, setStage] = useState(1)
+  const [stage] = useState(1)
   const [mainAnswers, setMainAnswers] = useState({})
-  const [bonusAnswers, setBonusAnswers] = useState({})
-  const [petName, setPetName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const questionRefs = useRef([])
   const hasTrackedFirstQuestion = useRef(false)
-  const hasTrackedStage2Complete = useRef(false)
 
   // 최초 컴포넌트 마운트 시 test_start 이벤트 발행
   useEffect(() => {
@@ -103,14 +72,10 @@ function PersonalityTest() {
   // ✅ 언어 변경 시 테스트 상태 초기화
   useEffect(() => {
     // 언어가 변경되면 테스트를 처음부터 다시 시작
-    setStage(1)
     setMainAnswers({})
-    setBonusAnswers({})
-    setPetName('')
     setIsSubmitting(false)
     questionRefs.current = []
     hasTrackedFirstQuestion.current = false
-    hasTrackedStage2Complete.current = false
     // 스크롤 최상단으로
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [lang])
@@ -120,21 +85,15 @@ function PersonalityTest() {
   const loading = false
   const error = null
 
-  // 스테이지 변경 시 스크롤 최상단으로
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    questionRefs.current = []
-  }, [stage])
+  // 현재 질문 및 답변 데이터
+  const currentQuestions = questions?.stage1 || []
+  const currentAnswers = mainAnswers
+  const setCurrentAnswers = setMainAnswers
+  const currentImageConfig = stage1ImageConfig
 
-  // 현재 스테이지에 맞는 질문 및 답변 데이터 (안전한 기본값 설정)
-  const currentQuestions = stage === 1 ? (questions?.stage1 || []) : (questions?.stage2 || [])
-  const currentAnswers = stage === 1 ? mainAnswers : bonusAnswers
-  const setCurrentAnswers = stage === 1 ? setMainAnswers : setBonusAnswers
-  const currentImageConfig = stage === 1 ? stage1ImageConfig : stage2ImageConfig
-
-  // 안전한 길이 계산 (Optional Chaining)
-  const totalQuestions = (questions?.stage1?.length || 0) + (questions?.stage2?.length || 0)
-  const totalAnswered = Object.keys(mainAnswers).length + Object.keys(bonusAnswers).length
+  // 안전한 길이 계산
+  const totalQuestions = currentQuestions.length || 12
+  const totalAnswered = Object.keys(mainAnswers).length
   const allAnswered = currentQuestions.length > 0 && Object.keys(currentAnswers).length === currentQuestions.length
 
   // 📌 1. 1번 문항 뷰포트 실제 노출 트래킹 (IntersectionObserver)
@@ -161,14 +120,6 @@ function PersonalityTest() {
     return () => observer.disconnect()
   }, [stage, lang, currentQuestions])
 
-  // 📌 4. Stage 2 (보호자 문항 5개) 모두 응답 완료 트래킹
-  useEffect(() => {
-    if (stage === 2 && allAnswered && !hasTrackedStage2Complete.current) {
-      hasTrackedStage2Complete.current = true
-      trackEvent('stage2_complete', { lang })
-    }
-  }, [stage, allAnswered, lang])
-
   // 진행률 계산
   const progressPercent = totalQuestions > 0 ? (totalAnswered / totalQuestions) * 100 : 0
   
@@ -191,10 +142,10 @@ function PersonalityTest() {
   const currentActiveIndex = getNextUnansweredIndex()
 
   const handleAnswer = (questionIndex, value) => {
-    const stepNumber = stage === 1 ? questionIndex + 1 : 20 + questionIndex + 1
+    const stepNumber = questionIndex + 1
     trackEvent('question_answer', {
       step_number: stepNumber,
-      stage: stage,
+      stage: 1,
       question_index: questionIndex + 1,
       option_value: value,
       lang: lang
@@ -217,19 +168,8 @@ function PersonalityTest() {
     }
   }
 
-  const handleNext = () => {
-    if (allAnswered && stage === 1) {
-      trackEvent('stage1_complete', {
-        lang,
-        completed_questions: 20
-      })
-      trackEvent('test_start', { stage: 2, lang })
-      setStage(2)
-    }
-  }
-
   const handleSeeResults = async () => {
-    if (!allAnswered || stage !== 2 || !petName.trim() || isSubmitting) return
+    if (!allAnswered || isSubmitting) return
 
     trackEvent('test_submit', { lang })
     setIsSubmitting(true)
@@ -237,9 +177,8 @@ function PersonalityTest() {
     try {
       // 클라이언트 전용 즉시 MBTI 계산 (서버 없이 0.001초 계산)
       const resultData = calculateMbti({
-        petName: petName.trim(),
+        petName: '',
         mainAnswers,
-        bonusAnswers,
         locale: lang
       })
 
@@ -248,12 +187,11 @@ function PersonalityTest() {
       // 결과를 캐시에 저장 (sessionStorage 및 ResultsContext)
       cacheResult(resultId, resultData)
 
-      // 📌 3. 백엔드가 동작하는 환경일 경우 백그라운드 백업 전달 시도 (실패 시 에러 트래킹)
+      // 📌 백엔드가 동작하는 환경일 경우 백그라운드 백업 전달 시도
       try {
         axios.post(`${API_BASE_URL}/api/calculate`, {
-          petName: petName.trim(),
+          petName: '',
           mainAnswers,
-          bonusAnswers,
           locale: lang
         }).catch((err) => {
           trackEvent('backup_api_error', {
@@ -272,7 +210,6 @@ function PersonalityTest() {
       navigate(`/result/${resultId}`)
     } catch (error) {
       console.error('결과 계산 중 오류:', error)
-      // 📌 3. 제출/계산 과정 오류 시 트래킹
       trackEvent('test_submit_error', {
         lang,
         error_message: String(error?.message || error).slice(0, 100)
@@ -282,11 +219,9 @@ function PersonalityTest() {
     }
   }
 
-  const canSeeResults = allAnswered && petName.trim().length > 0 && !isSubmitting
+  const canSeeResults = allAnswered && !isSubmitting
 
-  const getQuestionNumber = (index) => {
-    return stage === 1 ? index + 1 : questions.stage1.length + index + 1
-  }
+  const getQuestionNumber = (index) => index + 1
 
   // 로딩 화면 (데이터가 아직 없을 때도 포함)
   if (loading || !questions?.stage1?.length) {
@@ -346,7 +281,7 @@ function PersonalityTest() {
                   </span>
                   <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
                     <span className="material-symbols-outlined text-orange-500 text-xs">quiz</span>
-                    <span>{lang === 'jp' ? '25の質問' : '25 Questions'}</span>
+                    <span>{lang === 'jp' ? '12の質問' : '12 Questions'}</span>
                   </div>
                   <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
                     <span className="material-symbols-outlined text-orange-500 text-xs">pets</span>
@@ -385,16 +320,8 @@ function PersonalityTest() {
           {(stage !== 1 || Object.keys(mainAnswers).length > 0) && (
             <div className="mb-6 md:mb-8">
               <h2 className="text-primary text-xl md:text-2xl font-display font-bold leading-tight tracking-tight mb-2">
-                {stage === 1 ? uiText.stage1.title : uiText.stage2.title}
+                {uiText.stage1.title}
               </h2>
-              {stage === 2 && (
-                <div className="mt-3">
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-accent/20 rounded-full">
-                    <span className="material-symbols-outlined text-accent text-sm">favorite</span>
-                    <span className="text-accent font-medium text-xs">{uiText.stage2.badge}</span>
-                  </span>
-                </div>
-              )}
             </div>
           )}
 
@@ -423,66 +350,34 @@ function PersonalityTest() {
             })}
           </div>
 
-          <div className="pt-8 md:pt-10 pb-8 flex justify-end">
-            {stage === 1 ? (
+          <div className="pt-8 md:pt-10 pb-8 flex justify-center">
+            <div className="w-full flex flex-col items-center gap-6">
               <button
-                onClick={handleNext}
-                disabled={!allAnswered}
+                onClick={handleSeeResults}
+                disabled={!canSeeResults || isSubmitting}
                 className={`
-                  w-full md:w-auto group px-8 py-4 font-display text-lg font-bold rounded-xl transition-all flex items-center justify-center gap-2
-                  ${allAnswered 
+                  w-full md:w-auto group px-16 py-6 font-display text-lg md:text-xl font-bold rounded-2xl transition-all flex items-center justify-center gap-3
+                  ${canSeeResults && !isSubmitting
                     ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg hover:shadow-xl cursor-pointer' 
                     : 'bg-accent text-primary cursor-not-allowed shadow-lg opacity-60'
                   }
                 `}
               >
-                <span>{uiText.buttons.next}</span>
-                <span className={`material-symbols-outlined transform transition-transform ${allAnswered ? 'group-hover:translate-x-1' : ''}`}>
-                  arrow_forward
-                </span>
+                {isSubmitting ? (
+                  <>
+                    <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>{uiText.buttons.analyzing}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{uiText.buttons.seeResults}</span>
+                    <span className={`material-symbols-outlined text-2xl transform transition-transform ${canSeeResults ? 'group-hover:translate-x-1' : ''}`}>
+                      celebration
+                    </span>
+                  </>
+                )}
               </button>
-            ) : (
-              <div className="w-full flex flex-col items-center gap-6">
-                <div className="w-full max-w-md">
-                  <label className="block text-primary text-base md:text-lg font-medium mb-3 text-center">
-                    {uiText.petName.label}
-                  </label>
-                  <input
-                    type="text"
-                    value={petName}
-                    onChange={(e) => setPetName(e.target.value)}
-                    placeholder={uiText.petName.placeholder}
-                    className="w-full px-6 py-4 text-base md:text-lg rounded-xl border-2 border-primary/20 bg-white text-primary placeholder-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center font-medium"
-                  />
-                </div>
-
-                <button
-                  onClick={handleSeeResults}
-                  disabled={!canSeeResults || isSubmitting}
-                  className={`
-                    w-full md:w-auto group px-16 py-6 font-display text-lg md:text-xl font-bold rounded-2xl transition-all flex items-center justify-center gap-3
-                    ${canSeeResults && !isSubmitting
-                      ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg hover:shadow-xl cursor-pointer' 
-                      : 'bg-accent text-primary cursor-not-allowed shadow-lg opacity-60'
-                    }
-                  `}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>{uiText.buttons.analyzing}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{uiText.buttons.seeResults}</span>
-                      <span className={`material-symbols-outlined text-2xl transform transition-transform ${canSeeResults ? 'group-hover:translate-x-1' : ''}`}>
-                        celebration
-                      </span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

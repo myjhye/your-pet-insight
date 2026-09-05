@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLang } from '../contexts/LanguageContext'
 import { useResults } from '../contexts/ResultsContext'
@@ -354,9 +354,10 @@ function PersonalityTestResult() {
   // UI 텍스트 선택
   const uiText = UI_TEXT[lang] || UI_TEXT.en
 
-  // 데이터 추출
   const petName = resultData?.pet_name || resultData?.petName || ''
-  const displayPetName = petName ? (petName.charAt(0).toUpperCase() + petName.slice(1)) : 'Pet'
+  const displayPetName = petName 
+    ? (petName.charAt(0).toUpperCase() + petName.slice(1))
+    : (lang === 'jp' ? '愛犬' : (lang === 'ko' ? '우리 강아지' : 'My Pet'))
   const archetype = resultData?.archetype || {}
   const alias = getLocalizedText(archetype.alias)
   const summary = getLocalizedText(archetype.summary)
