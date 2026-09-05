@@ -183,6 +183,10 @@ function PersonalityTest() {
 
   const handleNext = () => {
     if (allAnswered && stage === 1) {
+      trackEvent('stage1_complete', {
+        lang,
+        completed_questions: 20
+      })
       trackEvent('test_start', { stage: 2, lang })
       setStage(2)
     }

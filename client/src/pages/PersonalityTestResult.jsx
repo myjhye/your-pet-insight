@@ -197,6 +197,9 @@ function PersonalityTestResult() {
   const { fullPageRef, isSaving, saveMode, saveAsFullPage } = useSaveAsImage()
   const [saveToast, setSaveToast] = useState(null)
   
+  // 결과 저장 CTA 문구 A/B 분기 (50:50 세션 고정)
+  const [saveCtaVariant] = useState(() => (Math.random() < 0.5 ? 'A' : 'B'))
+  
   // 언어 불일치 상태
   const [languageMismatch, setLanguageMismatch] = useState(false)
 
@@ -314,13 +317,27 @@ function PersonalityTestResult() {
 
   // 전체 결과 이미지 저장 함수
   const handleSaveFullPage = useCallback(async () => {
-    trackEvent('save_image', { save_type: 'full', mode: 'full_page', lang })
+    trackEvent('save_image', {
+      save_type: 'full',
+      mode: 'full_page',
+      lang,
+      cta_variant: saveCtaVariant
+    })
     const success = await saveAsFullPage()
     if (success) {
       setSaveToast('saved')
       setTimeout(() => setSaveToast(null), 3000)
     }
-  }, [saveAsFullPage, lang])
+  }, [saveAsFullPage, lang, saveCtaVariant])
+
+  // 둘째 강아지 테스트 핸들러
+  const handleSecondPetTest = useCallback(() => {
+    trackEvent('second_pet_click', {
+      lang,
+      source_screen: 'result_page'
+    })
+    navigate(localePath('/'))
+  }, [lang, localePath, navigate])
 
   // UI 텍스트 선택
   const uiText = UI_TEXT[lang] || UI_TEXT.en
@@ -622,9 +639,9 @@ function PersonalityTestResult() {
             )}
           </div>
 
-          {/* 하단 액션 버튼 그룹 (이미지 저장, 공유하기 & 다시하기) */}
+          {/* 하단 액션 버튼 그룹 (이미지 저장, 공유하기 & 둘째 강아지 테스트) */}
           <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 mb-8 md:mb-12">
-            {/* 결과 이미지 저장 (보조 버튼 - 아웃라인 스타일) */}
+            {/* 결과 이미지 저장 (보조 버튼 - 아웃라인 스타일, A/B 테스트 적용) */}
             <button
               onClick={handleSaveFullPage}
               disabled={isSaving}
@@ -639,7 +656,10 @@ function PersonalityTestResult() {
               </span>
               {isSaving && saveMode === 'full'
                 ? (lang === 'jp' ? '保存中...' : (lang === 'ko' ? '저장 중...' : 'Saving...'))
-                : (lang === 'jp' ? '結果を画像で保存' : (lang === 'ko' ? '결과 이미지 저장' : 'Save Results as Image'))
+                : (saveCtaVariant === 'B'
+                  ? (lang === 'jp' ? 'インスタカードを入手' : (lang === 'ko' ? '인스타 카드 받기' : 'Get Instagram Card'))
+                  : (lang === 'jp' ? '結果を画像で保存' : (lang === 'ko' ? '결과 이미지 저장' : 'Save Result Card'))
+                )
               }
             </button>
 
@@ -652,16 +672,13 @@ function PersonalityTestResult() {
               {lang === 'jp' ? 'テストを共有' : (lang === 'ko' ? '테스트 공유하기' : 'Share Test')}
             </button>
 
-            {/* 테스트 다시하기 (메인 강조 CTA - 솔리드 에메랄드 스타일) */}
+            {/* 둘째 강아지 테스트하기 (메인 강조 CTA - 솔리드 에메랄드 스타일) */}
             <button
-              onClick={() => {
-                trackEvent('test_restart', { lang })
-                navigate(localePath('/'))
-              }}
+              onClick={handleSecondPetTest}
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-base font-bold shadow-lg hover:shadow-xl transition-all active:scale-95 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-xl">restart_alt</span>
-              {lang === 'jp' ? 'もう一度テストする' : (lang === 'ko' ? '테스트 다시하기' : 'Retake Test')}
+              <span className="material-symbols-outlined text-xl">pets</span>
+              {lang === 'jp' ? '2匹目の愛犬をテスト' : (lang === 'ko' ? '둘째 강아지 테스트하기' : 'Test for Another Pet')}
             </button>
           </div>
         </div>
