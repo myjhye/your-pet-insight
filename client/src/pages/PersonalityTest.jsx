@@ -265,74 +265,61 @@ function PersonalityTest() {
   return (
     <main className="flex-grow bg-[#F9FBF9] min-h-screen">
       
-      {/* ========== 인트로 헤더 (컴팩트하게 배치하여 첫 번째 문제가 첫 화면에 즉시 노출되도록 구현) ========== */}
-      {stage === 1 && Object.keys(mainAnswers).length === 0 && (
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#fff8e1] to-[#F9FBF9] pt-4 pb-3 md:pt-6 md:pb-4 border-b border-orange-100/60 shadow-xs">
-          {/* 배경 장식 */}
-          <div className="absolute top-0 left-0 w-48 h-48 bg-orange-200/20 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-          
-          <div className="relative z-10 max-w-[800px] mx-auto px-4 md:px-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex-1">
-                {/* 메인 타이틀 */}
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-primary leading-tight tracking-tight">
-                  {lang === 'jp' ? (
-                    <>愛犬の<span className="text-orange-500">本当の性格</span>を発見</>
-                  ) : (
-                    <>Discover Your Dog's <span className="text-orange-500">True Personality</span></>
-                  )}
-                </h1>
+      {/* ========== 인트로 헤더 (상단 고정 유지) ========== */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#fff8e1] to-[#F9FBF9] pt-4 pb-3 md:pt-6 md:pb-4 border-b border-orange-100/60 shadow-xs">
+        {/* 배경 장식 */}
+        <div className="absolute top-0 left-0 w-48 h-48 bg-orange-200/20 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+        
+        <div className="relative z-10 max-w-[800px] mx-auto px-4 md:px-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1">
+              {/* 메인 타이틀 */}
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-primary leading-tight tracking-tight">
+                {lang === 'jp' ? (
+                  <>愛犬の<span className="text-orange-500">本当の性格</span>を発見</>
+                ) : (
+                  <>Discover Your Dog's <span className="text-orange-500">True Personality</span></>
+                )}
+              </h1>
 
-                {/* 서브문구 & 뱃지 (AI Powered 문구 제거) */}
-                <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                  <span className="text-xs sm:text-sm text-primary/70 font-medium">
-                    {lang === 'jp' ? '1分でわかる性格診断' : '1-min personality assessment'}
-                  </span>
-                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
-                    <span className="material-symbols-outlined text-orange-500 text-xs">quiz</span>
-                    <span>{lang === 'jp' ? '12の質問' : '12 Questions'}</span>
-                  </div>
-                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
-                    <span className="material-symbols-outlined text-orange-500 text-xs">pets</span>
-                    <span>{lang === 'jp' ? '16の性格タイプ' : '16 Types'}</span>
-                  </div>
+              {/* 서브문구 & 뱃지 */}
+              <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                <span className="text-xs sm:text-sm text-primary/70 font-medium">
+                  {lang === 'jp' ? '1分でわかる性格診断' : '1-min personality assessment'}
+                </span>
+                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
+                  <span className="material-symbols-outlined text-orange-500 text-xs">quiz</span>
+                  <span>{lang === 'jp' ? '12の質問' : '12 Questions'}</span>
+                </div>
+                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
+                  <span className="material-symbols-outlined text-orange-500 text-xs">pets</span>
+                  <span>{lang === 'jp' ? '16の性格タイプ' : '16 Types'}</span>
                 </div>
               </div>
+            </div>
 
-              {/* 우측 강아지 일러스트 썸네일 */}
-              <div className="flex items-center shrink-0">
-                <img 
-                  src="/images/dog/2.png" 
-                  alt="Dog" 
-                  className="w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 object-contain drop-shadow-md"
-                />
-              </div>
+            {/* 우측 강아지 일러스트 썸네일 */}
+            <div className="flex items-center shrink-0">
+              <img 
+                src="/images/dog/2.png" 
+                alt="Dog" 
+                className="w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 object-contain drop-shadow-md"
+              />
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* ========== 기존 테스트 영역 ========== */}
       <div className="px-4 md:px-20 lg:px-40 py-3 md:py-6">
         <div className="max-w-[800px] mx-auto">
           
-          {/* 진행 상황 (인트로 지나면 표시) */}
-          {(stage !== 1 || Object.keys(mainAnswers).length > 0) && (
-            <div className="flex justify-end mb-4">
-              <span className="text-primary/60 text-xs md:text-sm font-medium">
-                {totalAnswered} / {totalQuestions} {lang === 'jp' ? '回答済み' : 'Answered'}
-              </span>
-            </div>
-          )}
-          
-          {/* 기존 스테이지 헤더 (인트로 후에만 간략하게) */}
-          {(stage !== 1 || Object.keys(mainAnswers).length > 0) && (
-            <div className="mb-6 md:mb-8">
-              <h2 className="text-primary text-xl md:text-2xl font-display font-bold leading-tight tracking-tight mb-2">
-                {uiText.stage1.title}
-              </h2>
-            </div>
-          )}
+          {/* 진행 상황 카운터 */}
+          <div className="flex justify-end mb-3 md:mb-4">
+            <span className="text-primary/60 text-xs md:text-sm font-medium">
+              {totalAnswered} / {totalQuestions} {lang === 'jp' ? '回答済み' : 'Answered'}
+            </span>
+          </div>
 
           <div className="space-y-4 md:space-y-6">
             {currentQuestions.map((q, index) => {
