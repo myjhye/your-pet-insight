@@ -296,8 +296,9 @@ function PersonalityTestResult() {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         const shareUrl = getShareUrl()
+        const shareTitle = lang === 'jp' ? 'ペット性格診断テスト' : 'Pet Personality Test'
         await navigator.share({
-          title: resultData?.pet_name ? `${resultData.pet_name}'s Personality Result` : 'Pet Personality Result',
+          title: shareTitle,
           url: shareUrl,
         })
         trackEvent('share_click', { share_type: 'native_share', method: 'native_share', lang })
@@ -309,7 +310,7 @@ function PersonalityTestResult() {
     } else {
       handleCopyLink()
     }
-  }, [resultData, lang, getShareUrl, handleCopyLink])
+  }, [lang, getShareUrl, handleCopyLink])
 
   // 전체 결과 이미지 저장 함수
   const handleSaveFullPage = useCallback(async () => {
