@@ -25,7 +25,7 @@ const textContent = {
       title: 'Dog Personality Test',
       desc: "Reveal your dog's true personality type and hidden traits.",
       btn: 'Start Analysis',
-      badge: "25 Questions • 3 min"
+      badge: "12 Questions • 1 min"
     }
   },
   jp: {
@@ -33,7 +33,7 @@ const textContent = {
       title: '犬の性格診断',
       desc: "AIを活用した診断で、あなたの愛犬の独自の性格タイプ、社交スタイル、隠れた特性を発見します。",
       btn: '性格を分析',
-      badge: "25問 • 3分"
+      badge: "12問 • 1分"
     }
   }
 }

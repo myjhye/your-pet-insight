@@ -286,7 +286,7 @@ function PersonalityTest() {
                 {/* 서브문구 & 뱃지 (AI Powered 문구 제거) */}
                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
                   <span className="text-xs sm:text-sm text-primary/70 font-medium">
-                    {lang === 'jp' ? '3分でわかる性格診断' : '3-min personality assessment'}
+                    {lang === 'jp' ? '1分でわかる性格診断' : '1-min personality assessment'}
                   </span>
                   <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white rounded-full text-xs font-semibold text-primary border border-orange-200 shadow-2xs">
                     <span className="material-symbols-outlined text-orange-500 text-xs">quiz</span>
